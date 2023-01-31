@@ -1,9 +1,8 @@
-# Fabric Example Mod
+# Aspect
 
-## Setup
-
-For setup instructions please see the [fabric wiki page](https://fabricmc.net/wiki/tutorial:setup) that relates to the IDE that you are using.
+A character customization mod inspired by Figura!
+Aims to place more focus on script safety and ease of use, while 
+making sure not to compromise on players' creative freedom.
 
 ## License
-
-This template is available under the CC0 license. Feel free to learn from it and incorporate it in your own projects.
+vibe license :)
