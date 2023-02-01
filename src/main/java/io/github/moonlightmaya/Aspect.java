@@ -1,6 +1,7 @@
 package io.github.moonlightmaya;
 
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.util.math.MatrixStack;
 
 import java.util.UUID;
 
@@ -13,8 +14,8 @@ public class Aspect {
     private UUID user;
 
 
-    public void renderCompatibly(VertexConsumerProvider vcp) {
-        root.render(vcp, true);
+    public void renderCompatibly(VertexConsumerProvider vcp, MatrixStack matrixStack) {
+        root.render(vcp, matrixStack, true);
     }
 
 }

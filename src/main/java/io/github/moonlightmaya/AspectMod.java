@@ -8,7 +8,6 @@ public class AspectMod implements ClientModInitializer {
 
     public static final String MODID = "aspect";
     public static final Logger LOGGER = LoggerFactory.getLogger(MODID);
-
     public static Aspect TEST_ASPECT;
 
 

@@ -4,10 +4,13 @@ import com.google.common.collect.ImmutableList;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.entity.CreeperEntityRenderer;
 import net.minecraft.client.render.entity.model.CreeperEntityModel;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4d;
 import org.joml.Vector3d;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import java.util.List;
 
@@ -60,9 +63,9 @@ public class AspectModelPart {
      *
      * transformToViewSpace should generally be true when using compatibility mode, and false otherwise.
      */
-    public void render(VertexConsumerProvider vcp, boolean transformToViewSpace) {
+    public void render(VertexConsumerProvider vcp, MatrixStack matrixStack, boolean transformToViewSpace) {
         List<RenderLayer> defaultLayers = DEFAULT_LAYERS;
-        renderInternal(vcp, defaultLayers);
+        renderInternal(vcp, defaultLayers, matrixStack);
     }
 
     /**
@@ -72,8 +75,8 @@ public class AspectModelPart {
      */
     private void renderInternal(
             VertexConsumerProvider vcp, //The VCP used for this rendering call, where we will fetch buffers from using the render layers.
-            List<RenderLayer> currentRenderLayers //The current set of render layers for the part. Inherited from the parent if this.renderLayers is null.
-
+            List<RenderLayer> currentRenderLayers, //The current set of render layers for the part. Inherited from the parent if this.renderLayers is null.
+            MatrixStack matrixStack //The current matrix stack. This will likely be our own matrix stack wrapper class over the vanilla one, but that shouldn't matter here.
     ) {
         //If this model part's layers are not null, then set the current ones to our overrides. Otherwise, keep the parent's render layers.
         if (this.renderLayers != null)
@@ -84,13 +87,17 @@ public class AspectModelPart {
                 //Obtain a vertex buffer from the VCP, then put all our vertices into it.
                 VertexConsumer buffer = vcp.getBuffer(layer);
                 for (int i = 0; i < vertexData.length; i += 8) {
+                    Vector4f pos = new Vector4f(vertexData[i], vertexData[i+1], vertexData[i+2], 1f);
+                    matrixStack.peek().getPositionMatrix().transform(pos);
+                    Vector3f normal = new Vector3f(vertexData[i+5], vertexData[i+6], vertexData[i+7]);
+                    matrixStack.peek().getNormalMatrix().transform(normal);
                     buffer.vertex(
-                            vertexData[i], vertexData[i+1], vertexData[i+2], //Position
+                            pos.x, pos.y, pos.z, //Position
                             1f, 1f, 1f, 1f, //Color
                             vertexData[i+3], vertexData[i+4], //Texture
                             OverlayTexture.DEFAULT_UV, //"Overlay"
                             LightmapTextureManager.MAX_LIGHT_COORDINATE, //Light
-                            vertexData[i+5], vertexData[i+6], vertexData[i+7] //Normal
+                            normal.x, normal.y, normal.z //Normal
                     );
                 }
             }
@@ -99,7 +106,7 @@ public class AspectModelPart {
         //If there are children , render them all too
         if (hasChildren()) {
             for (AspectModelPart child : children) {
-                child.renderInternal(vcp, currentRenderLayers);
+                child.renderInternal(vcp, currentRenderLayers, matrixStack);
             }
         }
     }
