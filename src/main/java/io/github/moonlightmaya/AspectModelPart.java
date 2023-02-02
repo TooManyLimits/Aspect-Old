@@ -1,6 +1,7 @@
 package io.github.moonlightmaya;
 
 import com.google.common.collect.ImmutableList;
+import io.github.moonlightmaya.util.AspectMatrixStack;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.entity.CreeperEntityRenderer;
 import net.minecraft.client.render.entity.model.CreeperEntityModel;
@@ -63,20 +64,23 @@ public class AspectModelPart {
      *
      * transformToViewSpace should generally be true when using compatibility mode, and false otherwise.
      */
-    public void render(VertexConsumerProvider vcp, MatrixStack matrixStack, boolean transformToViewSpace) {
+    public void render(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, boolean transformToViewSpace) {
         List<RenderLayer> defaultLayers = DEFAULT_LAYERS;
         renderInternal(vcp, defaultLayers, matrixStack);
     }
 
     /**
-     * Recursively renders this part and its children to the VCP using compat mode
+     * Recursively renders this part and its children to the VCP
      * The part customization stack from Figura Rewrite II is removed, in favor of using
      * the call stack with parameters instead. (Just like prewrite did~ lol)
+     * This time though, things are different.
+     * Each parameter will be commented and documented, so that the organization
+     * doesn't get out of hand!
      */
     private void renderInternal(
             VertexConsumerProvider vcp, //The VCP used for this rendering call, where we will fetch buffers from using the render layers.
             List<RenderLayer> currentRenderLayers, //The current set of render layers for the part. Inherited from the parent if this.renderLayers is null.
-            MatrixStack matrixStack //The current matrix stack. This will likely be our own matrix stack wrapper class over the vanilla one, but that shouldn't matter here.
+            AspectMatrixStack matrixStack //The current matrix stack.
     ) {
         //If this model part's layers are not null, then set the current ones to our overrides. Otherwise, keep the parent's render layers.
         if (this.renderLayers != null)
@@ -88,9 +92,9 @@ public class AspectModelPart {
                 VertexConsumer buffer = vcp.getBuffer(layer);
                 for (int i = 0; i < vertexData.length; i += 8) {
                     Vector4f pos = new Vector4f(vertexData[i], vertexData[i+1], vertexData[i+2], 1f);
-                    matrixStack.peek().getPositionMatrix().transform(pos);
+                    matrixStack.peekPosition().transform(pos);
                     Vector3f normal = new Vector3f(vertexData[i+5], vertexData[i+6], vertexData[i+7]);
-                    matrixStack.peek().getNormalMatrix().transform(normal);
+                    matrixStack.peekNormal().transform(normal);
                     buffer.vertex(
                             pos.x, pos.y, pos.z, //Position
                             1f, 1f, 1f, 1f, //Color
