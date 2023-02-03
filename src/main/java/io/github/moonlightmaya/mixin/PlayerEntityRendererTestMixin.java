@@ -20,6 +20,6 @@ public class PlayerEntityRendererTestMixin {
         //TRANSLATED relative to the player's feet!
         //**This matrix will transform from that space into camera space.** Keep this fact in mind when writing math and render code.
         AspectMod.updateTestAspect();
-        AspectMod.TEST_ASPECT.renderCompatibly(vertexConsumerProvider, new AspectMatrixStack(matrixStack));
+        AspectMod.TEST_ASPECT.renderEntity(vertexConsumerProvider, new AspectMatrixStack(matrixStack));
     }
 }

@@ -21,8 +21,14 @@ public class Aspect {
 
     private UUID user;
 
-    public void renderCompatibly(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {
+    public void renderEntity(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {
         entityRoot.render(vcp, matrixStack);
+    }
+
+    public void renderWorld(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, double cameraX, double cameraY, double cameraZ) {
+        for (WorldRootModelPart worldRoot : worldRoots) {
+            worldRoot.renderWorld(vcp, matrixStack, cameraX, cameraY, cameraZ);
+        }
     }
 
 }

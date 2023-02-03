@@ -29,6 +29,7 @@ public class AspectMod implements ClientModInitializer {
     public static Aspect TEST_ASPECT;
     public static AspectModelPart TEST_ROOT_PART;
     public static AspectModelPart TEST_ORBITER_PART;
+    public static WorldRootModelPart TEST_WORLD_PART;
 
 
     @Override
@@ -40,30 +41,42 @@ public class AspectMod implements ClientModInitializer {
 
 
     /**
-     * Private testing method that creates a basic aspect, that's just
-     * a singular quad, and saves it in the static test variable.
+     * Private testing method that creates a basic aspect
+     * and saves it in the static test variables.
      */
     private static void createTestAspect() {
         AspectModelPart root = new AspectModelPart();
-        root.vertexData = new float[] { //position, texture, normal
-                -1, 0, -1,  0, 0,  0, 0, 1,
-                1, 0, -1,  1, 0,  0, 0, 1,
-                1, 0, 1,  1, 1,  0, 0, 1,
-                -1, 0, 1,  0, 1,  0, 0, 1,
-        };
+//        root.vertexData = new float[] { //position, texture, normal
+//                -1, 0, -1,  0, 0,  0, 0, 1,
+//                1, 0, -1,  1, 0,  0, 0, 1,
+//                1, 0, 1,  1, 1,  0, 0, 1,
+//                -1, 0, 1,  0, 1,  0, 0, 1,
+//        };
         AspectModelPart orbiter = new AspectModelPart();
-        orbiter.vertexData = new float[] {
-                -1, -1, 0,  0, 0,  0, 0, 1,
-                1, -1, 0,  1, 0,  0, 0, 1,
-                1, 1, 0,  1, 1,  0, 0, 1,
-                -1, 1, 0,  0, 1,  0, 0, 1,
-        };
+//        orbiter.vertexData = new float[] {
+//                -1, -1, 0,  0, 0,  0, 0, 1,
+//                1, -1, 0,  1, 0,  0, 0, 1,
+//                1, 1, 0,  1, 1,  0, 0, 1,
+//                -1, 1, 0,  0, 1,  0, 0, 1,
+//        };
         root.children = List.of(orbiter);
         Aspect aspect = new Aspect();
         aspect.entityRoot = root;
         TEST_ASPECT = aspect;
         TEST_ROOT_PART = root;
         TEST_ORBITER_PART = orbiter;
+
+        WorldRootModelPart worldPart = new WorldRootModelPart();
+        worldPart.worldPos.set(5288326.37668, 2, 3);
+
+        TEST_WORLD_PART = worldPart;
+        worldPart.vertexData = new float[] {
+                0, 0, 0,  0, 0,  0, 0, 1,
+                0, 1, 0,  0, 1,  0, 0, 1,
+                1, 1, 0,  1, 1,  0, 0, 1,
+                1, 0, 0,  1, 0,  0, 0, 1,
+        };
+        aspect.worldRoots = List.of(TEST_WORLD_PART);
     }
 
     public static void updateTestAspect() {
@@ -74,6 +87,8 @@ public class AspectMod implements ClientModInitializer {
         root.partPos.set(0, Math.sin(time * Math.PI * 2), 0);
         root.partPivot.set(0, Math.sin(time * Math.PI * 2), 0);
         root.partRot.rotationX((float) Math.toRadians(0));
+
+        TEST_WORLD_PART.worldPos.set(5288326.37668, 2, 3);
 
         outer.partPos.set(0, 0, 1);
         outer.partPivot.set(0, 0, 1);
