@@ -123,8 +123,6 @@ public class AspectMatrixStack {
         normalMatrices.get(curIndex).identity();
     }
 
-
-
     public MatrixStack getVanillaCopy() {
         MatrixStack result = new MatrixStack();
         MatrixStack.Entry entry = result.peek();

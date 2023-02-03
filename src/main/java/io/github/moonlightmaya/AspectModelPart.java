@@ -53,10 +53,6 @@ public class AspectModelPart {
         return children != null;
     }
 
-    public void setWorldPos(Vector3d pos) {
-        throw new UnsupportedOperationException("Can only call setWorldPos on the roots of world part trees.");
-    }
-
     private void recalculateMatrixIfNecessary() {
         if (needsMatrixRecalculation) {
             //We want to scale, then rotate, then translate, so _of course_ we have to call these functions in the order
