@@ -3,15 +3,9 @@ package io.github.moonlightmaya;
 import com.google.common.collect.ImmutableList;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import net.minecraft.client.render.*;
-import net.minecraft.client.render.entity.CreeperEntityRenderer;
-import net.minecraft.client.render.entity.model.CreeperEntityModel;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix4d;
-import org.joml.Vector3d;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
+import org.joml.*;
 
 import java.util.List;
 
@@ -20,13 +14,20 @@ import java.util.List;
  */
 public class AspectModelPart {
     private String name;
-    public List<AspectModelPart> children; //null if no children //temporarily public for testing!
 
-    private Matrix4d partMatrix;
-    private Vector3d partPos;
-    private Vector3d partRot;
-    private Vector3d partScale;
-    public float[] vertexData; //null if no vertices in this part //Temporarily public for testing!
+    //following are temporarily public for testing!
+    public List<AspectModelPart> children; //null if no children
+    public final Matrix4f positionMatrix = new Matrix4f();
+    public final Matrix3f normalMatrix = new Matrix3f();
+    public final Vector3f partPivot = new Vector3f();
+    public final Vector3f partPos = new Vector3f();
+    public final Quaternionf partRot = new Quaternionf();
+    public final Vector3f partScale = new Vector3f(1, 1, 1);
+
+    //Whether this part needs its matrix recalculated. After calling rot(), pos(), etc. this will be set to true.
+    //If it's true at rendering time, then the this.partMatrix field will be updated, and this will be set to false.
+    public boolean needsMatrixRecalculation = true;
+    public float[] vertexData; //null if no vertices in this part
 
     /**
      * Contains the render layers we wish to draw to
@@ -52,6 +53,23 @@ public class AspectModelPart {
         return children != null;
     }
 
+    private void recalculateMatrixIfNecessary() {
+        if (needsMatrixRecalculation) {
+            //We want to scale, then rotate, then translate, so _of course_ we have to call these functions in the order
+            //translate, rotate, scale! Because that's the convention, apparently... okay i guess
+            positionMatrix.translation(partPivot)
+                    .rotate(partRot)
+                    .scale(partScale)
+                    .translate(partPos)
+                    .translate(partPivot.negate());
+            partPivot.negate();
+            //Compute the normal matrix as well and store it
+            positionMatrix.normal(normalMatrix);
+            //Matrices are now calculated, don't need to be recalculated anymore
+            needsMatrixRecalculation = false;
+        }
+    }
+
     private static final List<RenderLayer> DEFAULT_LAYERS = ImmutableList.of(RenderLayer.getEntityCutoutNoCull(new Identifier("textures/entity/creeper/creeper.png"))); //aww man
     /**
      * Renders with the given VCP.
@@ -62,9 +80,10 @@ public class AspectModelPart {
      * In optimized mode, this is a custom VCP that will save its buffers to VertexBuffer objects to use
      * our custom core shaders, allowing us to avoid re-uploading vertices each frame.
      *
-     * transformToViewSpace should generally be true when using compatibility mode, and false otherwise.
+     * Depending on whether we're in optimized or compatible mode, the provided matrixStack will also be
+     * different.
      */
-    public void render(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, boolean transformToViewSpace) {
+    public void render(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {
         List<RenderLayer> defaultLayers = DEFAULT_LAYERS;
         renderInternal(vcp, defaultLayers, matrixStack);
     }
@@ -85,6 +104,14 @@ public class AspectModelPart {
         //If this model part's layers are not null, then set the current ones to our overrides. Otherwise, keep the parent's render layers.
         if (this.renderLayers != null)
             currentRenderLayers = this.renderLayers;
+
+        //Push and transform the stack, if necessary
+        if (hasVertexData() || hasChildren()) {
+            //Recalculate the matrices for this part if necessary, then apply them to the stack.
+            recalculateMatrixIfNecessary();
+            matrixStack.push();
+            matrixStack.multiply(positionMatrix, normalMatrix);
+        }
 
         if (hasVertexData()) {
             for (RenderLayer layer : currentRenderLayers) {
@@ -107,11 +134,16 @@ public class AspectModelPart {
             }
         }
 
-        //If there are children , render them all too
+        //If there are children, render them all too
         if (hasChildren()) {
             for (AspectModelPart child : children) {
                 child.renderInternal(vcp, currentRenderLayers, matrixStack);
             }
+        }
+
+        //Remove the matrix we pushed earlier
+        if (hasVertexData() || hasChildren()) {
+            matrixStack.pop();
         }
     }
 

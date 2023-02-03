@@ -2,9 +2,7 @@ package io.github.moonlightmaya.util;
 
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.MathHelper;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
-import org.joml.Quaternionf;
+import org.joml.*;
 
 import java.util.ArrayList;
 
@@ -31,24 +29,46 @@ public class AspectMatrixStack {
         normalMatrices.add(new Matrix3f());
     }
 
-    public AspectMatrixStack translate(double x, double y, double z) {
-        return translate((float) x, (float) y, (float) z);
+    public AspectMatrixStack(MatrixStack vanillaStack) {
+        this();
+        MatrixStack.Entry peeked = vanillaStack.peek();
+        positionMatrices.get(curIndex).set(peeked.getPositionMatrix());
+        normalMatrices.get(curIndex).set(peeked.getNormalMatrix());
     }
 
-    public AspectMatrixStack translate(float x, float y, float z) {
+    public void translate(Vector3dc vec) {
+        translate(vec.x(), vec.y(), vec.z());
+    }
+
+    public void translate(Vector3fc vec) {
+        translate(vec.x(), vec.y(), vec.z());
+    }
+
+    public void translate(double x, double y, double z) {
+        translate((float) x, (float) y, (float) z);
+    }
+
+    public void translate(float x, float y, float z) {
         positionMatrices.get(curIndex).translate(x, y, z);
-        return this;
     }
 
-    public AspectMatrixStack scale(double x, double y, double z) {
-        return scale((float) x, (float) y, (float) z);
+    public void scale(Vector3dc vec) {
+        scale(vec.x(), vec.y(), vec.z());
     }
 
-    public AspectMatrixStack scale(float x, float y, float z) {
+    public void scale(Vector3fc vec) {
+        scale(vec.x(), vec.y(), vec.z());
+    }
+
+    public void scale(double x, double y, double z) {
+        scale((float) x, (float) y, (float) z);
+    }
+
+    public void scale(float x, float y, float z) {
         positionMatrices.get(curIndex).scale(x, y, z);
         if (x == y && y == z) {
             if (x > 0)
-                return this; //If all positive, and uniform scaling, normals are not affected
+                return; //If all positive, and uniform scaling, normals are not affected
             normalMatrices.get(curIndex).scale(-1);
         }
         float f = 1 / x;
@@ -56,20 +76,23 @@ public class AspectMatrixStack {
         float h = 1 / z;
         float i = MathHelper.fastInverseCbrt(f * g * h);
         normalMatrices.get(curIndex).scale(f * i, g * i, h * i);
-        return this;
     }
 
-    public AspectMatrixStack multiply(Quaternionf quaternion) {
+    public void rotate(Quaternionf quaternion) {
         positionMatrices.get(curIndex).rotate(quaternion);
         normalMatrices.get(curIndex).rotate(quaternion);
-        return this;
     }
 
-    public AspectMatrixStack push() {
+    public void multiply(Matrix4f posMatrix, Matrix3f normalMatrix) {
+        positionMatrices.get(curIndex).mul(posMatrix);
+        normalMatrices.get(curIndex).mul(normalMatrix);
+    }
+
+    public void push() {
         curIndex++;
         if (curIndex == maxSize) {
-            positionMatrices.add(new Matrix4f(positionMatrices.get(maxSize)));
-            normalMatrices.add(new Matrix3f(normalMatrices.get(maxSize)));
+            positionMatrices.add(new Matrix4f(positionMatrices.get(curIndex-1)));
+            normalMatrices.add(new Matrix3f(normalMatrices.get(curIndex-1)));
             maxSize++;
         } else if (curIndex > maxSize) {
             throw new IllegalStateException("Current index should never be above max size - this is a bug in AspectMatrixStack!");
@@ -77,12 +100,10 @@ public class AspectMatrixStack {
             positionMatrices.get(curIndex).set(positionMatrices.get(curIndex-1));
             normalMatrices.get(curIndex).set(normalMatrices.get(curIndex-1));
         }
-        return this;
     }
 
-    public AspectMatrixStack pop() {
+    public void pop() {
         curIndex--;
-        return this;
     }
 
     public Matrix4f peekPosition()  {
@@ -97,18 +118,12 @@ public class AspectMatrixStack {
         return curIndex == 0;
     }
 
-    public AspectMatrixStack loadIdentity() {
+    public void loadIdentity() {
         positionMatrices.get(curIndex).identity();
         normalMatrices.get(curIndex).identity();
-        return this;
     }
 
-    public AspectMatrixStack loadVanilla(MatrixStack vanillaStack) {
-        MatrixStack.Entry peeked = vanillaStack.peek();
-        positionMatrices.get(curIndex).set(peeked.getPositionMatrix());
-        normalMatrices.get(curIndex).set(peeked.getNormalMatrix());
-        return this;
-    }
+
 
     public MatrixStack getVanillaCopy() {
         MatrixStack result = new MatrixStack();

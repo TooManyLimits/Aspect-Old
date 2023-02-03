@@ -1,6 +1,5 @@
 package io.github.moonlightmaya.mixin;
 
-import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.AspectMod;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
@@ -19,6 +18,8 @@ public class PlayerEntityRendererTestMixin {
     public void renderInject(AbstractClientPlayerEntity abstractClientPlayerEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i, CallbackInfo ci) {
         //The matrix stack passed into this function is in WORLD space,
         //TRANSLATED relative to the player's feet!
-        AspectMod.TEST_ASPECT.renderCompatibly(vertexConsumerProvider, new AspectMatrixStack().loadVanilla(matrixStack));
+        //**This matrix will transform from that space into camera space.** Keep this fact in mind when writing math and render code.
+        AspectMod.updateTestAspect();
+        AspectMod.TEST_ASPECT.renderCompatibly(vertexConsumerProvider, new AspectMatrixStack(matrixStack));
     }
 }

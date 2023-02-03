@@ -15,7 +15,7 @@ public class Aspect {
     private UUID user;
 
     public void renderCompatibly(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {
-        root.render(vcp, matrixStack, true);
+        root.render(vcp, matrixStack);
     }
 
 }

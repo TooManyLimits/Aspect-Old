@@ -6,7 +6,7 @@ import net.minecraft.util.Identifier;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-@Deprecated //unused lol, just leaving it here in case
+@Deprecated //unused lol, just leaving it here in case we want it later
 public enum AspectRenderType {
     CUTOUT(RenderLayer::getEntityCutout),
     CUTOUT_NO_CULL(RenderLayer::getEntityCutoutNoCull),
