@@ -1,7 +1,6 @@
 package io.github.moonlightmaya;
 
 import net.fabricmc.api.ClientModInitializer;
-import org.joml.Quaternionf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +24,8 @@ public class AspectMod implements ClientModInitializer {
      */
     public static final String MODID = "aspect";
     public static final Logger LOGGER = LoggerFactory.getLogger(MODID);
+
+    //Testing variables
     public static Aspect TEST_ASPECT;
     public static AspectModelPart TEST_ROOT_PART;
     public static AspectModelPart TEST_ORBITER_PART;
@@ -59,7 +60,7 @@ public class AspectMod implements ClientModInitializer {
         };
         root.children = List.of(orbiter);
         Aspect aspect = new Aspect();
-        aspect.root = root;
+        aspect.entityRoot = root;
         TEST_ASPECT = aspect;
         TEST_ROOT_PART = root;
         TEST_ORBITER_PART = orbiter;

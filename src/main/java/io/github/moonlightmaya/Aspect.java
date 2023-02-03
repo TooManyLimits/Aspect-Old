@@ -2,8 +2,8 @@ package io.github.moonlightmaya;
 
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -11,11 +11,18 @@ import java.util.UUID;
  */
 public class Aspect {
 
-    public AspectModelPart root; //temporarily public for testing
+
+    //Temporarily public for testing
+    public AspectModelPart entityRoot;
+    public List<WorldRootModelPart> worldRoots;
+    public AspectModelPart skullRoot;
+    public AspectModelPart hudRoot;
+    public AspectModelPart portraitRoot;
+
     private UUID user;
 
     public void renderCompatibly(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {
-        root.render(vcp, matrixStack);
+        entityRoot.render(vcp, matrixStack);
     }
 
 }
