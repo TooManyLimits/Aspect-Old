@@ -25,9 +25,12 @@ public class Aspect {
         entityRoot.render(vcp, matrixStack);
     }
 
-    public void renderWorld(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, double cameraX, double cameraY, double cameraZ) {
+    /**
+     * Render the world-parented parts
+     */
+    public void renderWorld(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {
         for (WorldRootModelPart worldRoot : worldRoots) {
-            worldRoot.renderWorld(vcp, matrixStack, cameraX, cameraY, cameraZ);
+            worldRoot.render(vcp, matrixStack);
         }
     }
 

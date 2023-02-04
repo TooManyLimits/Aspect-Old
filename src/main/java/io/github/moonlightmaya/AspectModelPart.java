@@ -16,6 +16,8 @@ public class AspectModelPart {
     private String name;
 
     //following are temporarily public for testing!
+    //Unsure whether these following values should use float or double precision.
+    //I'll leave them as float for now because double precision shouldn't be required for these parts.
     public List<AspectModelPart> children; //null if no children
     public final Matrix4f positionMatrix = new Matrix4f();
     public final Matrix3f normalMatrix = new Matrix3f();
@@ -61,8 +63,7 @@ public class AspectModelPart {
                     .rotate(partRot)
                     .scale(partScale)
                     .translate(partPos)
-                    .translate(partPivot.negate());
-            partPivot.negate();
+                    .translate(-partPivot.x, -partPivot.y, -partPivot.z);
             //Compute the normal matrix as well and store it
             positionMatrix.normal(normalMatrix);
             //Matrices are now calculated, don't need to be recalculated anymore
@@ -71,6 +72,7 @@ public class AspectModelPart {
     }
 
     private static final List<RenderLayer> DEFAULT_LAYERS = ImmutableList.of(RenderLayer.getEntityCutoutNoCull(new Identifier("textures/entity/creeper/creeper.png"))); //aww man
+
     /**
      * Renders with the given VCP.
      * Sets up the initial call to the internal render function, which has many parameters
@@ -118,12 +120,12 @@ public class AspectModelPart {
                 //Obtain a vertex buffer from the VCP, then put all our vertices into it.
                 VertexConsumer buffer = vcp.getBuffer(layer);
                 for (int i = 0; i < vertexData.length; i += 8) {
-                    Vector4f pos = new Vector4f(vertexData[i], vertexData[i+1], vertexData[i+2], 1f);
+                    Vector4d pos = new Vector4d(vertexData[i], vertexData[i+1], vertexData[i+2], 1f);
                     matrixStack.peekPosition().transform(pos);
                     Vector3f normal = new Vector3f(vertexData[i+5], vertexData[i+6], vertexData[i+7]);
                     matrixStack.peekNormal().transform(normal);
                     buffer.vertex(
-                            pos.x, pos.y, pos.z, //Position
+                            (float) pos.x, (float) pos.y, (float) pos.z, //Position
                             1f, 1f, 1f, 1f, //Color
                             vertexData[i+3], vertexData[i+4], //Texture
                             OverlayTexture.DEFAULT_UV, //"Overlay"

@@ -4,6 +4,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.MathHelper;
 import org.joml.*;
 
+import java.lang.Math;
 import java.util.ArrayList;
 
 /**
@@ -17,16 +18,16 @@ import java.util.ArrayList;
  */
 public class AspectMatrixStack {
 
-    private final ArrayList<Matrix4f> positionMatrices = new ArrayList<>();
-    private final ArrayList<Matrix3f> normalMatrices = new ArrayList<>();
+    private final ArrayList<Matrix4d> positionMatrices = new ArrayList<>();
+    private final ArrayList<Matrix3d> normalMatrices = new ArrayList<>();
     int curIndex; //index of the top item
     int maxSize; //the number of matrices that have been on the stack at its peak
 
     public AspectMatrixStack() {
         curIndex = 0;
         maxSize = 1;
-        positionMatrices.add(new Matrix4f());
-        normalMatrices.add(new Matrix3f());
+        positionMatrices.add(new Matrix4d());
+        normalMatrices.add(new Matrix3d());
     }
 
     public AspectMatrixStack(MatrixStack vanillaStack) {
@@ -45,10 +46,6 @@ public class AspectMatrixStack {
     }
 
     public void translate(double x, double y, double z) {
-        translate((float) x, (float) y, (float) z);
-    }
-
-    public void translate(float x, float y, float z) {
         positionMatrices.get(curIndex).translate(x, y, z);
     }
 
@@ -61,20 +58,16 @@ public class AspectMatrixStack {
     }
 
     public void scale(double x, double y, double z) {
-        scale((float) x, (float) y, (float) z);
-    }
-
-    public void scale(float x, float y, float z) {
         positionMatrices.get(curIndex).scale(x, y, z);
         if (x == y && y == z) {
             if (x > 0)
                 return; //If all positive, and uniform scaling, normals are not affected
             normalMatrices.get(curIndex).scale(-1);
         }
-        float f = 1 / x;
-        float g = 1 / y;
-        float h = 1 / z;
-        float i = MathHelper.fastInverseCbrt(f * g * h);
+        double f = 1 / x;
+        double g = 1 / y;
+        double h = 1 / z;
+        double i = 1 / Math.cbrt(f * g * h);
         normalMatrices.get(curIndex).scale(f * i, g * i, h * i);
     }
 
@@ -88,11 +81,16 @@ public class AspectMatrixStack {
         normalMatrices.get(curIndex).mul(normalMatrix);
     }
 
+    public void multiply(Matrix4d posMatrix, Matrix3d normalMatrix) {
+        positionMatrices.get(curIndex).mul(posMatrix);
+        normalMatrices.get(curIndex).mul(normalMatrix);
+    }
+
     public void push() {
         curIndex++;
         if (curIndex == maxSize) {
-            positionMatrices.add(new Matrix4f(positionMatrices.get(curIndex-1)));
-            normalMatrices.add(new Matrix3f(normalMatrices.get(curIndex-1)));
+            positionMatrices.add(new Matrix4d(positionMatrices.get(curIndex-1)));
+            normalMatrices.add(new Matrix3d(normalMatrices.get(curIndex-1)));
             maxSize++;
         } else if (curIndex > maxSize) {
             throw new IllegalStateException("Current index should never be above max size - this is a bug in AspectMatrixStack!");
@@ -106,11 +104,11 @@ public class AspectMatrixStack {
         curIndex--;
     }
 
-    public Matrix4f peekPosition()  {
+    public Matrix4d peekPosition()  {
         return positionMatrices.get(curIndex);
     }
 
-    public Matrix3f peekNormal()  {
+    public Matrix3d peekNormal()  {
         return normalMatrices.get(curIndex);
     }
 
@@ -123,12 +121,25 @@ public class AspectMatrixStack {
         normalMatrices.get(curIndex).identity();
     }
 
+    /**
+     * Converts the matrix stack to a vanilla matrix stack. Note that precision
+     * may be lost if doing this with large numbers, since vanilla matrix stacks
+     * use floats, while this uses doubles.
+     */
     public MatrixStack getVanillaCopy() {
         MatrixStack result = new MatrixStack();
         MatrixStack.Entry entry = result.peek();
         entry.getPositionMatrix().set(positionMatrices.get(curIndex));
-        entry.getNormalMatrix().set(normalMatrices.get(curIndex));
+        //JOML doesnt have a method like the above for Matrix3f, so I made our own helper
+        set(entry.getNormalMatrix(), normalMatrices.get(curIndex));
         return result;
+    }
+
+    //I can't do "entry.getNormalMatrix().set(normalMatrices.get(curIndex));" since JOML never added that method,
+    //so I made this instead
+    private final float[] buffer = new float[9];
+    private void set(Matrix3f toEdit, Matrix3dc toCopy) {
+        toEdit.set(toCopy.get(buffer));
     }
 
 }

@@ -16,7 +16,9 @@ public class WorldRendererMixin {
 
     @Inject(method = "renderEntity", at = @At("TAIL"))
     public void renderWorldParts(Entity entity, double cameraX, double cameraY, double cameraZ, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, CallbackInfo ci) {
-        AspectMod.TEST_ASPECT.renderWorld(vertexConsumers, new AspectMatrixStack(matrices), cameraX, cameraY, cameraZ);
+        AspectMatrixStack aspectMatrixStack = new AspectMatrixStack(matrices);
+        aspectMatrixStack.translate(-cameraX, -cameraY, -cameraZ);
+        AspectMod.TEST_ASPECT.renderWorld(vertexConsumers, aspectMatrixStack);
     }
 
 }
