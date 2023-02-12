@@ -8,8 +8,7 @@ import java.lang.Math;
 import java.util.ArrayList;
 
 /**
- * A matrix stack that minimizes allocations.
- * This also applies transformations in an unusual (to me) order.
+ * A matrix stack that doesn't allocate when popping and pushing.
  * When calling translate(), rotate(), or scale(), it will act as though
  * it has performed that transformation *before* the transformation it
  * currently has in its stack. It will *post-multiply*. This is the same

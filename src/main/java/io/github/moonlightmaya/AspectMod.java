@@ -1,6 +1,7 @@
 package io.github.moonlightmaya;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +40,10 @@ public class AspectMod implements ClientModInitializer {
         createTestAspect();
     }
 
+
+    public static Identifier identifier(String path) {
+        return new Identifier(MODID, path);
+    }
 
     /**
      * Private testing method that creates a basic aspect
