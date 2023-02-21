@@ -1,12 +1,14 @@
 package io.github.moonlightmaya;
 
 import com.google.common.collect.ImmutableList;
+import io.github.moonlightmaya.nbt.NbtStructures;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import net.minecraft.client.render.*;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,6 +33,65 @@ public class AspectModelPart {
     public boolean needsMatrixRecalculation = true;
     public float[] vertexData; //null if no vertices in this part
 
+    public AspectModelPart(NbtStructures.NbtModelPart nbt) {
+        if (nbt != null) {
+            name = nbt.name();
+            setPos(nbt.pos());
+            setRot(nbt.rot());
+            setPivot(nbt.pivot());
+            if (nbt.children() != null) {
+                children = new ArrayList<>(nbt.children().size());
+                for (NbtStructures.NbtModelPart child : nbt.children())
+                    children.add(new AspectModelPart(child));
+            }
+        }
+    }
+
+    public void setPos(Vector3f vec) {
+        setPos(vec.x, vec.y, vec.z);
+    }
+
+    public void setPos(float x, float y, float z) {
+        partPos.set(x, y, z);
+        needsMatrixRecalculation = true;
+    }
+
+    public void setPivot(Vector3f vec) {
+        setPivot(vec.x, vec.y, vec.z);
+    }
+
+    public void setPivot(float x, float y, float z) {
+        partPivot.set(x, y, z);
+        needsMatrixRecalculation = true;
+    }
+
+    public void setScale(Vector3f vec) {
+        setScale(vec.x, vec.y, vec.z);
+    }
+
+    public void setScale(float s) {
+        setScale(s, s, s);
+    }
+
+    public void setScale(float x, float y, float z) {
+        partScale.set(x, y, z);
+        needsMatrixRecalculation = true;
+    }
+
+    public void setRot(Vector3f vec) {
+        setRot(vec.x, vec.y, vec.z);
+    }
+
+    public void setRot(float x, float y, float z) {
+        partRot.identity().rotationXYZ(x, y, z);
+        needsMatrixRecalculation = true;
+    }
+
+    public void setRot(Quaternionf rot) {
+        partRot.set(rot);
+        needsMatrixRecalculation = true;
+    }
+
     /**
      * Contains the render layers we wish to draw to
      * These may be vanilla render layers,
@@ -39,7 +100,7 @@ public class AspectModelPart {
      *
      * If this is null, then copy the render layers of the parent.
      */
-    private @Nullable List<RenderLayer> renderLayers;
+    private List<RenderLayer> renderLayers;
 
     /**
      * Returns whether this part has vertex data attached or not.

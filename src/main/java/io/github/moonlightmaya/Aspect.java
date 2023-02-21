@@ -1,8 +1,11 @@
 package io.github.moonlightmaya;
 
+import io.github.moonlightmaya.nbt.AspectConstructionMaterials;
+import io.github.moonlightmaya.nbt.NbtStructures;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import net.minecraft.client.render.VertexConsumerProvider;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -11,15 +14,14 @@ import java.util.UUID;
  */
 public class Aspect {
 
-
-    //Temporarily public for testing
+    //Variables temporarily public for testing
     public AspectModelPart entityRoot;
     public List<WorldRootModelPart> worldRoots;
     public AspectModelPart skullRoot;
     public AspectModelPart hudRoot;
     public AspectModelPart portraitRoot;
 
-    private UUID user;
+    private final UUID user;
 
     public void renderEntity(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {
         entityRoot.render(vcp, matrixStack);
@@ -32,6 +34,15 @@ public class Aspect {
         for (WorldRootModelPart worldRoot : worldRoots) {
             worldRoot.render(vcp, matrixStack);
         }
+    }
+
+
+    public Aspect(UUID user, AspectConstructionMaterials materials) {
+        this.user = user;
+        entityRoot = new AspectModelPart(materials.entityRoot());
+        worldRoots = new ArrayList<>(materials.worldRoots().size());
+        for (NbtStructures.NbtModelPart nbtPart : materials.worldRoots())
+            worldRoots.add(new WorldRootModelPart(nbtPart));
     }
 
 }

@@ -1,12 +1,13 @@
 package io.github.moonlightmaya;
 
+import io.github.moonlightmaya.nbt.NbtStructures;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import net.minecraft.client.render.VertexConsumerProvider;
 import org.joml.Vector3d;
 
 /**
  * This class is a special case because it needs to contain a high-precision world vector.
- * This is used when rendering in order to counteract the floating point issues that Figura
+ * This is used when rendering in order to counteract the floating point issues that Figura's
  * world-parented model parts face at high coordinates.
  */
 public class WorldRootModelPart extends AspectModelPart {
@@ -17,6 +18,10 @@ public class WorldRootModelPart extends AspectModelPart {
      * exists to counteract the problems of floating point precision at high coordinate values.
      */
     public final Vector3d worldPos = new Vector3d();
+
+    public WorldRootModelPart(NbtStructures.NbtModelPart nbt) {
+        super(nbt);
+    }
 
     public void setWorldPos(Vector3d pos) {
         worldPos.set(pos);

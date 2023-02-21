@@ -8,7 +8,7 @@ import java.lang.Math;
 import java.util.ArrayList;
 
 /**
- * A matrix stack that doesn't allocate when popping and pushing.
+ * A matrix stack that doesn't allocate when popping then pushing.
  * When calling translate(), rotate(), or scale(), it will act as though
  * it has performed that transformation *before* the transformation it
  * currently has in its stack. It will *post-multiply*. This is the same
@@ -121,9 +121,10 @@ public class AspectMatrixStack {
     }
 
     /**
-     * Converts the matrix stack to a vanilla matrix stack. Note that precision
-     * may be lost if doing this with large numbers, since vanilla matrix stacks
-     * use floats, while this uses doubles.
+     * Converts the matrix stack to a vanilla matrix stack. Note that PRECISION
+     * MAY BE LOST if doing this with large numbers, since vanilla matrix stacks
+     * use floats, while this class uses doubles! Ensure that large numbers are
+     * not in the top of the stack when calling this!
      */
     public MatrixStack getVanillaCopy() {
         MatrixStack result = new MatrixStack();

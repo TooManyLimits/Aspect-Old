@@ -19,7 +19,7 @@ public class PlayerEntityRendererTestMixin {
         //The matrix stack passed into this function is in WORLD space,
         //TRANSLATED relative to the player's feet!
         //**This matrix will transform from that space into camera space.** Keep this fact in mind when writing math and render code.
-        AspectMod.updateTestAspect();
+        AspectMod.updateTestAspect(); //line here for testing rendering
         AspectMod.TEST_ASPECT.renderEntity(vertexConsumerProvider, new AspectMatrixStack(matrixStack));
     }
 }
