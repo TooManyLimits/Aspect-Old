@@ -1,11 +1,9 @@
 package io.github.moonlightmaya;
 
 import com.google.common.collect.ImmutableList;
-import io.github.moonlightmaya.nbt.NbtStructures;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import net.minecraft.client.render.*;
 import net.minecraft.util.Identifier;
-import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 
 import java.util.ArrayList;
@@ -211,6 +209,11 @@ public class AspectModelPart {
     }
 
 
-
+    public enum ModelPartType {
+        GROUP,
+        CUBE,
+        MESH,
+        NULL
+    }
 
 }

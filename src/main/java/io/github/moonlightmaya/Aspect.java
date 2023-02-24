@@ -1,7 +1,5 @@
 package io.github.moonlightmaya;
 
-import io.github.moonlightmaya.nbt.AspectConstructionMaterials;
-import io.github.moonlightmaya.nbt.NbtStructures;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import net.minecraft.client.render.VertexConsumerProvider;
 
@@ -17,9 +15,6 @@ public class Aspect {
     //Variables temporarily public for testing
     public AspectModelPart entityRoot;
     public List<WorldRootModelPart> worldRoots;
-    public AspectModelPart skullRoot;
-    public AspectModelPart hudRoot;
-    public AspectModelPart portraitRoot;
 
     private final UUID user;
 
