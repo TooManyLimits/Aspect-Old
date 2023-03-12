@@ -1,9 +1,11 @@
 package io.github.moonlightmaya;
 
 import io.github.moonlightmaya.conversion.BaseStructures;
+import io.github.moonlightmaya.texture.AspectTexture;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import net.minecraft.client.render.VertexConsumerProvider;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -14,13 +16,19 @@ import java.util.UUID;
 public class Aspect {
 
     //Variables temporarily public for testing
-    public AspectModelPart entityRoot;
-    public List<WorldRootModelPart> worldRoots;
+    public final AspectModelPart entityRoot;
+    public final List<WorldRootModelPart> worldRoots;
+    public final List<AspectTexture> textures;
 
-    private final UUID user;
+    private final UUID userId; //uuid of the entity using this aspect
+    private final UUID aspectId; //uuid of this aspect itself
 
     public void renderEntity(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {
         entityRoot.render(vcp, matrixStack);
+    }
+
+    public UUID getAspectId() {
+        return aspectId;
     }
 
     /**
@@ -34,11 +42,26 @@ public class Aspect {
 
 
     public Aspect(UUID user, BaseStructures.AspectStructure materials) {
-        this.user = user;
-        entityRoot = new AspectModelPart(materials.entityRoot());
+        this.userId = user;
+        this.aspectId = UUID.randomUUID();
+
+        //Load textures first, needed for making model parts
+        textures = new ArrayList<>();
+        for (BaseStructures.Texture base : materials.textures()) {
+            try {
+                AspectTexture tex = new AspectTexture(this, base);
+                tex.uploadIfNeeded(); //upload texture
+                textures.add(tex);
+            } catch (IOException e) {
+                throw new RuntimeException("Error importing texture " + base.name() + "!");
+            }
+        }
+
+        entityRoot = new AspectModelPart(materials.entityRoot(), this);
         worldRoots = new ArrayList<>(materials.worldRoots().size());
+
         for (BaseStructures.ModelPartStructure worldRoot : materials.worldRoots())
-            worldRoots.add(new WorldRootModelPart(worldRoot));
+            worldRoots.add(new WorldRootModelPart(worldRoot, this));
     }
 
 }

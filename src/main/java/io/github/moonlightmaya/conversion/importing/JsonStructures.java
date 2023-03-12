@@ -12,11 +12,12 @@ import java.util.stream.Collectors;
 
 public class JsonStructures {
 
-    public class BBModel {
+    public static class BBModel {
         public Resolution resolution;
         public Part[] elements;
         public JsonArray outliner;
         public Part[] fixedOutliner;
+        public Texture[] textures;
 
         public Gson getGson() {
             return new GsonBuilder()
@@ -31,16 +32,38 @@ public class JsonStructures {
 
     public record Part(String name, float color, Vector3f origin, Vector3f rotation, boolean visibility, String type,
                        String uuid, Vector3f from, Vector3f to, CubeFaces faces, JsonStructures.Part[] children) {
-            public BaseStructures.ModelPartStructure toBaseStructure() {
+            public BaseStructures.ModelPartStructure toBaseStructure(List<Integer> texMapper, Resolution resolution) {
+                List<BaseStructures.CubeFaces> faces = null;
+                if (this.faces != null) {
+                    faces = this.faces.toBaseStructure(texMapper, resolution);
+                    int n = faces.size();
+                    if (n > 1) {
+                        if (children != null) {
+                            throw new RuntimeException("Attempt to split part with children");
+                        }
+                        List<BaseStructures.ModelPartStructure> splitCubes = new ArrayList<>(n);
+                        for (int i = 0; i < n; i++) {
+                            splitCubes.add(new BaseStructures.ModelPartStructure(
+                                "split" + i, new Vector3f(), new Vector3f(), new Vector3f(), visibility, null,
+                                type != null ? AspectModelPart.ModelPartType.valueOf(type.toUpperCase()) : AspectModelPart.ModelPartType.GROUP,
+                                new BaseStructures.CubeData(from, to, faces.get(i))
+                            ));
+                        }
+                        return new BaseStructures.ModelPartStructure(
+                                name, new Vector3f(), rotation == null ? new Vector3f() : rotation, origin, visibility,
+                                splitCubes, AspectModelPart.ModelPartType.GROUP, null
+                        );
+                    }
+                }
+
                 return new BaseStructures.ModelPartStructure(
                         name, new Vector3f(), rotation == null ? new Vector3f() : rotation, origin, visibility,
                         children == null ? null :
-                                Arrays.stream(children).map(Part::toBaseStructure).collect(Collectors.toList()),
+                                Arrays.stream(children).map(p -> p.toBaseStructure(texMapper, resolution)).collect(Collectors.toList()),
                         type != null ? AspectModelPart.ModelPartType.valueOf(type.toUpperCase()) : AspectModelPart.ModelPartType.GROUP,
-                        faces != null ? new BaseStructures.CubeData(from, to, faces.toBaseStructure()) : null
+                        (faces != null && faces.size() == 1) ? new BaseStructures.CubeData(from, to, faces.get(0)) : null
                 );
             }
-
         }
     public record CubeFaces(
             CubeFace north,
@@ -50,24 +73,61 @@ public class JsonStructures {
             CubeFace up,
             CubeFace down
     ) {
-        public List<BaseStructures.CubeFace> toBaseStructure() {
-            ArrayList<BaseStructures.CubeFace> faces = new ArrayList<>();
-            faces.add(north.toBaseStructure());
-            faces.add(east.toBaseStructure());
-            faces.add(south.toBaseStructure());
-            faces.add(west.toBaseStructure());
-            faces.add(up.toBaseStructure());
-            faces.add(down.toBaseStructure());
-            return faces;
+        //may also split the part into many
+        public List<BaseStructures.CubeFaces> toBaseStructure(List<Integer> texMapper, Resolution resolution) {
+            Map<Integer, CubeFacesIntermediate> intermediates = new LinkedHashMap<>();
+            faceHelper(resolution, intermediates, north, 0);
+            faceHelper(resolution, intermediates, east, 1);
+            faceHelper(resolution, intermediates, south, 2);
+            faceHelper(resolution, intermediates, west, 3);
+            faceHelper(resolution, intermediates, up, 4);
+            faceHelper(resolution, intermediates, down, 5);
+            ArrayList<BaseStructures.CubeFaces> result = new ArrayList<>(intermediates.size());
+            for (Map.Entry<Integer, CubeFacesIntermediate> entry : intermediates.entrySet()) {
+                result.add(new BaseStructures.CubeFaces(
+                        entry.getValue().present, entry.getValue().faces, texMapper.get(entry.getKey())
+                ));
+            }
+            return result;
+        }
+
+        private void faceHelper(Resolution resolution, Map<Integer, CubeFacesIntermediate> intermediates, CubeFace face, int index) {
+            if (face.tex() != -1) {
+                if (!intermediates.containsKey(face.tex()))
+                    intermediates.put(face.tex(), new CubeFacesIntermediate());
+                CubeFacesIntermediate intermediate = intermediates.get(face.tex());
+                intermediate.present |= (1 << index);
+                intermediate.faces.add(face.toBaseStructure(resolution));
+            }
+        }
+
+        private static class CubeFacesIntermediate {
+            private final List<BaseStructures.CubeFace> faces = new ArrayList<>(6);
+            private byte present;
         }
     }
 
     public record CubeFace(
-            float[] uv,
+            float[] uv, //u1 v1 u2 v2
+            Integer rotation,
             Integer texture
     ) {
-        public BaseStructures.CubeFace toBaseStructure() {
-            return new BaseStructures.CubeFace(uv[0], uv[1], uv[2], uv[3], texture != null ? texture : -1);
+        public BaseStructures.CubeFace toBaseStructure(Resolution resolution) {
+            return new BaseStructures.CubeFace(
+                    uv[0]/resolution.width, uv[1]/resolution.height, uv[2]/resolution.width, uv[3]/resolution.height,
+                    rotation != null ? (((rotation/90)%4)+4)%4 : 0);
+        }
+        public int tex() {
+            return texture != null ? texture : -1;
+        }
+    }
+
+    public record Texture(
+             String name, String source
+    ) {
+        public BaseStructures.Texture toBaseStructure() {
+            String src = source.replace("data:image/png;base64,", "");
+            return new BaseStructures.Texture(name, Base64.getDecoder().decode(src));
         }
     }
 

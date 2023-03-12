@@ -2,6 +2,7 @@ package io.github.moonlightmaya;
 
 import com.google.common.collect.ImmutableList;
 import io.github.moonlightmaya.conversion.BaseStructures;
+import io.github.moonlightmaya.texture.AspectTexture;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import net.minecraft.client.render.*;
 import net.minecraft.util.Identifier;
@@ -14,7 +15,7 @@ import java.util.List;
  * An element of a hierarchical tree structure, analogous to the structure in Blockbench as well as the file system.
  */
 public class AspectModelPart {
-    private String name;
+    private final String name;
 
     //following are temporarily public for testing!
     //Unsure whether these following values should use float or double precision.
@@ -30,9 +31,16 @@ public class AspectModelPart {
     //Whether this part needs its matrix recalculated. After calling rot(), pos(), etc. this will be set to true.
     //If it's true at rendering time, then the this.partMatrix field will be updated, and this will be set to false.
     public boolean needsMatrixRecalculation = true;
-    public float[] vertexData; //null if no vertices in this part
 
-    public AspectModelPart(BaseStructures.ModelPartStructure baseStructure) {
+    //Cube data is always position, texture, normal.
+    //Mesh data is position, texture, normal, with (optionally) skinning information.
+    private static final float[] tempCubeData = new float[(3+2+3+1) * 24]; //max 24 verts per cube
+    public float[] vertexData; //null if no vertices in this part. in the case of non-float values like short, we cast the float down.
+
+    public final Aspect owningAspect; //The aspect that this model part is inside
+
+    public AspectModelPart(BaseStructures.ModelPartStructure baseStructure, Aspect owningAspect) {
+        this.owningAspect = owningAspect;
         name = baseStructure.name();
         setPos(baseStructure.pos());
         setRot(baseStructure.rot());
@@ -40,8 +48,10 @@ public class AspectModelPart {
         if (baseStructure.children() != null) {
             children = new ArrayList<>(baseStructure.children().size());
             for (BaseStructures.ModelPartStructure child : baseStructure.children())
-                children.add(new AspectModelPart(child));
+                children.add(new AspectModelPart(child, owningAspect)); //all children are owned by the same aspect
         }
+        if (baseStructure.cubeData() != null)
+            genCubeRenderData(baseStructure.cubeData());
     }
 
     public void setPos(Vector3f vec) {
@@ -87,6 +97,95 @@ public class AspectModelPart {
     public void setRot(Quaternionf rot) {
         partRot.set(rot);
         needsMatrixRecalculation = true;
+    }
+
+    /**
+     * Generates render data from cube data
+     * Including the vertices and the render layers
+     */
+    private void genCubeRenderData(BaseStructures.CubeData cube) {
+        Vector3f f = cube.from();
+        Vector3f t = cube.to();
+        BaseStructures.CubeFaces faces = cube.faces();
+        int idx = 0;
+        int w = 0;
+        for (int i = 0; i < 6; i++) {
+            if ((faces.presentFaces() & (1 << i)) == 0) continue; //face is deleted
+            BaseStructures.CubeFace face = faces.faces().get(w++);
+            float u1 = face.u1();
+            float v1 = face.v1();
+            float u2 = face.u2();
+            float v2 = face.v1();
+            float u3 = face.u2();
+            float v3 = face.v2();
+            float u4 = face.u1();
+            float v4 = face.v2();
+            int r = face.rot();
+            while (r > 0) { //rotate texture
+                float temp = u1;
+                u1 = u2; u2 = u3; u3 = u4; u4 = temp;
+                temp = v1;
+                v1 = v2; v2 = v3; v3 = v4; v4 = temp;
+                r--;
+            }
+            switch (i) {
+                case 0 -> { //north
+                    idx = emitCubeVert(idx, t.x, t.y, f.z, u1, v1, 0f, 0f, -1f);
+                    idx = emitCubeVert(idx, f.x, t.y, f.z, u2, v2,0f, 0f, -1f);
+                    idx = emitCubeVert(idx, f.x, f.y, f.z, u3, v3, 0f, 0f, -1f);
+                    idx = emitCubeVert(idx, t.x, f.y, f.z, u4, v4, 0f, 0f, -1f);
+                }
+                case 1 -> { //east
+                    idx = emitCubeVert(idx, t.x, t.y, t.z, u1, v1, 1f, 0f, 0f);
+                    idx = emitCubeVert(idx, t.x, t.y, f.z, u2, v2,1f, 0f, 0f);
+                    idx = emitCubeVert(idx, t.x, f.y, f.z, u3, v3, 1f, 0f, 0f);
+                    idx = emitCubeVert(idx, t.x, f.y, t.z, u4, v4, 1f, 0f, 0f);
+                }
+                case 2 -> { //south
+                    idx = emitCubeVert(idx, f.x, t.y, t.z, u1, v1, 0f, 0f, 1f);
+                    idx = emitCubeVert(idx, t.x, t.y, t.z, u2, v2, 0f, 0f, 1f);
+                    idx = emitCubeVert(idx, t.x, f.y, t.z, u3, v3, 0f, 0f, 1f);
+                    idx = emitCubeVert(idx, f.x, f.y, t.z, u4, v4, 0f, 0f, 1f);
+                }
+                case 3 -> { //west
+                    idx = emitCubeVert(idx, f.x, t.y, f.z, u1, v1, -1f, 0f, 0f);
+                    idx = emitCubeVert(idx, f.x, t.y, t.z, u2, v2, -1f, 0f, 0f);
+                    idx = emitCubeVert(idx, f.x, f.y, t.z, u3, v3, -1f, 0f, 0f);
+                    idx = emitCubeVert(idx, f.x, f.y, f.z, u4, v4, -1f, 0f, 0f);
+                }
+                case 4 -> { //up
+                    idx = emitCubeVert(idx, f.x, t.y, f.z, u1, v1, 0f, 1f, 0f);
+                    idx = emitCubeVert(idx, t.x, t.y, f.z, u2, v2, 0f, 1f, 0f);
+                    idx = emitCubeVert(idx, t.x, t.y, t.z, u3, v3, 0f, 1f, 0f);
+                    idx = emitCubeVert(idx, f.x, t.y, t.z, u4, v4, 0f, 1f, 0f);
+                }
+                case 5 -> { //down
+                    idx = emitCubeVert(idx, f.x, f.y, t.z, u1, v1, 0f, -1f, 0f);
+                    idx = emitCubeVert(idx, t.x, f.y, t.z, u2, v2, 0f, -1f, 0f);
+                    idx = emitCubeVert(idx, t.x, f.y, f.z, u3, v3, 0f, -1f, 0f);
+                    idx = emitCubeVert(idx, f.x, f.y, f.z, u4, v4, 0f, -1f, 0f);
+                }
+            }
+        }
+        vertexData = new float[idx];
+        System.arraycopy(tempCubeData, 0, vertexData, 0, idx);
+
+        //Set up render layer:
+        renderLayers = new ArrayList<>();
+        AspectTexture tex = owningAspect.textures.get(faces.tex()); //grab the texture
+        renderLayers.add(RenderLayer.getEntityCutoutNoCull(tex.getIdentifier())); //make or get render layer for that texture
+    }
+    //Returns the new ptr
+    private int emitCubeVert(int ptr, float x, float y, float z, float u, float v, float nx, float ny, float nz) {
+        tempCubeData[ptr] = x/16;
+        tempCubeData[ptr+1] = y/16;
+        tempCubeData[ptr+2] = z/16;
+        tempCubeData[ptr+3] = u;
+        tempCubeData[ptr+4] = v;
+        tempCubeData[ptr+5] = nx;
+        tempCubeData[ptr+6] = ny;
+        tempCubeData[ptr+7] = nz;
+        return ptr+8;
     }
 
     /**

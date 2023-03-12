@@ -43,14 +43,9 @@ public class AspectMod implements ClientModInitializer {
 
 
 
-        try {
-            createTestAspect();
-        } catch (Throwable t) {
-            throw new RuntimeException(t);
-        }
+
 
     }
-
 
     public static Identifier id(String path) {
         return new Identifier(MODID, path);
@@ -60,7 +55,7 @@ public class AspectMod implements ClientModInitializer {
      * Private testing methods that create a basic aspect,
      * save it in the static test variables, and update it each frame.
      */
-    private static void createTestAspect() throws Throwable {
+    public static void createTestAspect() throws Throwable {
         Path searchPath = FabricLoader.getInstance().getGameDir().resolve(MODID).resolve("test_aspect");
         AspectImporter importer = new AspectImporter(searchPath);
         BaseStructures.AspectStructure structure = importer.getImportResult();

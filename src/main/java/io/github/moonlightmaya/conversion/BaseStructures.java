@@ -25,19 +25,25 @@ public class BaseStructures {
 
     public record ModelPartStructure(
             String name,
-            Vector3f pos, Vector3f rot, Vector3f pivot, Boolean visible,
+            Vector3f pos, Vector3f rot, Vector3f pivot, boolean visible,
             List<ModelPartStructure> children,
             AspectModelPart.ModelPartType type,
             @Nullable CubeData cubeData) {}
 
     public record CubeData(
             Vector3f from, Vector3f to,
-            List<CubeFace> faces
+            CubeFaces faces
+    ) {}
+
+    public record CubeFaces(
+        byte presentFaces,
+        List<CubeFace> faces, //n, e, s, w, u, d
+        int tex
     ) {}
 
     public record CubeFace(
             float u1, float v1, float u2, float v2,
-            int tex
+            int rot //0 1 2 3
     ) {}
 
     public record Texture(

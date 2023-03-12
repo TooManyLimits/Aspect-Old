@@ -1,5 +1,6 @@
 package io.github.moonlightmaya.conversion.importing;
 
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -14,10 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -39,20 +37,26 @@ public class AspectImporter {
             .setPrettyPrinting().create();
 
     private LinkedHashMap<String, BaseStructures.Texture> textures;
+    private int textureOffset;
 
     private BaseStructures.AspectStructure result;
 
     public AspectImporter(Path aspectFolder) {
         this.rootPath = aspectFolder;
         try {
-            //Read the global textures to here
+            //Read the globally shared textures to here
             textures = getTextures();
             //Read scripts
             //scripts = getScripts();
             //Get entity model parts:
             BaseStructures.ModelPartStructure entityRoot = getEntityModels();
 
-            result = new BaseStructures.AspectStructure(entityRoot, List.of(), null, null);
+
+            result = new BaseStructures.AspectStructure(
+                    entityRoot, List.of(),
+                    Lists.newArrayList(textures.values()),
+                    null
+            );
         } catch (Exception e) {
             error = e;
         }
@@ -72,6 +76,7 @@ public class AspectImporter {
             byte[] bytes = Files.readAllBytes(f.toPath());
             texes.put(name, new BaseStructures.Texture(name, bytes));
         }
+        textureOffset += texes.size();
         return texes;
     }
 
@@ -84,7 +89,8 @@ public class AspectImporter {
             String str = Files.readString(f.toPath());
             JsonStructures.BBModel bbmodel = gson.fromJson(str, JsonStructures.BBModel.class);
             bbmodel.fixedOutliner = bbmodel.getGson().fromJson(bbmodel.outliner, JsonStructures.Part[].class);
-            bbmodels.add(handleBBModel(bbmodel, f.getName()));
+            String fileName = f.getName().substring(0, f.getName().length() - ".bbmodel".length()); //remove .bbmodel
+            bbmodels.add(handleBBModel(bbmodel, fileName));
         }
         return new BaseStructures.ModelPartStructure(
                 "entity", new Vector3f(), new Vector3f(), new Vector3f(), true,
@@ -98,12 +104,53 @@ public class AspectImporter {
      * new textures or other data.
      */
     private BaseStructures.ModelPartStructure handleBBModel(JsonStructures.BBModel model, String fileName) {
+
+        /*
+        Mapping explanation:
+        Cube faces inside blockbench have numbers like 0, 1, 2, ... etc.
+        These textures refer to the blockbench textures *inside the model*. So 0 means the first texture in the
+        bbmodel's list. However, we want to convert these to a global index, since we want all textures from all
+        bbmodels inside one big list. A "0" in one bbmodel might refer to the 11th texture in the overall aspect,
+        so we make a "mapping" from 0 -> 10 for that bbmodel.
+         */
+
+        //Process json's textures and create a mapping.
+        int numNewTextures = 0;
+        List<Integer> jsonToGlobalTextureMapper = new ArrayList<>();
+        for (JsonStructures.Texture jsonTexture : model.textures) {
+            if (textures.containsKey(jsonTexture.name())) {
+                //If a texture of the same name is loaded globally, create a mapping
+                jsonToGlobalTextureMapper.add(indexOfKey(textures, jsonTexture.name()));
+            } else {
+                //Otherwise, create mapping using the texture offset, and store texture in main list
+                textures.put(fileName + "/ASPECT_GENERATED" + numNewTextures, jsonTexture.toBaseStructure());
+                jsonToGlobalTextureMapper.add(numNewTextures + textureOffset);
+                numNewTextures++;
+            }
+        }
+        textureOffset += numNewTextures;
+
+        //Gather children
+        List<BaseStructures.ModelPartStructure> children = Arrays.stream(model.fixedOutliner).map(
+                p -> p.toBaseStructure(jsonToGlobalTextureMapper, model.resolution)
+        ).collect(Collectors.toList());
+
+        //Create final model part
         return new BaseStructures.ModelPartStructure(
-                fileName, new Vector3f(), new Vector3f(), new Vector3f(), null,
-                Arrays.stream(model.fixedOutliner).map(JsonStructures.Part::toBaseStructure).collect(Collectors.toList()),
-                AspectModelPart.ModelPartType.GROUP,
+                fileName, new Vector3f(), new Vector3f(), new Vector3f(),
+                true, children, AspectModelPart.ModelPartType.GROUP,
                 null
         );
+    }
+
+    private static <K, V>  int indexOfKey(LinkedHashMap<K, V> map, K key) {
+        int i = 0;
+        for (K elem : map.keySet()) {
+            if (elem.equals(key))
+                return i;
+            i++;
+        }
+        return -1;
     }
 
 }

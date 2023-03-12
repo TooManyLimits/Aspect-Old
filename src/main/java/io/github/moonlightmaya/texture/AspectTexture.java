@@ -1,13 +1,16 @@
 package io.github.moonlightmaya.texture;
 
 import com.mojang.blaze3d.platform.TextureUtil;
+import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.AspectMod;
+import io.github.moonlightmaya.conversion.BaseStructures;
 import io.github.moonlightmaya.util.RenderUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.ResourceTexture;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.resource.ResourceManager;
+import net.minecraft.util.Identifier;
 import org.lwjgl.BufferUtils;
 
 import java.io.IOException;
@@ -17,7 +20,7 @@ import java.util.UUID;
 public class AspectTexture extends ResourceTexture {
 
     private String name;
-    private NativeImage image;
+    private final NativeImage image;
 
     /**
      * Whether this texture has been modified and needs to be reuploaded.
@@ -39,13 +42,17 @@ public class AspectTexture extends ResourceTexture {
      */
     private boolean isClosed = false;
 
-    public AspectTexture(UUID aspectUUID, String name, byte[] data) throws IOException {
-        super(AspectMod.id("aspect_textures/" + aspectUUID + "/" + name));
-        ByteBuffer buffer = BufferUtils.createByteBuffer(data.length);
-        buffer.put(data);
+    public AspectTexture(Aspect aspect, BaseStructures.Texture baseTex) throws IOException {
+        super(AspectMod.id("aspect_textures/" + aspect.getAspectId() + "/" + baseTex.name()));
+        ByteBuffer buffer = BufferUtils.createByteBuffer(baseTex.data().length);
+        buffer.put(baseTex.data());
         buffer.rewind();
-        this.image = NativeImage.read(ByteBuffer.wrap(data));
-        this.name = name;
+        this.image = NativeImage.read(buffer);
+        this.name = baseTex.name();
+    }
+
+    public Identifier getIdentifier() {
+        return location;
     }
 
     //Disable load. We don't get our textures from the resource manager, we get them from
