@@ -1,5 +1,6 @@
 package io.github.moonlightmaya;
 
+import io.github.moonlightmaya.conversion.BaseStructures;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import net.minecraft.client.render.VertexConsumerProvider;
 import org.joml.Vector3d;
@@ -18,7 +19,7 @@ public class WorldRootModelPart extends AspectModelPart {
      */
     public final Vector3d worldPos = new Vector3d();
 
-    public WorldRootModelPart(NbtStructures.NbtModelPart nbt) {
+    public WorldRootModelPart(BaseStructures.ModelPartStructure nbt) {
         super(nbt);
     }
 

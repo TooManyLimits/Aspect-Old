@@ -1,5 +1,6 @@
 package io.github.moonlightmaya;
 
+import io.github.moonlightmaya.conversion.BaseStructures;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import net.minecraft.client.render.VertexConsumerProvider;
 
@@ -32,12 +33,12 @@ public class Aspect {
     }
 
 
-    public Aspect(UUID user, AspectConstructionMaterials materials) {
+    public Aspect(UUID user, BaseStructures.AspectStructure materials) {
         this.user = user;
         entityRoot = new AspectModelPart(materials.entityRoot());
         worldRoots = new ArrayList<>(materials.worldRoots().size());
-        for (NbtStructures.NbtModelPart nbtPart : materials.worldRoots())
-            worldRoots.add(new WorldRootModelPart(nbtPart));
+        for (BaseStructures.ModelPartStructure worldRoot : materials.worldRoots())
+            worldRoots.add(new WorldRootModelPart(worldRoot));
     }
 
 }

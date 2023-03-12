@@ -1,6 +1,7 @@
 package io.github.moonlightmaya;
 
 import com.google.common.collect.ImmutableList;
+import io.github.moonlightmaya.conversion.BaseStructures;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import net.minecraft.client.render.*;
 import net.minecraft.util.Identifier;
@@ -31,17 +32,15 @@ public class AspectModelPart {
     public boolean needsMatrixRecalculation = true;
     public float[] vertexData; //null if no vertices in this part
 
-    public AspectModelPart(NbtStructures.NbtModelPart nbt) {
-        if (nbt != null) {
-            name = nbt.name();
-            setPos(nbt.pos());
-            setRot(nbt.rot());
-            setPivot(nbt.pivot());
-            if (nbt.children() != null) {
-                children = new ArrayList<>(nbt.children().size());
-                for (NbtStructures.NbtModelPart child : nbt.children())
-                    children.add(new AspectModelPart(child));
-            }
+    public AspectModelPart(BaseStructures.ModelPartStructure baseStructure) {
+        name = baseStructure.name();
+        setPos(baseStructure.pos());
+        setRot(baseStructure.rot());
+        setPivot(baseStructure.pivot());
+        if (baseStructure.children() != null) {
+            children = new ArrayList<>(baseStructure.children().size());
+            for (BaseStructures.ModelPartStructure child : baseStructure.children())
+                children.add(new AspectModelPart(child));
         }
     }
 

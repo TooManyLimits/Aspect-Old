@@ -25,7 +25,7 @@ public class BaseStructures {
 
     public record ModelPartStructure(
             String name,
-            Vector3f pos, Vector3f rot, Vector3f pivot, boolean visible,
+            Vector3f pos, Vector3f rot, Vector3f pivot, Boolean visible,
             List<ModelPartStructure> children,
             AspectModelPart.ModelPartType type,
             @Nullable CubeData cubeData) {}
