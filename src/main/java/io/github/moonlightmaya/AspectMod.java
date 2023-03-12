@@ -1,11 +1,19 @@
 package io.github.moonlightmaya;
 
+import io.github.moonlightmaya.conversion.BaseStructures;
+import io.github.moonlightmaya.conversion.importing.AspectImporter;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.item.ItemGroup;
+import net.minecraft.item.ItemGroups;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * The client mod initializer for Aspect, the core of the mod.
@@ -33,7 +41,14 @@ public class AspectMod implements ClientModInitializer {
     public void onInitializeClient() {
         LOGGER.info("Hello Aspect!");
 
-        createTestAspect();
+
+
+        try {
+            createTestAspect();
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
+
     }
 
 
@@ -45,8 +60,11 @@ public class AspectMod implements ClientModInitializer {
      * Private testing methods that create a basic aspect,
      * save it in the static test variables, and update it each frame.
      */
-    private static void createTestAspect() {
-
+    private static void createTestAspect() throws Throwable {
+        Path searchPath = FabricLoader.getInstance().getGameDir().resolve(MODID).resolve("test_aspect");
+        AspectImporter importer = new AspectImporter(searchPath);
+        BaseStructures.AspectStructure structure = importer.getImportResult();
+        TEST_ASPECT = new Aspect(UUID.randomUUID(), structure);
     }
 
     public static void updateTestAspect() {
