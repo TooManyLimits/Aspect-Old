@@ -10,6 +10,7 @@ import net.minecraft.item.ItemGroups;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import petpet.external.PetPetInstance;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -41,7 +42,12 @@ public class AspectMod implements ClientModInitializer {
     public void onInitializeClient() {
         LOGGER.info("Hello Aspect!");
 
-
+        String source = "print(\"Hello Aspect from PetPet!\")";
+        try {
+            new PetPetInstance().runScript("script", source);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
 
 
