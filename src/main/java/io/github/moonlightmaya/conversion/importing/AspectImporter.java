@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 /**
@@ -39,31 +41,36 @@ public class AspectImporter {
     private LinkedHashMap<String, BaseStructures.Texture> textures;
     private int textureOffset;
 
-    private BaseStructures.AspectStructure result;
-
     public AspectImporter(Path aspectFolder) {
         this.rootPath = aspectFolder;
-        try {
-            //Read the globally shared textures to here
-            textures = getTextures();
-            //Read scripts
-            //scripts = getScripts();
-            //Get entity model parts:
-            BaseStructures.ModelPartStructure entityRoot = getEntityModels();
-
-
-            result = new BaseStructures.AspectStructure(
-                    entityRoot, List.of(),
-                    Lists.newArrayList(textures.values()),
-                    null
-            );
-        } catch (Exception e) {
-            error = e;
-        }
     }
 
-    public BaseStructures.AspectStructure getImportResult() throws Throwable {
-        if (error != null) throw error;
+    public CompletableFuture<BaseStructures.AspectStructure> doImport() {
+        CompletableFuture<BaseStructures.AspectStructure> result = new CompletableFuture<>();
+        CompletableFuture.runAsync(() -> {
+            try {
+                if (!Files.exists(rootPath))
+                    throw new AspectImporterException("Folder " + rootPath + " does not exist");
+
+                if (!Files.exists(rootPath.resolve("aspect.json")))
+                    throw new AspectImporterException("Folder " + rootPath + " has no aspect.json");
+
+                //Read the globally shared textures to here
+                textures = getTextures();
+                //Read scripts
+                //scripts = getScripts();
+                //Get entity model parts:
+                BaseStructures.ModelPartStructure entityRoot = getEntityModels();
+
+                result.complete(new BaseStructures.AspectStructure(
+                        entityRoot, List.of(),
+                        Lists.newArrayList(textures.values()),
+                        null
+                ));
+            } catch (Exception e) {
+                result.completeExceptionally(e);
+            }
+        });
         return result;
     }
 
@@ -80,7 +87,7 @@ public class AspectImporter {
         return texes;
     }
 
-    private BaseStructures.ModelPartStructure getEntityModels() throws IOException {
+    private BaseStructures.ModelPartStructure getEntityModels() throws IOException, AspectImporterException {
         Path p = rootPath.resolve("entity");
         List<File> files = IOUtils.getByExtension(p, "bbmodel");
         List<BaseStructures.ModelPartStructure> bbmodels = new ArrayList<>(files.size());
@@ -103,7 +110,7 @@ public class AspectImporter {
      * May also modify the state of this class in the process, adding
      * new textures or other data.
      */
-    private BaseStructures.ModelPartStructure handleBBModel(JsonStructures.BBModel model, String fileName) {
+    private BaseStructures.ModelPartStructure handleBBModel(JsonStructures.BBModel model, String fileName) throws AspectImporterException {
 
         /*
         Mapping explanation:
@@ -131,9 +138,9 @@ public class AspectImporter {
         textureOffset += numNewTextures;
 
         //Gather children
-        List<BaseStructures.ModelPartStructure> children = Arrays.stream(model.fixedOutliner).map(
-                p -> p.toBaseStructure(jsonToGlobalTextureMapper, model.resolution)
-        ).collect(Collectors.toList());
+        List<BaseStructures.ModelPartStructure> children = new ArrayList<>(model.fixedOutliner.length);
+        for (JsonStructures.Part p : model.fixedOutliner)
+            children.add(p.toBaseStructure(jsonToGlobalTextureMapper, model.resolution));
 
         //Create final model part
         return new BaseStructures.ModelPartStructure(
@@ -151,6 +158,12 @@ public class AspectImporter {
             i++;
         }
         return -1;
+    }
+
+    public static class AspectImporterException extends Exception {
+        public AspectImporterException(String message) {
+            super(message);
+        }
     }
 
 }

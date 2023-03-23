@@ -14,7 +14,7 @@ public class IOUtils {
      */
     public static ArrayList<File> getByExtension(Path root, String extension) {
         File file = root.toFile();
-        ArrayList<File> list = new ArrayList<File>();
+        ArrayList<File> list = new ArrayList<>();
         if (file.exists() && file.isDirectory()) {
             File[] arr = root.toFile().listFiles((f,s) -> s.endsWith("."+extension));
             if (arr != null)

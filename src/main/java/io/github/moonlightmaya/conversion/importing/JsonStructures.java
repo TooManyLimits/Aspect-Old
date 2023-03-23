@@ -32,14 +32,14 @@ public class JsonStructures {
 
     public record Part(String name, float color, Vector3f origin, Vector3f rotation, boolean visibility, String type,
                        String uuid, Vector3f from, Vector3f to, CubeFaces faces, JsonStructures.Part[] children) {
-            public BaseStructures.ModelPartStructure toBaseStructure(List<Integer> texMapper, Resolution resolution) {
+            public BaseStructures.ModelPartStructure toBaseStructure(List<Integer> texMapper, Resolution resolution) throws AspectImporter.AspectImporterException {
                 List<BaseStructures.CubeFaces> faces = null;
                 if (this.faces != null) {
                     faces = this.faces.toBaseStructure(texMapper, resolution);
                     int n = faces.size();
                     if (n > 1) {
                         if (children != null) {
-                            throw new RuntimeException("Attempt to split part with children");
+                            throw new AspectImporter.AspectImporterException("Attempted to split a part with children? Invalid BBModel, notify devs");
                         }
                         List<BaseStructures.ModelPartStructure> splitCubes = new ArrayList<>(n);
                         for (int i = 0; i < n; i++) {
@@ -56,10 +56,14 @@ public class JsonStructures {
                     }
                 }
 
+                ArrayList<BaseStructures.ModelPartStructure> baseChildren = children == null ? null : new ArrayList<>(children.length);
+                if (baseChildren != null)
+                    for (Part p : children)
+                        baseChildren.add(p.toBaseStructure(texMapper, resolution));
+
                 return new BaseStructures.ModelPartStructure(
                         name, new Vector3f(), rotation == null ? new Vector3f() : rotation, origin, visibility,
-                        children == null ? null :
-                                Arrays.stream(children).map(p -> p.toBaseStructure(texMapper, resolution)).collect(Collectors.toList()),
+                        baseChildren,
                         type != null ? AspectModelPart.ModelPartType.valueOf(type.toUpperCase()) : AspectModelPart.ModelPartType.GROUP,
                         (faces != null && faces.size() == 1) ? new BaseStructures.CubeData(from, to, faces.get(0)) : null
                 );
@@ -92,7 +96,7 @@ public class JsonStructures {
         }
 
         private void faceHelper(Resolution resolution, Map<Integer, CubeFacesIntermediate> intermediates, CubeFace face, int index) {
-            if (face.tex() != -1) {
+            if (face != null && face.tex() != -1) {
                 if (!intermediates.containsKey(face.tex()))
                     intermediates.put(face.tex(), new CubeFacesIntermediate());
                 CubeFacesIntermediate intermediate = intermediates.get(face.tex());

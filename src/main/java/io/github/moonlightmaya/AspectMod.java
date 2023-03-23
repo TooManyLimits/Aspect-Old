@@ -12,9 +12,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import petpet.external.PetPetInstance;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * The client mod initializer for Aspect, the core of the mod.
@@ -49,22 +53,38 @@ public class AspectMod implements ClientModInitializer {
             throw new RuntimeException(e);
         }
 
-
-
     }
 
     public static Identifier id(String path) {
         return new Identifier(MODID, path);
     }
 
+    public static Path getModFolder() {
+        Path path = FabricLoader.getInstance().getGameDir().resolve(MODID);
+        if (Files.notExists(path)) {
+            try {
+                Files.createDirectory(path);
+                LOGGER.info("Successfully created mod folder at " + path);
+            } catch (IOException e) {
+                LOGGER.error("Failed to create mod folder at " + path + ". Reason: ", e);
+                return null;
+            }
+        } else {
+            LOGGER.info("Located mod folder at " + path);
+        }
+        return path;
+    }
+
+
     /**
      * Private testing methods that create a basic aspect,
      * save it in the static test variables, and update it each frame.
      */
     public static void createTestAspect() throws Throwable {
-        Path searchPath = FabricLoader.getInstance().getGameDir().resolve(MODID).resolve("test_aspect");
-        AspectImporter importer = new AspectImporter(searchPath);
-        BaseStructures.AspectStructure structure = importer.getImportResult();
+        //ignore null pointer for testing method
+        Path searchPath = getModFolder().resolve("test_aspect");
+        CompletableFuture<BaseStructures.AspectStructure> importTask = new AspectImporter(searchPath).doImport();
+        BaseStructures.AspectStructure structure = importTask.get();
         TEST_ASPECT = new Aspect(UUID.randomUUID(), structure);
     }
 
