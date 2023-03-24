@@ -1,7 +1,7 @@
 package io.github.moonlightmaya;
 
-import io.github.moonlightmaya.conversion.BaseStructures;
-import io.github.moonlightmaya.conversion.importing.AspectImporter;
+import io.github.moonlightmaya.data.BaseStructures;
+import io.github.moonlightmaya.data.importing.AspectImporter;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Identifier;

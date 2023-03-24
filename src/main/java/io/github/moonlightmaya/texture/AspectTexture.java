@@ -3,7 +3,7 @@ package io.github.moonlightmaya.texture;
 import com.mojang.blaze3d.platform.TextureUtil;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.AspectMod;
-import io.github.moonlightmaya.conversion.BaseStructures;
+import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.util.RenderUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.NativeImage;
@@ -15,7 +15,6 @@ import org.lwjgl.BufferUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.UUID;
 
 public class AspectTexture extends ResourceTexture {
 

@@ -1,6 +1,6 @@
 package io.github.moonlightmaya;
 
-import io.github.moonlightmaya.conversion.BaseStructures;
+import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import net.minecraft.client.render.VertexConsumerProvider;
 import org.joml.Vector3d;

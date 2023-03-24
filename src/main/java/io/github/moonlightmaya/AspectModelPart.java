@@ -1,7 +1,7 @@
 package io.github.moonlightmaya;
 
 import com.google.common.collect.ImmutableList;
-import io.github.moonlightmaya.conversion.BaseStructures;
+import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.texture.AspectTexture;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import net.minecraft.client.render.*;
