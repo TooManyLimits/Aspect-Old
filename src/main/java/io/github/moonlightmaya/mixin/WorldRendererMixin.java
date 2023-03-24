@@ -1,6 +1,8 @@
 package io.github.moonlightmaya.mixin;
 
+import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.AspectMod;
+import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.WorldRenderer;
@@ -16,9 +18,15 @@ public class WorldRendererMixin {
 
     @Inject(method = "renderEntity", at = @At("TAIL"))
     public void renderWorldParts(Entity entity, double cameraX, double cameraY, double cameraZ, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, CallbackInfo ci) {
-        AspectMatrixStack aspectMatrixStack = new AspectMatrixStack(matrices);
-        aspectMatrixStack.translate(-cameraX, -cameraY, -cameraZ);
-        AspectMod.TEST_ASPECT.renderWorld(vertexConsumers, aspectMatrixStack);
+
+        Aspect aspect = AspectManager.getAspect(entity.getUuid());
+        if (aspect != null) {
+            AspectMatrixStack aspectMatrixStack = new AspectMatrixStack(matrices);
+            aspectMatrixStack.translate(-cameraX, -cameraY, -cameraZ);
+
+            aspect.renderEntity(vertexConsumers, aspectMatrixStack);
+        }
+        
     }
 
 }

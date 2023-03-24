@@ -1,11 +1,17 @@
 package io.github.moonlightmaya;
 
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.data.importing.AspectImporter;
 import io.github.moonlightmaya.manage.AspectManager;
+import io.github.moonlightmaya.util.DisplayUtils;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +22,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+
+import static com.mojang.brigadier.builder.LiteralArgumentBuilder.*;
 
 /**
  * The client mod initializer for Aspect, the core of the mod.
@@ -46,7 +54,22 @@ public class AspectMod implements ClientModInitializer {
         //Setup global ticking objects
         ClientTickEvents.START_CLIENT_TICK.register(AspectManager::tick);
 
+        //Register testing command
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            LiteralArgumentBuilder<FabricClientCommandSource> aspect = literal("aspect");
+            LiteralArgumentBuilder<FabricClientCommandSource> test = literal("test");
+            test.executes(context -> {
+                context.getSource().sendFeedback(Text.literal("loading"));
+                UUID clientUUID = MinecraftClient.getInstance().player.getUuid();
+                AspectManager.loadAspectFromFolder(clientUUID, getOrCreateModFolder().resolve("test_aspect"),
+                        t -> DisplayUtils.displayError("Failed to load test avatar", t, true));
+                return 1;
+            });
+            aspect.then(test);
+            dispatcher.register(aspect);
+        });
 
+        Path aspectPath = getOrCreateModFolder().resolve("test_aspect");
 
         String script = "print(\"Hello Aspect from PetPet!\")";
         try {

@@ -1,6 +1,8 @@
 package io.github.moonlightmaya.mixin;
 
+import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.AspectMod;
+import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -20,15 +22,9 @@ public class PlayerEntityRendererTestMixin {
         //TRANSLATED relative to the player's feet!
         //**This matrix will transform from that space into camera space.** Keep this fact in mind when writing math and render code.
 
-        if (AspectMod.TEST_ASPECT == null)
-            try {
-                AspectMod.createTestAspect();
-            } catch (Throwable t) {
-                throw new RuntimeException(t);
-            }
-
-
-        AspectMod.updateTestAspect(); //line here for testing rendering
-        AspectMod.TEST_ASPECT.renderEntity(vertexConsumerProvider, new AspectMatrixStack(matrixStack));
+        Aspect aspect = AspectManager.getAspect(abstractClientPlayerEntity.getUuid());
+        if (aspect != null) {
+            aspect.renderEntity(vertexConsumerProvider, new AspectMatrixStack(matrixStack));
+        }
     }
 }
