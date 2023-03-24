@@ -56,8 +56,8 @@ public class JsonStructures {
                     }
                 }
 
-                ArrayList<BaseStructures.ModelPartStructure> baseChildren = children == null ? null : new ArrayList<>(children.length);
-                if (baseChildren != null)
+                ArrayList<BaseStructures.ModelPartStructure> baseChildren = new ArrayList<>(children == null ? 0 : children.length);
+                if (children != null)
                     for (Part p : children)
                         baseChildren.add(p.toBaseStructure(texMapper, resolution));
 
@@ -118,7 +118,7 @@ public class JsonStructures {
     ) {
         public BaseStructures.CubeFace toBaseStructure(Resolution resolution) {
             return new BaseStructures.CubeFace(
-                    uv[0]/resolution.width, uv[1]/resolution.height, uv[2]/resolution.width, uv[3]/resolution.height,
+                    new Vector4f(uv[0]/resolution.width, uv[1]/resolution.height, uv[2]/resolution.width, uv[3]/resolution.height),
                     rotation != null ? (((rotation/90)%4)+4)%4 : 0);
         }
         public int tex() {

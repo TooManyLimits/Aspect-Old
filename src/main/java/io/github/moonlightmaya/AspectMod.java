@@ -3,20 +3,15 @@ package io.github.moonlightmaya;
 import io.github.moonlightmaya.conversion.BaseStructures;
 import io.github.moonlightmaya.conversion.importing.AspectImporter;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemGroups;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import petpet.external.PetPetInstance;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -46,9 +41,9 @@ public class AspectMod implements ClientModInitializer {
     public void onInitializeClient() {
         LOGGER.info("Hello Aspect!");
 
-        String source = "print(\"Hello Aspect from PetPet!\")";
+        String script = "print(\"Hello Aspect from PetPet!\")";
         try {
-            new PetPetInstance().runScript("script", source);
+            new PetPetInstance().runScript("script", script);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -59,10 +54,16 @@ public class AspectMod implements ClientModInitializer {
         return new Identifier(MODID, path);
     }
 
-    public static Path getModFolder() {
+    /**
+     * Navigate to the mod folder and create it if it doesn't exist.
+     * In the future, functionality will be added for a customizable
+     * mod folder location.
+     */
+    public static Path getOrCreateModFolder() {
         Path path = FabricLoader.getInstance().getGameDir().resolve(MODID);
         if (Files.notExists(path)) {
             try {
+                LOGGER.info("Did not find mod folder at " + path + ". Creating...");
                 Files.createDirectory(path);
                 LOGGER.info("Successfully created mod folder at " + path);
             } catch (IOException e) {
@@ -82,10 +83,20 @@ public class AspectMod implements ClientModInitializer {
      */
     public static void createTestAspect() throws Throwable {
         //ignore null pointer for testing method
-        Path searchPath = getModFolder().resolve("test_aspect");
+        Path searchPath = getOrCreateModFolder().resolve("test_aspect");
         CompletableFuture<BaseStructures.AspectStructure> importTask = new AspectImporter(searchPath).doImport();
+
+        //Test serialization and deserialization
         BaseStructures.AspectStructure structure = importTask.get();
-        TEST_ASPECT = new Aspect(UUID.randomUUID(), structure);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        DataOutputStream dos = new DataOutputStream(out);
+        structure.write(dos);
+        System.out.println(out.size() + " bytes serialized");
+        ByteArrayInputStream bais = new ByteArrayInputStream(out.toByteArray());
+        DataInputStream dis = new DataInputStream(bais);
+        BaseStructures.AspectStructure reconstructed = BaseStructures.AspectStructure.read(dis);
+
+        TEST_ASPECT = new Aspect(UUID.randomUUID(), reconstructed);
     }
 
     public static void updateTestAspect() {

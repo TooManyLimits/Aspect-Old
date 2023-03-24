@@ -20,6 +20,7 @@ public class AspectModelPart {
     //following are temporarily public for testing!
     //Unsure whether these following values should use float or double precision.
     //I'll leave them as float for now because double precision shouldn't be required for these parts.
+    //Also, this data will need to be uploaded to the GPU.
     public List<AspectModelPart> children; //null if no children
     public final Matrix4f positionMatrix = new Matrix4f();
     public final Matrix3f normalMatrix = new Matrix3f();
@@ -112,14 +113,14 @@ public class AspectModelPart {
         for (int i = 0; i < 6; i++) {
             if ((faces.presentFaces() & (1 << i)) == 0) continue; //face is deleted
             BaseStructures.CubeFace face = faces.faces().get(w++);
-            float u1 = face.u1();
-            float v1 = face.v1();
-            float u2 = face.u2();
-            float v2 = face.v1();
-            float u3 = face.u2();
-            float v3 = face.v2();
-            float u4 = face.u1();
-            float v4 = face.v2();
+            float u1 = face.uvs().x();
+            float v1 = face.uvs().y();
+            float u2 = face.uvs().z();
+            float v2 = face.uvs().y();
+            float u3 = face.uvs().z();
+            float v3 = face.uvs().w();
+            float u4 = face.uvs().x();
+            float v4 = face.uvs().w();
             int r = face.rot();
             while (r > 0) { //rotate texture
                 float temp = u1;
@@ -239,7 +240,7 @@ public class AspectModelPart {
      * In optimized mode, this is a custom VCP that will save its buffers to VertexBuffer objects to use
      * our custom core shaders, allowing us to avoid re-uploading vertices each frame.
      *
-     * Depending on whether we're in optimized or compatible mode, the provided matrixStack will also be
+     * Depending on whether we're in optimized or compatible mode, the provided matrixStack may also be
      * different.
      */
     public void render(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {

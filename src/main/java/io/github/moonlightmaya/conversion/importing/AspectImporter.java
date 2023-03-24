@@ -65,7 +65,7 @@ public class AspectImporter {
                 result.complete(new BaseStructures.AspectStructure(
                         entityRoot, List.of(),
                         Lists.newArrayList(textures.values()),
-                        null
+                        new ArrayList<>()
                 ));
             } catch (Exception e) {
                 result.completeExceptionally(e);
