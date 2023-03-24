@@ -64,4 +64,11 @@ public class Aspect {
             worldRoots.add(new WorldRootModelPart(worldRoot, this));
     }
 
+    /**
+     * Destroy this object and free any native resources.
+     */
+    public void destroy() {
+
+    }
+
 }

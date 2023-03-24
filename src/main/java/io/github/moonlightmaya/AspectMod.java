@@ -2,7 +2,9 @@ package io.github.moonlightmaya;
 
 import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.data.importing.AspectImporter;
+import io.github.moonlightmaya.manage.AspectManager;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
@@ -40,6 +42,11 @@ public class AspectMod implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         LOGGER.info("Hello Aspect!");
+
+        //Setup global ticking objects
+        ClientTickEvents.START_CLIENT_TICK.register(AspectManager::tick);
+
+
 
         String script = "print(\"Hello Aspect from PetPet!\")";
         try {

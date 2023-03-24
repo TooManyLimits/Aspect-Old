@@ -116,4 +116,10 @@ public class IOUtils {
         return new Vector4f(x, y, z, w);
     }
 
+    public static class AspectIOException extends RuntimeException {
+        public AspectIOException(IOException wrapped) {
+            super(wrapped);
+        }
+    }
+
 }

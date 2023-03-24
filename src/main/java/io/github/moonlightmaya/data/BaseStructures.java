@@ -41,26 +41,30 @@ public class BaseStructures {
             for (Script script : scripts) script.write(out);
         }
 
-        public static AspectStructure read(DataInputStream in) throws IOException {
-            ModelPartStructure entityRoot = ModelPartStructure.read(in);
+        public static AspectStructure read(DataInputStream in) throws IOUtils.AspectIOException {
+            try {
+                ModelPartStructure entityRoot = ModelPartStructure.read(in);
 
-            int numWorldRoots = in.readInt();
-            List<ModelPartStructure> worldRoots = numWorldRoots > 0 ? new ArrayList<>(numWorldRoots) : List.of();
-            for (int i = 0; i < numWorldRoots; i++)
-                worldRoots.add(ModelPartStructure.read(in));
+                int numWorldRoots = in.readInt();
+                List<ModelPartStructure> worldRoots = numWorldRoots > 0 ? new ArrayList<>(numWorldRoots) : List.of();
+                for (int i = 0; i < numWorldRoots; i++)
+                    worldRoots.add(ModelPartStructure.read(in));
 
-            int numTextures = in.readInt();
-            List<Texture> textures = numTextures > 0 ? new ArrayList<>(numTextures) : List.of();
-            for (int i = 0; i < numTextures; i++)
-                textures.add(Texture.read(in));
+                int numTextures = in.readInt();
+                List<Texture> textures = numTextures > 0 ? new ArrayList<>(numTextures) : List.of();
+                for (int i = 0; i < numTextures; i++)
+                    textures.add(Texture.read(in));
 
-            int numScripts = in.readInt();
-            List<Script> scripts = numScripts > 0 ? new ArrayList<>(numScripts) : List.of();
-            for (int i = 0; i < numScripts; i++)
-                scripts.add(Script.read(in));
-            return new AspectStructure(
-                    entityRoot, worldRoots, textures, scripts
-            );
+                int numScripts = in.readInt();
+                List<Script> scripts = numScripts > 0 ? new ArrayList<>(numScripts) : List.of();
+                for (int i = 0; i < numScripts; i++)
+                    scripts.add(Script.read(in));
+                return new AspectStructure(
+                        entityRoot, worldRoots, textures, scripts
+                );
+            } catch (IOException e) {
+                throw new IOUtils.AspectIOException(e);
+            }
         }
     }
 
