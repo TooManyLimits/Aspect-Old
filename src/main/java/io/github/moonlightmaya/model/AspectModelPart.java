@@ -1,6 +1,7 @@
-package io.github.moonlightmaya;
+package io.github.moonlightmaya.model;
 
 import com.google.common.collect.ImmutableList;
+import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.texture.AspectTexture;
 import io.github.moonlightmaya.util.AspectMatrixStack;
@@ -17,10 +18,10 @@ import java.util.List;
 public class AspectModelPart {
     private final String name;
 
-    //following are temporarily public for testing!
     //Unsure whether these following values should use float or double precision.
     //I'll leave them as float for now because double precision shouldn't be required for these parts.
     //Also, this data will need to be uploaded to the GPU.
+    //The only case where double precision is necessary is for world model parts.
     public List<AspectModelPart> children; //null if no children
     public final Matrix4f positionMatrix = new Matrix4f();
     public final Matrix3f normalMatrix = new Matrix3f();

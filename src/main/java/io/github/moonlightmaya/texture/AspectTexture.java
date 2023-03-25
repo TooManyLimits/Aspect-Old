@@ -55,7 +55,7 @@ public class AspectTexture extends ResourceTexture {
     }
 
     //Disable load. We don't get our textures from the resource manager, we get them from
-    //our own Aspect managers.
+    //our own Aspect loading.
     @Override
     public void load(ResourceManager manager) throws IOException {}
 

@@ -3,7 +3,7 @@ package io.github.moonlightmaya.data.importing;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.github.moonlightmaya.AspectModelPart;
+import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.util.IOUtils;
 import org.joml.Vector3f;
@@ -121,9 +121,9 @@ public class AspectImporter {
         int numNewTextures = 0;
         List<Integer> jsonToGlobalTextureMapper = new ArrayList<>();
         for (JsonStructures.Texture jsonTexture : model.textures) {
-            if (textures.containsKey(jsonTexture.name())) {
+            if (textures.containsKey(jsonTexture.strippedName())) {
                 //If a texture of the same name is loaded globally, create a mapping
-                jsonToGlobalTextureMapper.add(indexOfKey(textures, jsonTexture.name()));
+                jsonToGlobalTextureMapper.add(indexOfKey(textures, jsonTexture.strippedName()));
             } else {
                 //Otherwise, create mapping using the texture offset, and store texture in main list
                 textures.put(fileName + "/ASPECT_GENERATED" + numNewTextures, jsonTexture.toBaseStructure());

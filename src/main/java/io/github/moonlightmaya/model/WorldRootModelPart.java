@@ -1,5 +1,6 @@
-package io.github.moonlightmaya;
+package io.github.moonlightmaya.model;
 
+import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import net.minecraft.client.render.VertexConsumerProvider;

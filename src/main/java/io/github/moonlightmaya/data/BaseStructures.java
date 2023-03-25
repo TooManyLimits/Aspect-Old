@@ -1,6 +1,6 @@
 package io.github.moonlightmaya.data;
 
-import io.github.moonlightmaya.AspectModelPart;
+import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.util.IOUtils;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;

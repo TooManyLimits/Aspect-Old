@@ -1,7 +1,7 @@
 package io.github.moonlightmaya.data.importing;
 
 import com.google.gson.*;
-import io.github.moonlightmaya.AspectModelPart;
+import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.data.BaseStructures;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -130,7 +130,11 @@ public class JsonStructures {
     ) {
         public BaseStructures.Texture toBaseStructure() {
             String src = source.replace("data:image/png;base64,", "");
-            return new BaseStructures.Texture(name, Base64.getDecoder().decode(src));
+            return new BaseStructures.Texture(strippedName(), Base64.getDecoder().decode(src));
+        }
+
+        public String strippedName() {
+            return name.endsWith(".png") ? name.substring(0, name.length()-4) : name;
         }
     }
 

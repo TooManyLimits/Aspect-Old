@@ -24,9 +24,9 @@ public class WorldRendererMixin {
             AspectMatrixStack aspectMatrixStack = new AspectMatrixStack(matrices);
             aspectMatrixStack.translate(-cameraX, -cameraY, -cameraZ);
 
-            aspect.renderEntity(vertexConsumers, aspectMatrixStack);
+            aspect.renderWorld(vertexConsumers, aspectMatrixStack);
         }
-        
+
     }
 
 }

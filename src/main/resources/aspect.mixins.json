@@ -6,8 +6,12 @@
   "mixins": [
   ],
   "client": [
+    "EntityRenderDispatcherMixin",
+    "ModelPartMixin",
     "PlayerEntityRendererTestMixin",
-    "WorldRendererMixin"
+    "WorldRendererMixin",
+    "entity_renderers.EntityRendererMixin",
+    "entity_renderers.LivingEntityRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

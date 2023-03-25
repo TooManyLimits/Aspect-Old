@@ -85,6 +85,13 @@ public class AspectMatrixStack {
         normalMatrices.get(curIndex).mul(normalMatrix);
     }
 
+    private static final Matrix3f normal = new Matrix3f();
+    public void multiply(Matrix4f posMatrix) {
+        positionMatrices.get(curIndex).mul(posMatrix);
+        posMatrix.normal(normal);
+        normalMatrices.get(curIndex).mul(normal);
+    }
+
     public void push() {
         curIndex++;
         if (curIndex == maxSize) {

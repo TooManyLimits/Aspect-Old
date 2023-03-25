@@ -69,8 +69,6 @@ public class AspectMod implements ClientModInitializer {
             dispatcher.register(aspect);
         });
 
-        Path aspectPath = getOrCreateModFolder().resolve("test_aspect");
-
         String script = "print(\"Hello Aspect from PetPet!\")";
         try {
             new PetPetInstance().runScript("script", script);

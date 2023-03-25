@@ -1,8 +1,11 @@
 package io.github.moonlightmaya;
 
 import io.github.moonlightmaya.data.BaseStructures;
+import io.github.moonlightmaya.model.AspectModelPart;
+import io.github.moonlightmaya.model.WorldRootModelPart;
 import io.github.moonlightmaya.texture.AspectTexture;
 import io.github.moonlightmaya.util.AspectMatrixStack;
+import io.github.moonlightmaya.vanilla.VanillaRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
 
 import java.io.IOException;
@@ -20,10 +23,13 @@ public class Aspect {
     public final List<WorldRootModelPart> worldRoots;
     public final List<AspectTexture> textures;
 
+    public final VanillaRenderer vanillaRenderer = new VanillaRenderer();
+
     private final UUID userId; //uuid of the entity using this aspect
     private final UUID aspectId; //uuid of this aspect itself
 
     public void renderEntity(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {
+        matrixStack.multiply(vanillaRenderer.modelTransform);
         entityRoot.render(vcp, matrixStack);
     }
 
