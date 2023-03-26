@@ -7,11 +7,14 @@
   ],
   "client": [
     "EntityRenderDispatcherMixin",
+    "ModelPartAccessor",
     "ModelPartMixin",
-    "PlayerEntityRendererTestMixin",
     "WorldRendererMixin",
     "entity_renderers.EntityRendererMixin",
-    "entity_renderers.LivingEntityRendererMixin"
+    "entity_renderers.LivingEntityRendererMixin",
+    "entity_renderers.specific.PlayerEntityRendererMixin",
+    "models.AnimalModelAccessor",
+    "models.PlayerEntityModelAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

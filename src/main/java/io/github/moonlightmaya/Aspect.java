@@ -29,7 +29,7 @@ public class Aspect {
     private final UUID aspectId; //uuid of this aspect itself
 
     public void renderEntity(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {
-        matrixStack.multiply(vanillaRenderer.modelTransform);
+        matrixStack.multiply(vanillaRenderer.aspectModelTransform);
         entityRoot.render(vcp, matrixStack);
     }
 

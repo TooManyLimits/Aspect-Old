@@ -1,14 +1,7 @@
 package io.github.moonlightmaya.vanilla;
 
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.OtherClientPlayerEntity;
 import net.minecraft.client.render.entity.*;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.mob.*;
-import net.minecraft.entity.passive.*;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.entity.mob.ElderGuardianEntity;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.IdentityHashMap;

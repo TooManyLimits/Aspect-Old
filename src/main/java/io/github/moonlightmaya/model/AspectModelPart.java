@@ -17,6 +17,7 @@ import java.util.List;
  */
 public class AspectModelPart {
     private final String name;
+    private final ModelPartType type;
 
     //Unsure whether these following values should use float or double precision.
     //I'll leave them as float for now because double precision shouldn't be required for these parts.
@@ -44,9 +45,10 @@ public class AspectModelPart {
     public AspectModelPart(BaseStructures.ModelPartStructure baseStructure, Aspect owningAspect) {
         this.owningAspect = owningAspect;
         name = baseStructure.name();
+        type = baseStructure.type();
         setPos(baseStructure.pos());
         setRot(baseStructure.rot());
-        setPivot(baseStructure.pivot());
+        setPivot(baseStructure.pivot().mul(1f/16));
         if (baseStructure.children() != null) {
             children = new ArrayList<>(baseStructure.children().size());
             for (BaseStructures.ModelPartStructure child : baseStructure.children())
@@ -215,19 +217,56 @@ public class AspectModelPart {
     }
 
     private void recalculateMatrixIfNecessary() {
-        if (needsMatrixRecalculation) {
+        if (type == ModelPartType.GROUP && name.equalsIgnoreCase("RIGHTARM")) {
+            positionMatrix.identity();
+            positionMatrix.translate(partPivot.x, partPivot.y + 0.001f, partPivot.z);
+//            positionMatrix.rotateAffineXYZ(0.5f, 0.5f, 0.5f);
+            Matrix4f savedTf = this.owningAspect.vanillaRenderer.vanillaParts.get("RIGHT_ARM").savedTransform;
+            positionMatrix.mul(savedTf);
+            positionMatrix.translate(-partPivot.x, -partPivot.y - 0.001f, partPivot.z);
+            positionMatrix.normal(normalMatrix);
+            return;
+        } else {
+            if (true) return;
+        }
+        if (needsMatrixRecalculation || true) {
+            positionMatrix.identity();
+
+            //Temporary thing before setting up parent types actually, just quick testing
+            if (type == ModelPartType.GROUP) {
+                if (this.name.equalsIgnoreCase("HEAD")) {
+                    positionMatrix.mul(this.owningAspect.vanillaRenderer.vanillaParts.get("HEAD").savedTransform);
+                } else if (this.name.equalsIgnoreCase("LEFTARM")) {
+                    positionMatrix.mul(this.owningAspect.vanillaRenderer.vanillaParts.get("LEFT_ARM").savedTransform);
+                } else if (this.name.equalsIgnoreCase("RIGHTARM")) {
+                    positionMatrix.mul(this.owningAspect.vanillaRenderer.vanillaParts.get("RIGHT_ARM").savedTransform);
+                } else if (this.name.equalsIgnoreCase("LEFTLEG")) {
+                    positionMatrix.mul(this.owningAspect.vanillaRenderer.vanillaParts.get("LEFT_LEG").savedTransform);
+                } else if (this.name.equalsIgnoreCase("RIGHTLEG")) {
+                    positionMatrix.mul(this.owningAspect.vanillaRenderer.vanillaParts.get("RIGHT_LEG").savedTransform);
+                } else if (this.name.equalsIgnoreCase("BODY")) {
+                    positionMatrix.mul(this.owningAspect.vanillaRenderer.vanillaParts.get("BODY").savedTransform);
+                }
+            }
+
             //We want to scale, then rotate, then translate, so _of course_ we have to call these functions in the order
             //translate, rotate, scale! Because that's the convention, apparently... okay i guess
-            positionMatrix.translation(partPivot)
+
+            positionMatrix
+                    .translate(partPivot)
                     .rotate(partRot)
                     .scale(partScale)
                     .translate(partPos)
                     .translate(-partPivot.x, -partPivot.y, -partPivot.z);
+
+
+
             //Compute the normal matrix as well and store it
             positionMatrix.normal(normalMatrix);
             //Matrices are now calculated, don't need to be recalculated anymore
             needsMatrixRecalculation = false;
         }
+
     }
 
     private static final List<RenderLayer> DEFAULT_LAYERS = ImmutableList.of(RenderLayer.getEntityCutoutNoCull(new Identifier("textures/entity/creeper/creeper.png"))); //aww man
