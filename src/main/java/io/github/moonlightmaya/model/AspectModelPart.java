@@ -48,7 +48,7 @@ public class AspectModelPart {
         type = baseStructure.type();
         setPos(baseStructure.pos());
         setRot(baseStructure.rot());
-        setPivot(baseStructure.pivot().mul(1f/16));
+        setPivot(baseStructure.pivot());
         if (baseStructure.children() != null) {
             children = new ArrayList<>(baseStructure.children().size());
             for (BaseStructures.ModelPartStructure child : baseStructure.children())
@@ -217,20 +217,10 @@ public class AspectModelPart {
     }
 
     private void recalculateMatrixIfNecessary() {
-        if (type == ModelPartType.GROUP && name.equalsIgnoreCase("RIGHTARM")) {
-            positionMatrix.identity();
-            positionMatrix.translate(partPivot.x, partPivot.y + 0.001f, partPivot.z);
-//            positionMatrix.rotateAffineXYZ(0.5f, 0.5f, 0.5f);
-            Matrix4f savedTf = this.owningAspect.vanillaRenderer.vanillaParts.get("RIGHT_ARM").savedTransform;
-            positionMatrix.mul(savedTf);
-            positionMatrix.translate(-partPivot.x, -partPivot.y - 0.001f, partPivot.z);
-            positionMatrix.normal(normalMatrix);
-            return;
-        } else {
-            if (true) return;
-        }
         if (needsMatrixRecalculation || true) {
-            positionMatrix.identity();
+            partPivot.mul(1f/16);
+            positionMatrix.identity()
+                    .translate(partPivot);
 
             //Temporary thing before setting up parent types actually, just quick testing
             if (type == ModelPartType.GROUP) {
@@ -253,14 +243,12 @@ public class AspectModelPart {
             //translate, rotate, scale! Because that's the convention, apparently... okay i guess
 
             positionMatrix
-                    .translate(partPivot)
                     .rotate(partRot)
                     .scale(partScale)
                     .translate(partPos)
                     .translate(-partPivot.x, -partPivot.y, -partPivot.z);
 
-
-
+            partPivot.mul(16f);
             //Compute the normal matrix as well and store it
             positionMatrix.normal(normalMatrix);
             //Matrices are now calculated, don't need to be recalculated anymore

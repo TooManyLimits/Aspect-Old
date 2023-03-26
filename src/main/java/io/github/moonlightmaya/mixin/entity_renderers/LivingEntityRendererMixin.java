@@ -64,8 +64,11 @@ public abstract class LivingEntityRendererMixin {
             //Save the original matrix before applying our wacky flip and translate to it
             topRenderer.savedVanillaModelTransform.set(matrixStack.peek().getPositionMatrix());
 
-            //And apply it to the matrix, undoing the previous things applied by Minecraft:
-            aspect$preTransformSnapshot.translate(0, 1.501f, 0);
+            //And apply it to the matrix, undoing the previous things applied by Minecraft
+            //for some arcane reason, that i will not bother to understand. I seriously do not understand
+            //this at all. But. This number *needs to be 1.5, not 1.501.* The number in minecraft's code
+            //is 1.501. However. It needs to *not* be 1.501 here.
+            aspect$preTransformSnapshot.translate(0, 1.500f, 0);
             aspect$preTransformSnapshot.scale(-1f, -1f, 1f);
 
             //Save this matrix in the currently set vanilla renderer, as its "aspectModelTransform".
