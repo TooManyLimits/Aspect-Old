@@ -1,6 +1,8 @@
 package io.github.moonlightmaya.util;
 
 import com.google.common.collect.ImmutableMap;
+import io.github.moonlightmaya.AspectMod;
+import net.fabricmc.loader.api.FabricLoader;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -8,10 +10,34 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
 public class IOUtils {
+
+    /**
+     * Navigate to the mod folder and create it if it doesn't exist.
+     * In the future, functionality will be added for a customizable
+     * mod folder location.
+     */
+    public static Path getOrCreateModFolder() {
+        Path path = FabricLoader.getInstance().getGameDir().resolve(AspectMod.MODID);
+        if (Files.notExists(path)) {
+            try {
+                AspectMod.LOGGER.info("Did not find mod folder at " + path + ". Creating...");
+                Files.createDirectory(path);
+                AspectMod.LOGGER.info("Successfully created mod folder at " + path);
+            } catch (IOException e) {
+                AspectMod.LOGGER.error("Failed to create mod folder at " + path + ". Reason: ", e);
+                return null;
+            }
+        } else {
+            AspectMod.LOGGER.info("Located mod folder at " + path);
+        }
+        return path;
+    }
+
 
     /**
      * Doesn't recurse because im too dumb

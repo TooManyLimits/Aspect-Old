@@ -5,12 +5,15 @@ import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.texture.AspectTexture;
 import io.github.moonlightmaya.util.AspectMatrixStack;
+import io.github.moonlightmaya.vanilla.VanillaPart;
 import net.minecraft.client.render.*;
 import net.minecraft.util.Identifier;
 import org.joml.*;
 
+import java.lang.Math;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * An element of a hierarchical tree structure, analogous to the structure in Blockbench as well as the file system.
@@ -30,6 +33,8 @@ public class AspectModelPart {
     public final Vector3f partPos = new Vector3f();
     public final Quaternionf partRot = new Quaternionf();
     public final Vector3f partScale = new Vector3f(1, 1, 1);
+
+    public VanillaPart vanillaParent; //The vanilla part that this will take transforms from
 
     //Whether this part needs its matrix recalculated. After calling rot(), pos(), etc. this will be set to true.
     //If it's true at rendering time, then the this.partMatrix field will be updated, and this will be set to false.
@@ -56,6 +61,17 @@ public class AspectModelPart {
         }
         if (baseStructure.cubeData() != null)
             genCubeRenderData(baseStructure.cubeData());
+
+        if (type == ModelPartType.GROUP) {
+            for (Map.Entry<Object, VanillaPart> entry : owningAspect.vanillaRenderer.vanillaParts.entrySet()) {
+                if (entry.getKey() instanceof String str) {
+                    if (name.substring(0, Math.min(str.length(), name.length())).equalsIgnoreCase(str)) {
+                        vanillaParent = entry.getValue();
+                    }
+                }
+            }
+        }
+
     }
 
     public void setPos(Vector3f vec) {
@@ -218,29 +234,11 @@ public class AspectModelPart {
 
     private void recalculateMatrixIfNecessary() {
         if (needsMatrixRecalculation || true) {
-            partPivot.mul(1f/16);
-            positionMatrix.identity()
-                    .translate(partPivot);
+            //Scale down the pivot value, it's in "block" units
+            positionMatrix.translation(partPivot.mul(1f/16));
 
-            //Temporary thing before setting up parent types actually, just quick testing
-            if (type == ModelPartType.GROUP) {
-                if (this.name.equalsIgnoreCase("HEAD")) {
-                    positionMatrix.mul(this.owningAspect.vanillaRenderer.vanillaParts.get("HEAD").savedTransform);
-                } else if (this.name.equalsIgnoreCase("LEFTARM")) {
-                    positionMatrix.mul(this.owningAspect.vanillaRenderer.vanillaParts.get("LEFT_ARM").savedTransform);
-                } else if (this.name.equalsIgnoreCase("RIGHTARM")) {
-                    positionMatrix.mul(this.owningAspect.vanillaRenderer.vanillaParts.get("RIGHT_ARM").savedTransform);
-                } else if (this.name.equalsIgnoreCase("LEFTLEG")) {
-                    positionMatrix.mul(this.owningAspect.vanillaRenderer.vanillaParts.get("LEFT_LEG").savedTransform);
-                } else if (this.name.equalsIgnoreCase("RIGHTLEG")) {
-                    positionMatrix.mul(this.owningAspect.vanillaRenderer.vanillaParts.get("RIGHT_LEG").savedTransform);
-                } else if (this.name.equalsIgnoreCase("BODY")) {
-                    positionMatrix.mul(this.owningAspect.vanillaRenderer.vanillaParts.get("BODY").savedTransform);
-                }
-            }
-
-            //We want to scale, then rotate, then translate, so _of course_ we have to call these functions in the order
-            //translate, rotate, scale! Because that's the convention, apparently... okay i guess
+            if (vanillaParent != null)
+                positionMatrix.mul(vanillaParent.savedTransform);
 
             positionMatrix
                     .rotate(partRot)
@@ -248,10 +246,11 @@ public class AspectModelPart {
                     .translate(partPos)
                     .translate(-partPivot.x, -partPivot.y, -partPivot.z);
 
+            //Scale the pivot value back up again
             partPivot.mul(16f);
             //Compute the normal matrix as well and store it
             positionMatrix.normal(normalMatrix);
-            //Matrices are now calculated, don't need to be recalculated anymore
+            //Matrices are now calculated, don't need to be recalculated anymore for this part
             needsMatrixRecalculation = false;
         }
 

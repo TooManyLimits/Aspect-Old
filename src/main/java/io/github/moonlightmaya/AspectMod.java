@@ -5,6 +5,7 @@ import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.data.importing.AspectImporter;
 import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.util.DisplayUtils;
+import io.github.moonlightmaya.util.IOUtils;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -45,9 +46,6 @@ public class AspectMod implements ClientModInitializer {
     public static final String MODID = "aspect";
     public static final Logger LOGGER = LoggerFactory.getLogger(MODID);
 
-    //Testing variables
-    public static Aspect TEST_ASPECT;
-
     @Override
     public void onInitializeClient() {
         LOGGER.info("Hello Aspect!");
@@ -61,8 +59,8 @@ public class AspectMod implements ClientModInitializer {
 
             LiteralArgumentBuilder<FabricClientCommandSource> test = literal("test");
             test.executes(context -> {
-                UUID clientUUID = MinecraftClient.getInstance().player.getUuid();
-                AspectManager.loadAspectFromFolder(clientUUID, getOrCreateModFolder().resolve("test_aspect"),
+                Entity player = MinecraftClient.getInstance().player;
+                AspectManager.loadAspectFromFolder(player, IOUtils.getOrCreateModFolder().resolve("test_aspect"),
                         t -> DisplayUtils.displayError("Failed to load test avatar", t, true));
                 return 1;
             });
@@ -73,7 +71,7 @@ public class AspectMod implements ClientModInitializer {
                 Entity target = context.getSource().getClient().targetedEntity;
                 if (target != null) {
                     context.getSource().sendFeedback(Text.literal("Applying to " + target.getName()));
-                    AspectManager.loadAspectFromFolder(target.getUuid(), getOrCreateModFolder().resolve("test_aspect"),
+                    AspectManager.loadAspectFromFolder(target, IOUtils.getOrCreateModFolder().resolve("test_aspect"),
                             t -> DisplayUtils.displayError("Failed to load test avatar", t, true));
                     return 1;
                 } else {
@@ -82,6 +80,17 @@ public class AspectMod implements ClientModInitializer {
                 }
             });
             aspect.then(put);
+
+            LiteralArgumentBuilder<FabricClientCommandSource> putall = literal("putall");
+            putall.executes(context -> {
+                for (Entity target : MinecraftClient.getInstance().world.getEntities()) {
+                    context.getSource().sendFeedback(Text.literal("Applying to " + target.getDisplayName()));
+                    AspectManager.loadAspectFromFolder(target, IOUtils.getOrCreateModFolder().resolve("test_aspect"),
+                            t -> DisplayUtils.displayError("Failed to load test avatar", t, true));
+                }
+                return 1;
+            });
+            aspect.then(putall);
 
             dispatcher.register(aspect);
         });
@@ -99,52 +108,6 @@ public class AspectMod implements ClientModInitializer {
         return new Identifier(MODID, path);
     }
 
-    /**
-     * Navigate to the mod folder and create it if it doesn't exist.
-     * In the future, functionality will be added for a customizable
-     * mod folder location.
-     */
-    public static Path getOrCreateModFolder() {
-        Path path = FabricLoader.getInstance().getGameDir().resolve(MODID);
-        if (Files.notExists(path)) {
-            try {
-                LOGGER.info("Did not find mod folder at " + path + ". Creating...");
-                Files.createDirectory(path);
-                LOGGER.info("Successfully created mod folder at " + path);
-            } catch (IOException e) {
-                LOGGER.error("Failed to create mod folder at " + path + ". Reason: ", e);
-                return null;
-            }
-        } else {
-            LOGGER.info("Located mod folder at " + path);
-        }
-        return path;
-    }
 
 
-    /**
-     * Private testing methods that create a basic aspect,
-     * save it in the static test variables, and update it each frame.
-     */
-    public static void createTestAspect() throws Throwable {
-        //ignore null pointer for testing method
-        Path searchPath = getOrCreateModFolder().resolve("test_aspect");
-        CompletableFuture<BaseStructures.AspectStructure> importTask = new AspectImporter(searchPath).doImport();
-
-        //Test serialization and deserialization
-        BaseStructures.AspectStructure structure = importTask.get();
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        DataOutputStream dos = new DataOutputStream(out);
-        structure.write(dos);
-        System.out.println(out.size() + " bytes serialized");
-        ByteArrayInputStream bais = new ByteArrayInputStream(out.toByteArray());
-        DataInputStream dis = new DataInputStream(bais);
-        BaseStructures.AspectStructure reconstructed = BaseStructures.AspectStructure.read(dis);
-
-        TEST_ASPECT = new Aspect(UUID.randomUUID(), reconstructed);
-    }
-
-    public static void updateTestAspect() {
-
-    }
 }

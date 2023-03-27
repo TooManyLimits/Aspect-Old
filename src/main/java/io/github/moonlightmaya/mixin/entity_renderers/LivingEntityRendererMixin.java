@@ -33,11 +33,7 @@ public abstract class LivingEntityRendererMixin {
             //When we begin rendering, take a snapshot of the top of the matrix stack.
             aspect$preTransformSnapshot.set(matrixStack.peek().getPositionMatrix());
 
-            //Also, grab vanilla model data for the model if necessary.
-            VanillaRenderer topRenderer = VanillaRenderer.CURRENT_RENDERER.peek();
-            if (topRenderer.vanillaParts == null) {
-                topRenderer.initVanillaParts(VanillaModelPartSorter.getModelInfo(model));
-            }
+
         }
     }
 

@@ -6,6 +6,7 @@ import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.data.importing.AspectImporter;
 import io.github.moonlightmaya.util.DisplayUtils;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.Entity;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
@@ -127,24 +128,24 @@ public class AspectManager {
     }
 
     //Load an aspect from a local file system folder
-    public static void loadAspectFromFolder(UUID entityUUID, Path folder, Consumer<Throwable> errorCallback) {
+    public static void loadAspectFromFolder(Entity entity, Path folder, Consumer<Throwable> errorCallback) {
         //Save my id.
-        final int myId = cancelAspectLoading(entityUUID);
+        final int myId = cancelAspectLoading(entity.getUuid());
         new AspectImporter(folder)
                 .doImport()
-                .thenApplyAsync(mats -> new Aspect(entityUUID, mats))
-                .whenCompleteAsync((aspect, error) -> finishLoadingTask(entityUUID, myId, aspect, error, errorCallback));
+                .thenApplyAsync(mats -> new Aspect(entity, mats))
+                .whenCompleteAsync((aspect, error) -> finishLoadingTask(entity.getUuid(), myId, aspect, error, errorCallback));
     }
 
     //Load an aspect from binary data
-    public static void loadAspectFromData(UUID entityUUID, byte[] data, Consumer<Throwable> errorCallback) {
-        final int myId = cancelAspectLoading(entityUUID);
+    public static void loadAspectFromData(Entity entity, byte[] data, Consumer<Throwable> errorCallback) {
+        final int myId = cancelAspectLoading(entity.getUuid());
         CompletableFuture.supplyAsync(() -> data)
                 .thenApply(ByteArrayInputStream::new)
                 .thenApply(DataInputStream::new)
                 .thenApplyAsync(BaseStructures.AspectStructure::read)
-                .thenApplyAsync(mats -> new Aspect(entityUUID, mats))
-                .whenCompleteAsync((aspect, error) -> finishLoadingTask(entityUUID, myId, aspect, error, errorCallback));
+                .thenApplyAsync(mats -> new Aspect(entity, mats))
+                .whenCompleteAsync((aspect, error) -> finishLoadingTask(entity.getUuid(), myId, aspect, error, errorCallback));
     }
 
 }

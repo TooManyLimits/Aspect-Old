@@ -5,8 +5,12 @@ import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.model.WorldRootModelPart;
 import io.github.moonlightmaya.texture.AspectTexture;
 import io.github.moonlightmaya.util.AspectMatrixStack;
+import io.github.moonlightmaya.util.RenderUtils;
+import io.github.moonlightmaya.vanilla.VanillaModelPartSorter;
 import io.github.moonlightmaya.vanilla.VanillaRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.entity.model.EntityModel;
+import net.minecraft.entity.Entity;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,8 +51,8 @@ public class Aspect {
     }
 
 
-    public Aspect(UUID user, BaseStructures.AspectStructure materials) {
-        this.userId = user;
+    public Aspect(Entity user, BaseStructures.AspectStructure materials) {
+        this.userId = user.getUuid();
         this.aspectId = UUID.randomUUID();
 
         //Load textures first, needed for making model parts
@@ -61,6 +65,12 @@ public class Aspect {
             } catch (IOException e) {
                 throw new RuntimeException("Error importing texture " + base.name() + "!");
             }
+        }
+
+        //Also grab vanilla model data for the entity
+        EntityModel<?> model = RenderUtils.getModel(user);
+        if (model != null) {
+            vanillaRenderer.initVanillaParts(VanillaModelPartSorter.getModelInfo(model));
         }
 
         entityRoot = new AspectModelPart(materials.entityRoot(), this);

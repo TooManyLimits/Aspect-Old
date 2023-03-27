@@ -29,31 +29,31 @@ public class VanillaModelPartSorter {
             Iterator<ModelPart> headParts = ((AnimalModelAccessor) animalModel).headParts().iterator();
             if (animalModel instanceof BipedEntityModel<?> biped) {
                 //All bipeds have these parts, so they go in the biped section
-                result.put("BODY", bodyParts.next());
-                result.put("RIGHT_ARM", bodyParts.next());
-                result.put("LEFT_ARM", bodyParts.next());
-                result.put("RIGHT_LEG", bodyParts.next());
-                result.put("LEFT_LEG", bodyParts.next());
-                result.put("HAT", bodyParts.next());
-                result.put("HEAD", headParts.next());
+                putAliased(result, bodyParts.next(), "body");
+                putAliased(result, bodyParts.next(), "rightarm", "right_arm");
+                putAliased(result, bodyParts.next(), "leftarm", "left_arm");
+                putAliased(result, bodyParts.next(), "rightleg", "right_leg");
+                putAliased(result, bodyParts.next(), "leftleg", "left_leg");
+                putAliased(result, bodyParts.next(), "hat");
+                putAliased(result, headParts.next(), "head");
 
                 if (biped instanceof PlayerEntityModel<?> player) {
-                    result.put("LEFT_PANTS", bodyParts.next());
-                    result.put("RIGHT_PANTS", bodyParts.next());
-                    result.put("LEFT_SLEEVE", bodyParts.next());
-                    result.put("RIGHT_SLEEVE", bodyParts.next());
-                    result.put("JACKET", bodyParts.next());
+                    putAliased(result, bodyParts.next(), "leftpants", "left_pants");
+                    putAliased(result, bodyParts.next(), "rightpants", "right_pants");
+                    putAliased(result, bodyParts.next(), "leftsleeve", "left_sleeve");
+                    putAliased(result, bodyParts.next(), "rightsleeve", "right_sleeve");
+                    putAliased(result, bodyParts.next(), "jacket");
 
                     //Ears and cape, special fields of player.
                     //We probably will need to handle several more special cases like these.
-                    result.put("EARS", ((PlayerEntityModelAccessor) player).getEar());
-                    result.put("CAPE", ((PlayerEntityModelAccessor) player).getCloak());
+                    putAliased(result, ((PlayerEntityModelAccessor) player).getEar(), "ears");
+                    putAliased(result, ((PlayerEntityModelAccessor) player).getCloak(), "cape");
                 } else if (biped instanceof ArmorStandEntityModel armorStand) {
                     //Really not needed right now but why not
-                    result.put("LEFT_STICK", bodyParts.next());
-                    result.put("RIGHT_STICK", bodyParts.next());
-                    result.put("SHOULDER_STICK", bodyParts.next());
-                    result.put("BASEPLATE", bodyParts.next());
+                    putAliased(result, bodyParts.next(), "leftstick", "left_stick");
+                    putAliased(result, bodyParts.next(), "rightstick", "right_stick");
+                    putAliased(result, bodyParts.next(), "shoulderstick", "shoulder_stick");
+                    putAliased(result, bodyParts.next(), "baseplate", "base_plate");
                 }
             }
 
@@ -64,9 +64,14 @@ public class VanillaModelPartSorter {
 
         } else if (model instanceof SinglePartEntityModel<?> singlePart) {
             //Single part models just have a single part :p
-            result.put("ROOT", singlePart.getPart());
+            putAliased(result, singlePart.getPart(), "root");
         }
         return result;
+    }
+
+    private static <K,V> void putAliased(Map<K, V> map, V v, K... keys) {
+        for (K alias : keys)
+            map.put(alias, v);
     }
 
 }
