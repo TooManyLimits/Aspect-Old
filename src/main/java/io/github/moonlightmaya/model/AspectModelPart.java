@@ -42,7 +42,9 @@ public class AspectModelPart {
 
     //Cube data is always position, texture, normal.
     //Mesh data is position, texture, normal, with (optionally) skinning information.
-    private static final float[] tempCubeData = new float[(3+2+3+1) * 24]; //max 24 verts per cube
+    //max 24 verts per cube, made into a thread local because multiple threads can build vertex data at once
+    private static final ThreadLocal<float[]> sharedTempCubeData = ThreadLocal.withInitial(() -> new float[(3+2+3+1) * 24]);
+    private float[] tempCubeData;
     public float[] vertexData; //null if no vertices in this part. in the case of non-float values like short, we cast the float down.
 
     public final Aspect owningAspect; //The aspect that this model part is inside
@@ -59,6 +61,10 @@ public class AspectModelPart {
             for (BaseStructures.ModelPartStructure child : baseStructure.children())
                 children.add(new AspectModelPart(child, owningAspect)); //all children are owned by the same aspect
         }
+
+        //Cache the thread local array to avoid a map lookup on each cube vertex
+        //maybe unnecessary, but might as well? i guess? i mean i already programmed it so why not
+        tempCubeData = sharedTempCubeData.get();
         if (baseStructure.cubeData() != null)
             genCubeRenderData(baseStructure.cubeData());
 
@@ -67,6 +73,7 @@ public class AspectModelPart {
                 if (entry.getKey() instanceof String str) {
                     if (name.substring(0, Math.min(str.length(), name.length())).equalsIgnoreCase(str)) {
                         vanillaParent = entry.getValue();
+                        break;
                     }
                 }
             }

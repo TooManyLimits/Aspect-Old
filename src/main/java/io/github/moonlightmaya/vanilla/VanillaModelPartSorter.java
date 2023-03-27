@@ -6,11 +6,12 @@ import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.render.entity.model.*;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class VanillaModelPartSorter {
 
     //Keys to map are strings if known, or ints otherwise
-    private static final Map<EntityModel<?>, Map<Object, ModelPart>> MODEL_PARTS_BY_ENTITY_MODEL = new HashMap<>();
+    private static final Map<EntityModel<?>, Map<Object, ModelPart>> MODEL_PARTS_BY_ENTITY_MODEL = new ConcurrentHashMap<>();
 
     /**
      * This map *might* fill up over time, causing a memory leak, when

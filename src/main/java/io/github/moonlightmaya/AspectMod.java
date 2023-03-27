@@ -84,13 +84,20 @@ public class AspectMod implements ClientModInitializer {
             LiteralArgumentBuilder<FabricClientCommandSource> putall = literal("putall");
             putall.executes(context -> {
                 for (Entity target : MinecraftClient.getInstance().world.getEntities()) {
-                    context.getSource().sendFeedback(Text.literal("Applying to " + target.getDisplayName()));
+                    context.getSource().sendFeedback(Text.literal("Applying to " + target.getType()));
                     AspectManager.loadAspectFromFolder(target, IOUtils.getOrCreateModFolder().resolve("test_aspect"),
                             t -> DisplayUtils.displayError("Failed to load test avatar", t, true));
                 }
                 return 1;
             });
             aspect.then(putall);
+
+            LiteralArgumentBuilder<FabricClientCommandSource> clear = literal("clear");
+            clear.executes(context -> {
+                AspectManager.clearAllAspects();
+                return 1;
+            });
+            aspect.then(clear);
 
             dispatcher.register(aspect);
         });

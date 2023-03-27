@@ -85,6 +85,17 @@ public class AspectManager {
     }
 
     /**
+     * Submits a task to clear all aspects from storage
+     */
+    public static void clearAllAspects() {
+        TASKS.add(() -> {
+            for (Aspect aspect : ENTITY_ASPECTS.values())
+                aspect.destroy();
+            ENTITY_ASPECTS.clear();
+        });
+    }
+
+    /**
      * The reason for this timestamp has to do with long-running load operations.
      * Imagine someone accidentally attempts to load a large aspect that takes a
      * long time to complete, then clicks the aspect they actually wanted, which

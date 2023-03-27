@@ -43,16 +43,24 @@ public class VanillaRenderer {
     public void initVanillaParts(Map<Object, ModelPart> vanillaModel) {
         //Create vanilla part map from the vanilla model data
         vanillaParts = new HashMap<>();
+        vanillaPartInverse = new HashMap<>();
         for (Map.Entry<Object, ModelPart> entry : vanillaModel.entrySet()) {
-            vanillaParts.put(entry.getKey(), new VanillaPart(entry.getValue()));
+            if (vanillaPartInverse.containsKey(entry.getValue())) {
+                vanillaParts.put(entry.getKey(), vanillaPartInverse.get(entry.getValue()));
+            } else {
+                VanillaPart newPart = new VanillaPart(entry.getValue());
+                vanillaParts.put(entry.getKey(), newPart);
+                newPart.traverse().forEach(p -> vanillaPartInverse.put(p.referencedPart, p));
+            }
+
         }
         //Once that's done, also generate an "inverse" map for faster lookups
         //of ModelPart -> VanillaPart for this VanillaRenderer.
         //There can't be a global ModelPart -> VanillaPart map, because each model
         //part may be shared by several VanillaParts.
-        vanillaPartInverse = new HashMap<>();
+
         for (VanillaPart vanillaPart : vanillaParts.values()) {
-            vanillaPart.traverse().forEach(p -> vanillaPartInverse.put(p.referencedPart, p));
+
         }
     }
 
