@@ -29,12 +29,12 @@ public class Aspect {
 
     public final VanillaRenderer vanillaRenderer = new VanillaRenderer();
 
-    private final UUID userId; //uuid of the entity using this aspect
-    private final UUID aspectId; //uuid of this aspect itself
+    public final Entity user; //the entity using this aspect
+    public final UUID aspectId; //uuid of this aspect itself
 
-    public void renderEntity(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {
+    public void renderEntity(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, int light) {
         matrixStack.multiply(vanillaRenderer.aspectModelTransform);
-        entityRoot.render(vcp, matrixStack);
+        entityRoot.render(vcp, matrixStack, light);
     }
 
     public UUID getAspectId() {
@@ -52,7 +52,7 @@ public class Aspect {
 
 
     public Aspect(Entity user, BaseStructures.AspectStructure materials) {
-        this.userId = user.getUuid();
+        this.user = user;
         this.aspectId = UUID.randomUUID();
 
         //Load textures first, needed for making model parts

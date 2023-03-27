@@ -23,7 +23,7 @@ public class EntityRendererMixin {
 
         Aspect aspect = AspectManager.getAspect(entity.getUuid());
         if (aspect != null) {
-            aspect.renderEntity(vertexConsumers, new AspectMatrixStack(matrices));
+            aspect.renderEntity(vertexConsumers, new AspectMatrixStack(matrices), light);
         }
     }
 

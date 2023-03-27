@@ -3,7 +3,10 @@ package io.github.moonlightmaya.model;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.util.AspectMatrixStack;
+import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.LightType;
 import org.joml.Vector3d;
 
 /**
@@ -31,11 +34,25 @@ public class WorldRootModelPart extends AspectModelPart {
         worldPos.set(x, y, z);
     }
 
-    @Override
     public void render(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {
         matrixStack.push();
         matrixStack.translate(worldPos);
-        super.render(vcp, matrixStack);
+
+        //This is how minecraft selects the light level for rendering an entity
+        BlockPos lightChoosePos = new BlockPos(worldPos.x, worldPos.y, worldPos.z);
+        int light = LightmapTextureManager.pack(
+                owningAspect.user.getEntityWorld().getLightLevel(LightType.BLOCK, lightChoosePos),
+                owningAspect.user.getEntityWorld().getLightLevel(LightType.SKY, lightChoosePos)
+        );
+
+        super.render(vcp, matrixStack, light);
         matrixStack.pop();
+    }
+
+    @Override
+    public void render(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, int light) {
+        //Shouldn't render this with a light level, as the light level is calculated by the world part's
+        //world pos instead of the entity's light level!
+        throw new UnsupportedOperationException("This render method should not work on world root types, if this happens it's a mistake by the mod devs!");
     }
 }

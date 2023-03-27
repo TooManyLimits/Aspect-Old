@@ -276,10 +276,13 @@ public class AspectModelPart {
      *
      * Depending on whether we're in optimized or compatible mode, the provided matrixStack may also be
      * different.
+     *
+     * The light level is the default light level to render the model part "root" at.
+     * In the future, this may be overridden by specific model part customizations.
      */
-    public void render(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {
+    public void render(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, int light) {
         List<RenderLayer> defaultLayers = DEFAULT_LAYERS;
-        renderInternal(vcp, defaultLayers, matrixStack);
+        renderInternal(vcp, defaultLayers, matrixStack, light);
     }
 
     /**
@@ -293,7 +296,8 @@ public class AspectModelPart {
     private void renderInternal(
             VertexConsumerProvider vcp, //The VCP used for this rendering call, where we will fetch buffers from using the render layers.
             List<RenderLayer> currentRenderLayers, //The current set of render layers for the part. Inherited from the parent if this.renderLayers is null.
-            AspectMatrixStack matrixStack //The current matrix stack.
+            AspectMatrixStack matrixStack, //The current matrix stack.
+            int light //The light level of the entity wearing the aspect. Inherited from the parent always (for the time being)
     ) {
         //If this model part's layers are not null, then set the current ones to our overrides. Otherwise, keep the parent's render layers.
         if (this.renderLayers != null)
@@ -321,7 +325,7 @@ public class AspectModelPart {
                             1f, 1f, 1f, 1f, //Color
                             vertexData[i+3], vertexData[i+4], //Texture
                             OverlayTexture.DEFAULT_UV, //"Overlay"
-                            LightmapTextureManager.MAX_LIGHT_COORDINATE, //Light
+                            light, //Light
                             normal.x, normal.y, normal.z //Normal
                     );
                 }
@@ -331,7 +335,7 @@ public class AspectModelPart {
         //If there are children, render them all too
         if (hasChildren()) {
             for (AspectModelPart child : children) {
-                child.renderInternal(vcp, currentRenderLayers, matrixStack);
+                child.renderInternal(vcp, currentRenderLayers, matrixStack, light);
             }
         }
 
