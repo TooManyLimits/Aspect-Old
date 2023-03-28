@@ -18,13 +18,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(LivingEntityRenderer.class)
 public abstract class LivingEntityRendererMixin {
 
-    @Shadow
-    protected abstract void scale(LivingEntity entity, MatrixStack matrices, float amount);
 
     @Shadow protected EntityModel<?> model;
     private final Matrix4f aspect$preTransformSnapshot = new Matrix4f();
-    private final MatrixStack aspect$helperStack = new MatrixStack();
-    private final Vector3f aspect$scaleVec = new Vector3f();
 
     @Inject(method = "render(Lnet/minecraft/entity/LivingEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V",
             at = @At("HEAD"))
@@ -51,11 +47,6 @@ public abstract class LivingEntityRendererMixin {
 
             //Transformed now contains the transformation matrix that was applied by the LivingEntityRenderer.
             //However, we now have to undo the x/y flip that Minecraft did, as well as the extra translation.
-            //Grab the scale factor by calling the shadowed scale() function ourselves:
-            aspect$helperStack.loadIdentity();
-            this.scale(livingEntity, aspect$helperStack, g);
-            Matrix4f pos = aspect$helperStack.peek().getPositionMatrix();
-            aspect$scaleVec.set(pos.get(0, 0), pos.get(1, 1), pos.get(2, 2));
 
             //Save the original matrix before applying our wacky flip and translate to it
             topRenderer.savedVanillaModelTransform.set(matrixStack.peek().getPositionMatrix());
