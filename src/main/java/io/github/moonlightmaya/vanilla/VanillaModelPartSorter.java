@@ -56,6 +56,13 @@ public class VanillaModelPartSorter {
                     putAliased(result, bodyParts.next(), "shoulderstick", "shoulder_stick");
                     putAliased(result, bodyParts.next(), "baseplate", "base_plate");
                 }
+            } else if (animalModel instanceof FoxEntityModel<?> fox) {
+                putAliased(result, bodyParts.next(), "body");
+                putAliased(result, bodyParts.next(), "righthindleg", "right_hind_leg", "leg0");
+                putAliased(result, bodyParts.next(), "lefthindleg", "left_hind_leg", "leg1");
+                putAliased(result, bodyParts.next(), "rightfrontleg", "right_front_leg", "leg2");
+                putAliased(result, bodyParts.next(), "leftfrontleg", "left_front_leg", "leg3");
+                putAliased(result, headParts.next(), "head");
             }
 
             //In the default case we'll still store the model parts, just with default number keys

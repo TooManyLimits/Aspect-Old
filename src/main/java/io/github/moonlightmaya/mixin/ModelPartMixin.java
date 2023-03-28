@@ -24,6 +24,7 @@ public abstract class ModelPartMixin {
     @Shadow public float yaw;
     @Shadow public float pivotX;
     @Shadow public float pivotY;
+    @Shadow public float pivotZ;
     //reuse variables to not allocate more than necessary
     private final Matrix3f aspect$tempMatrix = new Matrix3f();
 
@@ -52,10 +53,12 @@ public abstract class ModelPartMixin {
                 pitch = -pitch;
                 float savedPivotX = pivotX;
                 float savedPivotY = pivotY;
-                pivotX = pivotY = 0;
+                float savedPivotZ = pivotZ;
+                pivotX = pivotY = pivotZ = 0;
                 rotate(aspect$helperStack);
                 pivotX = savedPivotX;
                 pivotY = savedPivotY;
+                pivotZ = savedPivotZ;
                 pitch = -pitch;
                 yaw = -yaw;
 //                roll = -roll;

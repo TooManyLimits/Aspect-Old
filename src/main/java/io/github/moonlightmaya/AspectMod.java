@@ -1,6 +1,9 @@
 package io.github.moonlightmaya;
 
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.data.importing.AspectImporter;
 import io.github.moonlightmaya.manage.AspectManager;
@@ -67,11 +70,13 @@ public class AspectMod implements ClientModInitializer {
             aspect.then(test);
 
             LiteralArgumentBuilder<FabricClientCommandSource> put = literal("put");
-            put.executes(context -> {
+            RequiredArgumentBuilder<FabricClientCommandSource, String> arg = RequiredArgumentBuilder.argument("aspect_name", StringArgumentType.greedyString());
+            arg.executes(context -> {
                 Entity target = context.getSource().getClient().targetedEntity;
                 if (target != null) {
+                    String name = StringArgumentType.getString(context, "aspect_name");
                     context.getSource().sendFeedback(Text.literal("Applying to " + target.getName()));
-                    AspectManager.loadAspectFromFolder(target, IOUtils.getOrCreateModFolder().resolve("test_aspect"),
+                    AspectManager.loadAspectFromFolder(target, IOUtils.getOrCreateModFolder().resolve(name),
                             t -> DisplayUtils.displayError("Failed to load test avatar", t, true));
                     return 1;
                 } else {
@@ -79,17 +84,21 @@ public class AspectMod implements ClientModInitializer {
                     return 0;
                 }
             });
+            put.then(arg);
             aspect.then(put);
 
             LiteralArgumentBuilder<FabricClientCommandSource> putall = literal("putall");
-            putall.executes(context -> {
+            RequiredArgumentBuilder<FabricClientCommandSource, String> arg2 = RequiredArgumentBuilder.argument("aspect_name", StringArgumentType.greedyString());
+            arg2.executes(context -> {
                 for (Entity target : MinecraftClient.getInstance().world.getEntities()) {
-                    context.getSource().sendFeedback(Text.literal("Applying to " + target.getType()));
-                    AspectManager.loadAspectFromFolder(target, IOUtils.getOrCreateModFolder().resolve("test_aspect"),
+                    String name = StringArgumentType.getString(context, "aspect_name");
+                    context.getSource().sendFeedback(Text.literal("Applying to all entities"));
+                    AspectManager.loadAspectFromFolder(target, IOUtils.getOrCreateModFolder().resolve(name),
                             t -> DisplayUtils.displayError("Failed to load test avatar", t, true));
                 }
                 return 1;
             });
+            putall.then(arg2);
             aspect.then(putall);
 
             LiteralArgumentBuilder<FabricClientCommandSource> clear = literal("clear");
