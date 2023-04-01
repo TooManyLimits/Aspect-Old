@@ -14,7 +14,8 @@
     "entity_renderers.LivingEntityRendererMixin",
     "entity_renderers.specific.PlayerEntityRendererMixin",
     "models.AnimalModelAccessor",
-    "models.PlayerEntityModelAccessor"
+    "models.PlayerEntityModelAccessor",
+    "models.PlayerEntityModelMixin"
   ],
   "injectors": {
     "defaultRequire": 1
