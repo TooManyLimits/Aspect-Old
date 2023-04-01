@@ -28,8 +28,6 @@ public abstract class LivingEntityRendererMixin {
         if (!VanillaRenderer.CURRENT_RENDERER.isEmpty()) {
             //When we begin rendering, take a snapshot of the top of the matrix stack.
             aspect$preTransformSnapshot.set(matrixStack.peek().getPositionMatrix());
-
-
         }
     }
 

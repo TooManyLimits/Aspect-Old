@@ -158,9 +158,9 @@ public class AspectManager {
         CompletableFuture.supplyAsync(() -> data)
                 .thenApply(ByteArrayInputStream::new)
                 .thenApply(DataInputStream::new)
-                .thenApplyAsync(BaseStructures.AspectStructure::read)
-                .thenApplyAsync(mats -> new Aspect(entity, mats))
-                .whenCompleteAsync((aspect, error) -> finishLoadingTask(entity.getUuid(), myId, aspect, error, errorCallback));
+                .thenApply(BaseStructures.AspectStructure::read)
+                .thenApply(mats -> new Aspect(entity, mats))
+                .whenComplete((aspect, error) -> finishLoadingTask(entity.getUuid(), myId, aspect, error, errorCallback));
     }
 
 }

@@ -81,5 +81,6 @@ public class VanillaPart {
         if (pitch != 0.0f || yaw != 0.0f || roll != 0.0f) {
             inverseDefaultTransform.rotate(new Quaternionf().rotationZYX(roll, yaw, pitch));
         }
+        inverseDefaultTransform.invert();
     }
 }

@@ -4,6 +4,7 @@ import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.util.MathUtils;
 import net.minecraft.client.model.ModelPart;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.util.*;
 
@@ -30,10 +31,21 @@ public class VanillaRenderer {
      */
     public final Matrix4f aspectModelTransform = new Matrix4f();
 
-    //Saved model transform as an intermediate storage step in the process
-    //of calculating vanilla part matrices. Also may come in handy to
-    //scripters.
+    /**
+     * Matrix containing the entire stack of vanilla transforms, including
+     * the entity offset, the camera rotation/positioning, rotation of the
+     * entire entity, and so on. Saved here as an intermediate while calculating
+     * model part transforms.
+     */
     public final Matrix4f savedVanillaModelTransform = new Matrix4f();
+
+    /**
+     * The "render offset" of the entity, as applied in the entity render
+     * dispatcher. Turns out that we don't need to use this while rendering,
+     * but it's saved in case someone feels like knowing the value for some
+     * reason.
+     */
+    public final Vector3f renderOffset = new Vector3f();
 
     /**
      * A helper stack of matrices which deals with canceling out rotations of parents

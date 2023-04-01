@@ -23,6 +23,10 @@ public abstract class ModelPartMixin {
 
     @Shadow public float pitch;
     @Shadow public float yaw;
+    @Shadow public float roll;
+    @Shadow public float pivotZ;
+    @Shadow public float pivotX;
+    @Shadow public float pivotY;
     //reuse variables to not allocate more than necessary
     private static final Matrix3f aspect$tempMatrix = new Matrix3f();
     private static final Matrix4f aspect$tempMatrix2 = new Matrix4f();
@@ -76,7 +80,6 @@ public abstract class ModelPartMixin {
                 topRenderer.modelPartsChildrenHelper.push(correctedTotalTransform);
             }
         }
-
     }
 
     /**
@@ -125,7 +128,11 @@ public abstract class ModelPartMixin {
         aspect$helperStack.loadIdentity();
         yaw = -yaw;
         pitch = -pitch;
+        pivotX = -pivotX;
+        pivotY = -pivotY;
         rotate(aspect$helperStack);
+        pivotY = -pivotY;
+        pivotX = -pivotX;
         pitch = -pitch;
         yaw = -yaw;
     }
