@@ -117,7 +117,8 @@ public class AspectModelPart {
     }
 
     public void setRot(float x, float y, float z) {
-        partRot.identity().rotationXYZ(x, y, z);
+        float s = (float) (Math.PI / 180);
+        partRot.identity().rotationXYZ(x * s, y * s, z * s);
         needsMatrixRecalculation = true;
     }
 
@@ -244,8 +245,10 @@ public class AspectModelPart {
             //Scale down the pivot value, it's in "block" units
             positionMatrix.translation(partPivot.mul(1f/16));
 
-            if (vanillaParent != null)
+            if (vanillaParent != null) {
+                positionMatrix.mul(vanillaParent.inverseDefaultTransform);
                 positionMatrix.mul(vanillaParent.savedTransform);
+            }
 
             positionMatrix
                     .rotate(partRot)

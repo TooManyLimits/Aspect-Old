@@ -90,10 +90,11 @@ public class AspectMod implements ClientModInitializer {
             LiteralArgumentBuilder<FabricClientCommandSource> putall = literal("putall");
             RequiredArgumentBuilder<FabricClientCommandSource, String> arg2 = RequiredArgumentBuilder.argument("aspect_name", StringArgumentType.greedyString());
             arg2.executes(context -> {
+                context.getSource().sendFeedback(Text.literal("Applying to all entities"));
+                String name = StringArgumentType.getString(context, "aspect_name");
+                Path folder = IOUtils.getOrCreateModFolder().resolve(name);
                 for (Entity target : MinecraftClient.getInstance().world.getEntities()) {
-                    String name = StringArgumentType.getString(context, "aspect_name");
-                    context.getSource().sendFeedback(Text.literal("Applying to all entities"));
-                    AspectManager.loadAspectFromFolder(target, IOUtils.getOrCreateModFolder().resolve(name),
+                    AspectManager.loadAspectFromFolder(target, folder,
                             t -> DisplayUtils.displayError("Failed to load test avatar", t, true));
                 }
                 return 1;

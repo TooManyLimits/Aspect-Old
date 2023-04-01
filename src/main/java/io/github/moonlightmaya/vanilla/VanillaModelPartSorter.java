@@ -58,10 +58,11 @@ public class VanillaModelPartSorter {
                 }
             } else if (animalModel instanceof FoxEntityModel<?> fox) {
                 putAliased(result, bodyParts.next(), "body");
-                putAliased(result, bodyParts.next(), "righthindleg", "right_hind_leg", "leg0");
-                putAliased(result, bodyParts.next(), "lefthindleg", "left_hind_leg", "leg1");
-                putAliased(result, bodyParts.next(), "rightfrontleg", "right_front_leg", "leg2");
-                putAliased(result, bodyParts.next(), "leftfrontleg", "left_front_leg", "leg3");
+                putAliased(result, result.get("body").getChild(EntityModelPartNames.TAIL), "tail");
+                putAliased(result, bodyParts.next(), "righthindleg", "right_hind_leg", "leg1");
+                putAliased(result, bodyParts.next(), "lefthindleg", "left_hind_leg", "leg2");
+                putAliased(result, bodyParts.next(), "rightfrontleg", "right_front_leg", "leg3");
+                putAliased(result, bodyParts.next(), "leftfrontleg", "left_front_leg", "leg4");
                 putAliased(result, headParts.next(), "head");
             }
 

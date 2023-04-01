@@ -77,23 +77,26 @@ public class AspectTexture extends ResourceTexture {
      * Then, re-uploads it if it's marked as dirty.
      */
     public void uploadIfNeeded() {
-        //If closed, we don't need to do anything
-        if (!isClosed) {
-            //If the texture is not yet registered, then register it and mark as registered
-            if (!registered) {
-                TextureManager textureManager = MinecraftClient.getInstance().getTextureManager();
-                textureManager.registerTexture(this.location, this);
-                registered = true;
+        RenderUtils.executeOnRenderThread(() -> {
+            //If closed, we don't need to do anything
+            if (!isClosed) {
+                //If the texture is not yet registered, then register it and mark as registered
+                if (!registered) {
+                    TextureManager textureManager = MinecraftClient.getInstance().getTextureManager();
+                    textureManager.registerTexture(this.location, this);
+                    registered = true;
+                }
+                //If the texture needs to be uploaded, then upload it
+                if (dirty) {
+                    //Image may be closed in between registering this lambda and actually running it
+                    if (!isClosed) {
+                        TextureUtil.prepareImage(this.getGlId(), image.getWidth(), image.getHeight());
+                        image.upload(0, 0, 0, false);
+                    }
+                    dirty = false;
+                }
             }
-            //If the texture needs to be uploaded, then upload it
-            if (dirty) {
-                RenderUtils.executeOnRenderThread(() -> {
-                    TextureUtil.prepareImage(this.getGlId(), image.getWidth(), image.getHeight());
-                    image.upload(0, 0, 0, false);
-                });
-                dirty = false;
-            }
-        }
+        });
     }
 
 

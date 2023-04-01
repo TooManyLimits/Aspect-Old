@@ -138,7 +138,9 @@ public class AspectManager {
         }
     }
 
-    //Load an aspect from a local file system folder
+    /**
+     * Load an aspect from a local file system folder
+     */
     public static void loadAspectFromFolder(Entity entity, Path folder, Consumer<Throwable> errorCallback) {
         //Save my id.
         final int myId = cancelAspectLoading(entity.getUuid());
@@ -148,7 +150,9 @@ public class AspectManager {
                 .whenCompleteAsync((aspect, error) -> finishLoadingTask(entity.getUuid(), myId, aspect, error, errorCallback));
     }
 
-    //Load an aspect from binary data
+    /**
+     * Load an aspect from binary data
+     */
     public static void loadAspectFromData(Entity entity, byte[] data, Consumer<Throwable> errorCallback) {
         final int myId = cancelAspectLoading(entity.getUuid());
         CompletableFuture.supplyAsync(() -> data)

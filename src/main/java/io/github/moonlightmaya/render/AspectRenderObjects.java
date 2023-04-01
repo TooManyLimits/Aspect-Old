@@ -9,6 +9,8 @@ import net.minecraft.client.render.VertexFormats;
 /**
  * Contains useful instances of Minecraft's rendering classes, adapted for
  * Aspect's needs.
+ *
+ * This class is for future application
  */
 public class AspectRenderObjects {
 
