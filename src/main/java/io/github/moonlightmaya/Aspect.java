@@ -4,7 +4,6 @@ import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.model.WorldRootModelPart;
 import io.github.moonlightmaya.script.AspectScriptHandler;
-import io.github.moonlightmaya.script.initializers.ScriptInitializer;
 import io.github.moonlightmaya.texture.AspectTexture;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.util.RenderUtils;
@@ -13,7 +12,6 @@ import io.github.moonlightmaya.vanilla.VanillaRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.entity.Entity;
-import petpet.external.PetPetInstance;
 
 import java.io.IOException;
 import java.util.*;
@@ -71,9 +69,12 @@ public class Aspect {
             scripts.put(script.name(), script.source());
 
         scriptHandler = new AspectScriptHandler(this);
+        if (!scripts.isEmpty())
+            scriptHandler.runMain();
     }
 
     public void renderEntity(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, int light) {
+        scriptHandler.getEventHandler().callEvent("render");
         matrixStack.multiply(vanillaRenderer.aspectModelTransform);
         entityRoot.render(vcp, matrixStack, light);
     }

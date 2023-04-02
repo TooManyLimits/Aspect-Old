@@ -10,10 +10,12 @@ import net.minecraft.client.render.*;
 import net.minecraft.util.Identifier;
 import org.joml.*;
 import petpet.external.PetPetWhitelist;
+import petpet.lang.run.PetPetException;
 import petpet.types.PetPetList;
 
 import java.lang.Math;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -362,6 +364,27 @@ public class AspectModelPart {
         CUBE,
         MESH,
         NULL
+    }
+
+
+    //----------PETPET FUNCTIONS----------//
+    //----------PETPET FUNCTIONS----------//
+    //----------PETPET FUNCTIONS----------//
+    //----------PETPET FUNCTIONS----------//
+    //----------PETPET FUNCTIONS----------//
+
+    private HashMap<String, AspectModelPart> cachedPartMap;
+    @PetPetWhitelist
+    public AspectModelPart __get_str(String arg) {
+        if (children == null) return null;
+        if (cachedPartMap == null) cachedPartMap = new HashMap<>();
+        return cachedPartMap.computeIfAbsent(arg, s -> {
+            for (AspectModelPart child : children) {
+                if (child.name.equals(s))
+                    return child;
+            }
+            return null;
+        });
     }
 
 }

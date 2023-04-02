@@ -1,10 +1,12 @@
 package io.github.moonlightmaya.script;
 
 import io.github.moonlightmaya.Aspect;
-import io.github.moonlightmaya.script.initializers.ScriptInitializer;
+import io.github.moonlightmaya.model.AspectModelPart;
+import io.github.moonlightmaya.script.events.AspectEvent;
+import io.github.moonlightmaya.script.events.EventHandler;
 import io.github.moonlightmaya.util.DisplayUtils;
-import io.github.moonlightmaya.util.IOUtils;
 import petpet.external.PetPetInstance;
+import petpet.external.PetPetReflector;
 import petpet.lang.compile.Compiler;
 import petpet.lang.lex.Lexer;
 import petpet.lang.parse.Parser;
@@ -30,7 +32,9 @@ public class AspectScriptHandler {
     private final PetPetInstance instance;
 
     private final Map<String, PetPetClosure> compiledScripts;
-    private final JavaFunction requireFunction;
+    private JavaFunction requireFunction;
+
+    private EventHandler eventHandler;
 
     /**
      * When first creating the script handler, we will compile
@@ -41,24 +45,62 @@ public class AspectScriptHandler {
         this.aspect = aspect;
 
         //Create new instance
-        instance = new ScriptInitializer(aspect).createInstance();
+        instance = new PetPetInstance();
 
         //Compile all the scripts
         compiledScripts = new HashMap<>();
         compileScripts();
 
-        //Generate the "require" function using those compiled scripts
-        //and add it to the globals table
+        //Register the types
+        registerTypes();
+
+        //Set up the globals
+        setupGlobals();
+    }
+
+    /**
+     * Run the "main" script!
+     */
+    public void runMain() {
+        String main = "main";
+        requireFunction.call(main);
+    }
+
+    /**
+     * Register the different types which are allowed
+     */
+    private void registerTypes() {
+        //Events
+        instance.registerClass(AspectEvent.class, PetPetReflector.reflect(AspectEvent.class, "Event"));
+
+        //Model Parts
+        //instance.registerClass(WorldRootModelPart.class, PetPetReflector.reflect(WorldRootModelPart.class, "WorldRootModelPart"));
+        instance.registerClass(AspectModelPart.class, PetPetReflector.reflect(AspectModelPart.class, "ModelPart"));
+    }
+
+    /**
+     * Set all the global variables that are needed
+     */
+    private void setupGlobals() {
+        //Print functions
+        instance.setGlobal("print", DisplayUtils.PRINT_FUNCTION);
+        instance.setGlobal("log", DisplayUtils.PRINT_FUNCTION);
+
+        //Require
         requireFunction = setupRequire();
         instance.setGlobal("require", requireFunction);
 
-        if (!compiledScripts.isEmpty()) {
-            //Run the main script
-            //Maybe in the future it would be good to make the "running" of
-            //the script be in another method.
-            String main = "main";
-            requireFunction.call(main);
-        }
+        //Models
+        PetPetTable models = new PetPetTable();
+        models.put("entity", aspect.entityRoot);
+        instance.setGlobal("models", models);
+
+        //Events
+        //Code for events is all inside EventHandler, which
+        //deals with creating the events and also adding it
+        //as a global variable
+        eventHandler = new EventHandler(instance);
+
     }
 
     /**
@@ -120,6 +162,10 @@ public class AspectScriptHandler {
                 }
             }
         };
+    }
+
+    public EventHandler getEventHandler() {
+        return eventHandler;
     }
 
 }
