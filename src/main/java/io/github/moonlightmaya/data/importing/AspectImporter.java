@@ -28,13 +28,13 @@ import java.util.concurrent.CompletableFuture;
 public class AspectImporter {
 
     private final Path rootPath;
-    private Throwable error = null;
     private final Gson gson = new GsonBuilder()
             .registerTypeAdapter(Vector3f.class, JsonStructures.Vector3fDeserializer.INSTANCE)
             .registerTypeAdapter(Vector4f.class, JsonStructures.Vector4fDeserializer.INSTANCE)
             .setPrettyPrinting().create();
 
     private LinkedHashMap<String, BaseStructures.Texture> textures;
+    private List<BaseStructures.Script> scripts;
     private int textureOffset;
 
     public AspectImporter(Path aspectFolder) {
@@ -54,14 +54,14 @@ public class AspectImporter {
                 //Read the globally shared textures to here
                 textures = getTextures();
                 //Read scripts
-                //scripts = getScripts();
+                scripts = getScripts();
                 //Get entity model parts:
                 BaseStructures.ModelPartStructure entityRoot = getEntityModels();
 
                 result.complete(new BaseStructures.AspectStructure(
                         entityRoot, List.of(),
                         Lists.newArrayList(textures.values()),
-                        new ArrayList<>()
+                        scripts
                 ));
             } catch (Exception e) {
                 result.completeExceptionally(e);
@@ -70,12 +70,24 @@ public class AspectImporter {
         return result;
     }
 
+    private List<BaseStructures.Script> getScripts() throws IOException {
+        Path p = rootPath.resolve("scripts");
+        List<File> files = IOUtils.getByExtension(p, "petpet");
+        List<BaseStructures.Script> result = new ArrayList<>(files.size());
+        for (File f : files) {
+            String name = f.getName().substring(0, f.getName().length()-".petpet".length());
+            String code = Files.readString(f.toPath());
+            result.add(new BaseStructures.Script(name, code));
+        }
+        return result;
+    }
+
     private LinkedHashMap<String, BaseStructures.Texture> getTextures() throws IOException {
         Path p = rootPath.resolve("textures");
         List<File> files = IOUtils.getByExtension(p, "png");
         LinkedHashMap<String, BaseStructures.Texture> texes = new LinkedHashMap<>();
         for (File f : files) {
-            String name = f.getName().substring(0, f.getName().length()-4); //strip .png
+            String name = f.getName().substring(0, f.getName().length()-".png".length()); //strip .png
             byte[] bytes = Files.readAllBytes(f.toPath());
             texes.put(name, new BaseStructures.Texture(name, bytes));
         }

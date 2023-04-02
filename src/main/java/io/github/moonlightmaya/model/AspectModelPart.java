@@ -9,6 +9,8 @@ import io.github.moonlightmaya.vanilla.VanillaPart;
 import net.minecraft.client.render.*;
 import net.minecraft.util.Identifier;
 import org.joml.*;
+import petpet.external.PetPetWhitelist;
+import petpet.types.PetPetList;
 
 import java.lang.Math;
 import java.util.ArrayList;
@@ -18,8 +20,10 @@ import java.util.Map;
 /**
  * An element of a hierarchical tree structure, analogous to the structure in Blockbench as well as the file system.
  */
+@PetPetWhitelist
 public class AspectModelPart {
-    private final String name;
+    @PetPetWhitelist
+    public final String name;
     private final ModelPartType type;
 
     //Unsure whether these following values should use float or double precision.
@@ -57,7 +61,7 @@ public class AspectModelPart {
         setRot(baseStructure.rot());
         setPivot(baseStructure.pivot());
         if (baseStructure.children() != null) {
-            children = new ArrayList<>(baseStructure.children().size());
+            children = new PetPetList<>(baseStructure.children().size());
             for (BaseStructures.ModelPartStructure child : baseStructure.children())
                 children.add(new AspectModelPart(child, owningAspect)); //all children are owned by the same aspect
         }
@@ -85,6 +89,7 @@ public class AspectModelPart {
         setPos(vec.x, vec.y, vec.z);
     }
 
+    @PetPetWhitelist
     public void setPos(float x, float y, float z) {
         partPos.set(x, y, z);
         needsMatrixRecalculation = true;
@@ -94,6 +99,7 @@ public class AspectModelPart {
         setPivot(vec.x, vec.y, vec.z);
     }
 
+    @PetPetWhitelist
     public void setPivot(float x, float y, float z) {
         partPivot.set(x, y, z);
         needsMatrixRecalculation = true;
@@ -107,6 +113,7 @@ public class AspectModelPart {
         setScale(s, s, s);
     }
 
+    @PetPetWhitelist
     public void setScale(float x, float y, float z) {
         partScale.set(x, y, z);
         needsMatrixRecalculation = true;
@@ -116,6 +123,7 @@ public class AspectModelPart {
         setRot(vec.x, vec.y, vec.z);
     }
 
+    @PetPetWhitelist
     public void setRot(float x, float y, float z) {
         float s = (float) (Math.PI / 180);
         partRot.identity().rotationXYZ(x * s, y * s, z * s);
@@ -241,7 +249,7 @@ public class AspectModelPart {
     }
 
     private void recalculateMatrixIfNecessary() {
-        if (needsMatrixRecalculation || true) {
+        if (needsMatrixRecalculation || vanillaParent != null) {
             //Scale down the pivot value, it's in "block" units
             positionMatrix.translation(partPivot.mul(1f/16));
 

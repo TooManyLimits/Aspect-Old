@@ -1,11 +1,8 @@
 package io.github.moonlightmaya;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
-import io.github.moonlightmaya.data.BaseStructures;
-import io.github.moonlightmaya.data.importing.AspectImporter;
 import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.IOUtils;
@@ -13,7 +10,6 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.text.Text;
@@ -22,13 +18,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import petpet.external.PetPetInstance;
 
-import java.io.*;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
-import static com.mojang.brigadier.builder.LiteralArgumentBuilder.*;
+import static com.mojang.brigadier.builder.LiteralArgumentBuilder.literal;
 
 /**
  * The client mod initializer for Aspect, the core of the mod.
@@ -60,46 +52,50 @@ public class AspectMod implements ClientModInitializer {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             LiteralArgumentBuilder<FabricClientCommandSource> aspect = literal("aspect");
 
-            LiteralArgumentBuilder<FabricClientCommandSource> test = literal("test");
-            test.executes(context -> {
-                Entity player = MinecraftClient.getInstance().player;
-                AspectManager.loadAspectFromFolder(player, IOUtils.getOrCreateModFolder().resolve("test_aspect"),
-                        t -> DisplayUtils.displayError("Failed to load test avatar", t, true));
-                return 1;
-            });
-            aspect.then(test);
-
-            LiteralArgumentBuilder<FabricClientCommandSource> put = literal("put");
+            LiteralArgumentBuilder<FabricClientCommandSource> equip = literal("equip");
             RequiredArgumentBuilder<FabricClientCommandSource, String> arg = RequiredArgumentBuilder.argument("aspect_name", StringArgumentType.greedyString());
             arg.executes(context -> {
+                Entity player = MinecraftClient.getInstance().player;
+                String name = StringArgumentType.getString(context, "aspect_name");
+                AspectManager.loadAspectFromFolder(player, IOUtils.getOrCreateModFolder().resolve(name),
+                        t -> DisplayUtils.displayError("Failed to load aspect", t, true));
+                return 1;
+            });
+            equip.then(arg);
+            aspect.then(equip);
+
+
+            LiteralArgumentBuilder<FabricClientCommandSource> put = literal("put");
+            RequiredArgumentBuilder<FabricClientCommandSource, String> arg2 = RequiredArgumentBuilder.argument("aspect_name", StringArgumentType.greedyString());
+            arg2.executes(context -> {
                 Entity target = context.getSource().getClient().targetedEntity;
                 if (target != null) {
                     String name = StringArgumentType.getString(context, "aspect_name");
                     context.getSource().sendFeedback(Text.literal("Applying to " + target.getName()));
                     AspectManager.loadAspectFromFolder(target, IOUtils.getOrCreateModFolder().resolve(name),
-                            t -> DisplayUtils.displayError("Failed to load test avatar", t, true));
+                            t -> DisplayUtils.displayError("Failed to load aspect", t, true));
                     return 1;
                 } else {
                     context.getSource().sendError(Text.literal("No entity found"));
                     return 0;
                 }
             });
-            put.then(arg);
+            put.then(arg2);
             aspect.then(put);
 
             LiteralArgumentBuilder<FabricClientCommandSource> putall = literal("putall");
-            RequiredArgumentBuilder<FabricClientCommandSource, String> arg2 = RequiredArgumentBuilder.argument("aspect_name", StringArgumentType.greedyString());
-            arg2.executes(context -> {
+            RequiredArgumentBuilder<FabricClientCommandSource, String> arg3 = RequiredArgumentBuilder.argument("aspect_name", StringArgumentType.greedyString());
+            arg3.executes(context -> {
                 context.getSource().sendFeedback(Text.literal("Applying to all entities"));
                 String name = StringArgumentType.getString(context, "aspect_name");
                 Path folder = IOUtils.getOrCreateModFolder().resolve(name);
                 for (Entity target : MinecraftClient.getInstance().world.getEntities()) {
                     AspectManager.loadAspectFromFolder(target, folder,
-                            t -> DisplayUtils.displayError("Failed to load test avatar", t, true));
+                            t -> DisplayUtils.displayError("Failed to load aspect", t, true));
                 }
                 return 1;
             });
-            putall.then(arg2);
+            putall.then(arg3);
             aspect.then(putall);
 
             LiteralArgumentBuilder<FabricClientCommandSource> clear = literal("clear");

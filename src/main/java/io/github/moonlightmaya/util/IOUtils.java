@@ -42,6 +42,7 @@ public class IOUtils {
     /**
      * Doesn't recurse because im too dumb
      * to allow subfolders in aspects
+     * If the path doesn't exist, then returns an empty list.
      */
     public static ArrayList<File> getByExtension(Path root, String extension) {
         File file = root.toFile();
