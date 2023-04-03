@@ -387,4 +387,8 @@ public class AspectModelPart {
         });
     }
 
+    @Override
+    public String toString() {
+        return "ModelPart(" + name + ")";
+    }
 }

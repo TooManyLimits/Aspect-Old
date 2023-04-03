@@ -58,4 +58,8 @@ public class AspectEvent {
         return o;
     }
 
+    @Override
+    public String toString() {
+        return "Event(" + registered.size() + " functions)";
+    }
 }
