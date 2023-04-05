@@ -1,5 +1,7 @@
 package io.github.moonlightmaya.script.events;
 
+import io.github.moonlightmaya.script.AspectScriptHandler;
+import oshi.util.tuples.Pair;
 import petpet.external.PetPetInstance;
 import petpet.types.PetPetTable;
 
@@ -13,17 +15,17 @@ import java.util.Set;
  */
 public class EventHandler {
 
-    private Map<String, AspectEvent> events = new HashMap<>();
+    private final Map<String, AspectEvent> events = new HashMap<>();
 
     /**
      * Creates the event handler and installs it into the given instance
      */
     public EventHandler(PetPetInstance instance) {
-        PetPetTable table = new PetPetTable();
-        for (String name : EVENT_NAMES) {
-            AspectEvent event = new AspectEvent();
-            events.put(name, event);
-            table.put(name, event);
+        PetPetTable<String, AspectEvent> table = new PetPetTable<>();
+        for (Pair<String, Integer> type : EVENT_TYPES) {
+            AspectEvent event = new AspectEvent(type.getA(), type.getB());
+            events.put(type.getA(), event);
+            table.put(type.getA(), event);
         }
         instance.setGlobal("events", table);
     }
@@ -43,14 +45,14 @@ public class EventHandler {
      *
      * Public in case other mods later want to add their own new events.
      */
-    private static final Set<String> EVENT_NAMES = new HashSet<>();
-    public static void defineEvent(String name) {
-        EVENT_NAMES.add(name);
+    private static final Set<Pair<String, Integer>> EVENT_TYPES = new HashSet<>();
+    public static void defineEvent(String name, int argCount) {
+        EVENT_TYPES.add(new Pair<>(name, argCount));
     }
 
     static {
-        defineEvent("tick");
-        defineEvent("render");
+        defineEvent("tick", 0);
+        defineEvent("render", 1);
     }
 
 

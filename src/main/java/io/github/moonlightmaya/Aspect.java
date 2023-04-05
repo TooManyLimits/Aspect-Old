@@ -9,6 +9,7 @@ import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.util.RenderUtils;
 import io.github.moonlightmaya.vanilla.VanillaModelPartSorter;
 import io.github.moonlightmaya.vanilla.VanillaRenderer;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.entity.Entity;
@@ -69,18 +70,20 @@ public class Aspect {
             scripts.put(script.name(), script.source());
 
         scriptHandler = new AspectScriptHandler(this);
-        if (!scripts.isEmpty())
-            scriptHandler.runMain();
     }
 
     public void renderEntity(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, int light) {
-        scriptHandler.getEventHandler().callEvent("render");
+        scriptHandler.callEvent("render", MinecraftClient.getInstance().getTickDelta());
         matrixStack.multiply(vanillaRenderer.aspectModelTransform);
         entityRoot.render(vcp, matrixStack, light);
     }
 
     public UUID getAspectId() {
         return aspectId;
+    }
+
+    public boolean hasScripts() {
+        return scripts.size() > 0;
     }
 
     /**
@@ -96,7 +99,7 @@ public class Aspect {
      * Destroy this object and free any native resources.
      */
     public void destroy() {
-
+        //TODO
     }
 
 }

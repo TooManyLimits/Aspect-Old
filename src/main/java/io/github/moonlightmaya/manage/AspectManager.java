@@ -67,6 +67,7 @@ public class AspectManager {
      * Submits a task to apply the given Aspect to
      * the given entity. The entity's previous
      * Aspect will be destroyed, if it had one.
+     * This will also initialize the new Aspect.
      */
     public static void setAspect(UUID entityUUID, Aspect aspect) {
         clearAspect(entityUUID); //Clear the old aspect first
@@ -134,7 +135,8 @@ public class AspectManager {
             aspect.destroy();
         } else {
             //If did not complete, report error
-            errorCallback.accept(error);
+            //Error is a weird CompleteableFuture error that wraps the real error, so get cause
+            errorCallback.accept(error.getCause());
         }
     }
 
@@ -146,8 +148,8 @@ public class AspectManager {
         final int myId = cancelAspectLoading(entity.getUuid());
         new AspectImporter(folder)
                 .doImport()
-                .thenApplyAsync(mats -> new Aspect(entity, mats))
-                .whenCompleteAsync((aspect, error) -> finishLoadingTask(entity.getUuid(), myId, aspect, error, errorCallback));
+                .thenApply(mats -> new Aspect(entity, mats))
+                .whenComplete((aspect, error) -> finishLoadingTask(entity.getUuid(), myId, aspect, error, errorCallback));
     }
 
     /**

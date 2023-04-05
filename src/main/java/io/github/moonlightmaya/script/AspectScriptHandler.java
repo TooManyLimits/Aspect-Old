@@ -6,6 +6,7 @@ import io.github.moonlightmaya.script.apis.math.Vectors;
 import io.github.moonlightmaya.script.events.AspectEvent;
 import io.github.moonlightmaya.script.events.EventHandler;
 import io.github.moonlightmaya.util.DisplayUtils;
+import io.github.moonlightmaya.util.ScriptUtils;
 import org.joml.Vector2d;
 import org.joml.Vector3d;
 import org.joml.Vector4d;
@@ -39,6 +40,10 @@ public class AspectScriptHandler {
     private JavaFunction requireFunction;
 
     private EventHandler eventHandler;
+
+    private Throwable error; //Null until an error occurs
+
+    private boolean shouldPrintToChat = true; //Whether this Aspect should print its output to chat
 
     /**
      * When first creating the script handler, we will compile
@@ -92,9 +97,9 @@ public class AspectScriptHandler {
      * Set all the global variables that are needed
      */
     private void setupGlobals() {
-        //Print functions
-        instance.setGlobal("print", DisplayUtils.PRINT_FUNCTION);
-        instance.setGlobal("log", DisplayUtils.PRINT_FUNCTION);
+        //Print functions, if should print
+        instance.setGlobal("print", shouldPrintToChat ? DisplayUtils.PRINT_FUNCTION : ScriptUtils.DO_NOTHING_1_ARG);
+        instance.setGlobal("log", shouldPrintToChat ? DisplayUtils.PRINT_FUNCTION : ScriptUtils.DO_NOTHING_1_ARG);
 
         //Require
         requireFunction = setupRequire();
@@ -174,8 +179,23 @@ public class AspectScriptHandler {
         };
     }
 
-    public EventHandler getEventHandler() {
-        return eventHandler;
+    public Object callEvent(String eventName, Object... args) {
+        if (isErrored()) return null;
+        try {
+            return eventHandler.callEvent(eventName, args);
+        } catch (Throwable t) {
+            error = t;
+            DisplayUtils.displayError(t.getMessage(), shouldPrintToChat);
+            return null;
+        }
+    }
+
+    public boolean isErrored() {
+        return error != null;
+    }
+
+    public Throwable getError() {
+        return error;
     }
 
 }

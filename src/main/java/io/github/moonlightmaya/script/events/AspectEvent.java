@@ -16,6 +16,13 @@ public class AspectEvent {
     private final Set<PetPetCallable> registered = new LinkedHashSet<>();
 
     private boolean currentlyRunning;
+    private final String name;
+    private final int expectedArgCount;
+
+    public AspectEvent(String name, int expectedArgCount) {
+        this.name = name;
+        this.expectedArgCount = expectedArgCount;
+    }
 
     /**
      * Registers the given function to the event
@@ -23,8 +30,10 @@ public class AspectEvent {
      */
     @PetPetWhitelist
     public void add(PetPetCallable function) {
+        if (expectedArgCount != function.paramCount())
+            throw new PetPetException("Event " + name + " expects a " + expectedArgCount + "-arg function, but received a " + function.paramCount() + "-arg function");
         if (currentlyRunning)
-            throw new PetPetException("Cannot add to an event while inside that event!");
+            throw new PetPetException("Cannot add to an event while inside that event");
         if (!registered.add(function))
             throw new PetPetException("Attempt to register the same function to an event multiple times");
     }
