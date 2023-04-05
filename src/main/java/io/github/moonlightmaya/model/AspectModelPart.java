@@ -26,6 +26,9 @@ import java.util.Map;
 public class AspectModelPart {
     @PetPetWhitelist
     public final String name;
+    @PetPetWhitelist(forceImmutable = true)
+    public AspectModelPart parent;
+
     private final ModelPartType type;
 
     //Unsure whether these following values should use float or double precision.
@@ -39,6 +42,8 @@ public class AspectModelPart {
     public final Vector3f partPos = new Vector3f();
     public final Quaternionf partRot = new Quaternionf();
     public final Vector3f partScale = new Vector3f(1, 1, 1);
+    @PetPetWhitelist
+    public Boolean visible = null;
 
     public VanillaPart vanillaParent; //The vanilla part that this will take transforms from
 
@@ -55,17 +60,30 @@ public class AspectModelPart {
 
     public final Aspect owningAspect; //The aspect that this model part is inside
 
-    public AspectModelPart(BaseStructures.ModelPartStructure baseStructure, Aspect owningAspect) {
+    public AspectModelPart(BaseStructures.ModelPartStructure baseStructure, Aspect owningAspect, AspectModelPart parent) {
         this.owningAspect = owningAspect;
         name = baseStructure.name();
         type = baseStructure.type();
         setPos(baseStructure.pos());
         setRot(baseStructure.rot());
+        this.parent = parent;
+        if (parent == null) {
+            visible = null; //only possible for mod-generated parts, not blockbench ones
+        } else {
+            boolean parentVis = parent.recursiveParentVisibility();
+            if (parentVis == baseStructure.visible())
+                visible = null;
+            else
+                visible = baseStructure.visible();
+        }
+
         setPivot(baseStructure.pivot());
         if (baseStructure.children() != null) {
             children = new PetPetList<>(baseStructure.children().size());
-            for (BaseStructures.ModelPartStructure child : baseStructure.children())
-                children.add(new AspectModelPart(child, owningAspect)); //all children are owned by the same aspect
+            for (BaseStructures.ModelPartStructure child : baseStructure.children()) {
+                //all children are owned by the same aspect
+                children.add(new AspectModelPart(child, owningAspect, this));
+            }
         }
 
         //Cache the thread local array to avoid a map lookup on each cube vertex
@@ -87,11 +105,25 @@ public class AspectModelPart {
 
     }
 
+    /**
+     * This is a bit strange but bear with me
+     * The default value for parent in the *Base Structure* is true.
+     * Even though the constructor sets it to null, we should compare against true.
+     * This method is only used in the constructor.
+     */
+    private Boolean recursiveParentVisibility() {
+        if (parent == null) return true;
+        if (visible != null) return visible;
+        return parent.recursiveParentVisibility();
+    }
+
     public void setPos(Vector3f vec) {
         setPos(vec.x, vec.y, vec.z);
     }
+    public void setPos(Vector3d vec) {
+        setPos((float) vec.x, (float) vec.y, (float) vec.z);
+    }
 
-    @PetPetWhitelist
     public void setPos(float x, float y, float z) {
         partPos.set(x, y, z);
         needsMatrixRecalculation = true;
@@ -101,7 +133,6 @@ public class AspectModelPart {
         setPivot(vec.x, vec.y, vec.z);
     }
 
-    @PetPetWhitelist
     public void setPivot(float x, float y, float z) {
         partPivot.set(x, y, z);
         needsMatrixRecalculation = true;
@@ -115,7 +146,6 @@ public class AspectModelPart {
         setScale(s, s, s);
     }
 
-    @PetPetWhitelist
     public void setScale(float x, float y, float z) {
         partScale.set(x, y, z);
         needsMatrixRecalculation = true;
@@ -125,7 +155,6 @@ public class AspectModelPart {
         setRot(vec.x, vec.y, vec.z);
     }
 
-    @PetPetWhitelist
     public void setRot(float x, float y, float z) {
         float s = (float) (Math.PI / 180);
         partRot.identity().rotationXYZ(x * s, y * s, z * s);
@@ -133,6 +162,11 @@ public class AspectModelPart {
     }
 
     public void setRot(Quaternionf rot) {
+        partRot.set(rot);
+        needsMatrixRecalculation = true;
+    }
+
+    public void setRot(Quaterniond rot) {
         partRot.set(rot);
         needsMatrixRecalculation = true;
     }
@@ -290,12 +324,14 @@ public class AspectModelPart {
      * Depending on whether we're in optimized or compatible mode, the provided matrixStack may also be
      * different.
      *
+     * Visibility defaults to true for the moment, at the root. May change in the future.
+     *
      * The light level is the default light level to render the model part "root" at.
      * In the future, this may be overridden by specific model part customizations.
      */
     public void render(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, int light) {
         List<RenderLayer> defaultLayers = DEFAULT_LAYERS;
-        renderInternal(vcp, defaultLayers, matrixStack, light);
+        renderInternal(vcp, defaultLayers, matrixStack, true, light);
     }
 
     /**
@@ -310,11 +346,15 @@ public class AspectModelPart {
             VertexConsumerProvider vcp, //The VCP used for this rendering call, where we will fetch buffers from using the render layers.
             List<RenderLayer> currentRenderLayers, //The current set of render layers for the part. Inherited from the parent if this.renderLayers is null.
             AspectMatrixStack matrixStack, //The current matrix stack.
+            boolean visible, //Current visibility of the part. Just like render layers, inherited from parent if this.visible is null.
             int light //The light level of the entity wearing the aspect. Inherited from the parent always (for the time being)
     ) {
         //If this model part's layers are not null, then set the current ones to our overrides. Otherwise, keep the parent's render layers.
         if (this.renderLayers != null)
             currentRenderLayers = this.renderLayers;
+        //Likewise for visibility.
+        if (this.visible != null)
+            visible = this.visible;
 
         //Push and transform the stack, if necessary
         if (hasVertexData() || hasChildren()) {
@@ -324,7 +364,8 @@ public class AspectModelPart {
             matrixStack.multiply(positionMatrix, normalMatrix);
         }
 
-        if (hasVertexData()) {
+        //Render the part only if it's visible and has vertex data
+        if (hasVertexData() && visible) {
             for (RenderLayer layer : currentRenderLayers) {
                 //Obtain a vertex buffer from the VCP, then put all our vertices into it.
                 VertexConsumer buffer = vcp.getBuffer(layer);
@@ -348,7 +389,7 @@ public class AspectModelPart {
         //If there are children, render them all too
         if (hasChildren()) {
             for (AspectModelPart child : children) {
-                child.renderInternal(vcp, currentRenderLayers, matrixStack, light);
+                child.renderInternal(vcp, currentRenderLayers, matrixStack, visible, light);
             }
         }
 
@@ -373,6 +414,65 @@ public class AspectModelPart {
     //----------PETPET FUNCTIONS----------//
     //----------PETPET FUNCTIONS----------//
 
+    //Setters
+    @PetPetWhitelist
+    public AspectModelPart pos_3(double x, double y, double z) {
+        setPos((float) x, (float) y, (float) z);
+        return this;
+    }
+    @PetPetWhitelist
+    public AspectModelPart pos_1(Vector3d v) {
+        return pos_3(v.x, v.y, v.z);
+    }
+
+    @PetPetWhitelist
+    public AspectModelPart rot_3(double x, double y, double z) {
+        setRot((float) x, (float) y, (float) z);
+        return this;
+    }
+    @PetPetWhitelist
+    public AspectModelPart rot_1(Object r) {
+        if (r instanceof Quaterniond quat) {
+            setRot(quat);
+            return this;
+        } else if (r instanceof Vector3d v) {
+            return rot_3(v.x, v.y, v.z);
+        }
+        //Wish I could get the PetPetClass's name, but this will have to do
+        throw new PetPetException("Attempt to call rot() with object that is not vec3 or quat. type is " + r.getClass().getSimpleName());
+    }
+
+    @PetPetWhitelist
+    public AspectModelPart scale_3(double x, double y, double z) {
+        setScale((float) x, (float) y, (float) z);
+        return this;
+    }
+    @PetPetWhitelist
+    public AspectModelPart scale_1(Vector3d v) {
+        return scale_3(v.x, v.y, v.z);
+    }
+    @PetPetWhitelist
+    public AspectModelPart piv_3(double x, double y, double z) {
+        setPivot((float) x, (float) y, (float) z);
+        return this;
+    }
+    @PetPetWhitelist
+    public AspectModelPart piv_1(Vector3d v) {
+        return piv_3(v.x, v.y, v.z);
+    }
+
+    @PetPetWhitelist
+    public String bbType() {
+        return type.name();
+    }
+
+    @PetPetWhitelist
+    public PetPetList<AspectModelPart> getChildren() {
+        PetPetList<AspectModelPart> childrenCopy = new PetPetList<>();
+        childrenCopy.addAll(children);
+        return childrenCopy;
+    }
+
     private HashMap<String, AspectModelPart> cachedPartMap;
     @PetPetWhitelist
     public AspectModelPart __get_str(String arg) {
@@ -385,6 +485,13 @@ public class AspectModelPart {
             }
             return null;
         });
+    }
+
+    @PetPetWhitelist
+    public AspectModelPart __get_num(int arg) {
+        if (children == null) return null;
+        if (arg < 0 || arg >= children.size()) return null;
+        return children.get(arg);
     }
 
     @Override

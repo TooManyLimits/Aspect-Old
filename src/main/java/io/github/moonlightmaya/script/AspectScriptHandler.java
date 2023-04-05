@@ -2,9 +2,13 @@ package io.github.moonlightmaya.script;
 
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.model.AspectModelPart;
+import io.github.moonlightmaya.script.apis.math.Vectors;
 import io.github.moonlightmaya.script.events.AspectEvent;
 import io.github.moonlightmaya.script.events.EventHandler;
 import io.github.moonlightmaya.util.DisplayUtils;
+import org.joml.Vector2d;
+import org.joml.Vector3d;
+import org.joml.Vector4d;
 import petpet.external.PetPetInstance;
 import petpet.external.PetPetReflector;
 import petpet.lang.compile.Compiler;
@@ -70,12 +74,18 @@ public class AspectScriptHandler {
      * Register the different types which are allowed
      */
     private void registerTypes() {
+        //Math
+        instance.registerClass(Vector2d.class, Vectors.VEC_2);
+        instance.registerClass(Vector3d.class, Vectors.VEC_3);
+        instance.registerClass(Vector4d.class, Vectors.VEC_4);
+
         //Events
         instance.registerClass(AspectEvent.class, PetPetReflector.reflect(AspectEvent.class, "Event"));
 
         //Model Parts
         //instance.registerClass(WorldRootModelPart.class, PetPetReflector.reflect(WorldRootModelPart.class, "WorldRootModelPart"));
         instance.registerClass(AspectModelPart.class, PetPetReflector.reflect(AspectModelPart.class, "ModelPart"));
+
     }
 
     /**

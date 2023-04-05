@@ -24,7 +24,7 @@ public class WorldRootModelPart extends AspectModelPart {
     public final Vector3d worldPos = new Vector3d();
 
     public WorldRootModelPart(BaseStructures.ModelPartStructure nbt, Aspect owningAspect) {
-        super(nbt, owningAspect);
+        super(nbt, owningAspect, null);
     }
 
     public void setWorldPos(Vector3d pos) {

@@ -56,7 +56,7 @@ public class Aspect {
             vanillaRenderer.initVanillaParts(VanillaModelPartSorter.getModelInfo(model));
         }
 
-        entityRoot = new AspectModelPart(materials.entityRoot(), this);
+        entityRoot = new AspectModelPart(materials.entityRoot(), this, null);
         worldRoots = new ArrayList<>(materials.worldRoots().size());
 
         for (BaseStructures.ModelPartStructure worldRoot : materials.worldRoots())

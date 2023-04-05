@@ -29,7 +29,7 @@ public class JsonStructures {
 
     public record Resolution(int width, int height) {}
 
-    public record Part(String name, float color, Vector3f origin, Vector3f rotation, boolean visibility, String type,
+    public record Part(String name, float color, Vector3f origin, Vector3f rotation, Boolean visibility, String type,
                        String uuid, Vector3f from, Vector3f to, CubeFaces faces, JsonStructures.Part[] children) {
             public BaseStructures.ModelPartStructure toBaseStructure(List<Integer> texMapper, Resolution resolution) throws AspectImporter.AspectImporterException {
                 List<BaseStructures.CubeFaces> faces = null;
@@ -43,13 +43,13 @@ public class JsonStructures {
                         List<BaseStructures.ModelPartStructure> splitCubes = new ArrayList<>(n);
                         for (int i = 0; i < n; i++) {
                             splitCubes.add(new BaseStructures.ModelPartStructure(
-                                "split" + i, new Vector3f(), new Vector3f(), new Vector3f(), visibility, null,
+                                "split" + i, new Vector3f(), new Vector3f(), new Vector3f(), visibility == null ? true : visibility, null,
                                 type != null ? AspectModelPart.ModelPartType.valueOf(type.toUpperCase()) : AspectModelPart.ModelPartType.GROUP,
                                 new BaseStructures.CubeData(from, to, faces.get(i))
                             ));
                         }
                         return new BaseStructures.ModelPartStructure(
-                                name, new Vector3f(), rotation == null ? new Vector3f() : rotation, origin, visibility,
+                                name, new Vector3f(), rotation == null ? new Vector3f() : rotation, origin, visibility == null ? true : visibility,
                                 splitCubes, AspectModelPart.ModelPartType.GROUP, null
                         );
                     }
@@ -61,7 +61,7 @@ public class JsonStructures {
                         baseChildren.add(p.toBaseStructure(texMapper, resolution));
 
                 return new BaseStructures.ModelPartStructure(
-                        name, new Vector3f(), rotation == null ? new Vector3f() : rotation, origin, visibility,
+                        name, new Vector3f(), rotation == null ? new Vector3f() : rotation, origin, visibility == null ? true : visibility,
                         baseChildren,
                         type != null ? AspectModelPart.ModelPartType.valueOf(type.toUpperCase()) : AspectModelPart.ModelPartType.GROUP,
                         (faces != null && faces.size() == 1) ? new BaseStructures.CubeData(from, to, faces.get(0)) : null
@@ -159,7 +159,7 @@ public class JsonStructures {
                         ctx.deserialize(json.get("color"), float.class),
                         ctx.deserialize(json.get("origin"), Vector3f.class),
                         ctx.deserialize(json.get("rotation"), Vector3f.class),
-                        ctx.deserialize(json.get("visibility"), boolean.class),
+                        ctx.deserialize(json.get("visibility"), Boolean.class),
                         ctx.deserialize(json.get("type"), String.class),
                         ctx.deserialize(json.get("uuid"), String.class),
                         ctx.deserialize(json.get("from"), Vector3f.class),
