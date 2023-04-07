@@ -21,11 +21,21 @@ public class DisplayUtils {
 
     public static void displayError(String message, Throwable error, boolean reportToChat) {
         AspectMod.LOGGER.error(message + ": ", error);
-        if (reportToChat)
+        if (reportToChat) {
+            String errorMessage = error.getMessage();
+            while (errorMessage == null) {
+                error = error.getCause();
+                if (error != null)
+                    errorMessage = error.getMessage();
+                else
+                    errorMessage = "Unknown cause, check console";
+            }
             MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(
-                    Text.literal(message + ": " + error.getMessage())
+                    Text.literal(message + ": " + errorMessage)
                             .formatted(Formatting.RED)
             );
+        }
+
     }
 
 

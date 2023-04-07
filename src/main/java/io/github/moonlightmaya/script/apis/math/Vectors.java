@@ -116,6 +116,11 @@ public class Vectors {
             registerHelperCType("sub_1", "sub");
             registerHelperDType("sub", "sub");
 
+            //tf for transform, "transform" is a long word
+            VEC_2.addMethod("tf", new JavaFunction(Vector2d.class, "mul", true, Matrix2dc.class));
+            VEC_3.addMethod("tf", new JavaFunction(Vector3d.class, "mul", true, Matrix3dc.class));
+            VEC_4.addMethod("tf", new JavaFunction(Vector4d.class, "mul", true, Matrix4dc.class));
+
             //JOML is extremely weird and they have lots and lots and lots of inconsistencies all over the place...
             //For instance, take the "div" function.
             //All of the other operations, add, sub, mul, they take a VectorNdc as their argument.

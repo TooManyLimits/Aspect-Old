@@ -3,6 +3,7 @@ package io.github.moonlightmaya.script;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.model.WorldRootModelPart;
+import io.github.moonlightmaya.script.apis.math.Matrices;
 import io.github.moonlightmaya.script.apis.math.Vectors;
 import io.github.moonlightmaya.script.events.AspectEvent;
 import io.github.moonlightmaya.script.events.EventHandler;
@@ -10,9 +11,7 @@ import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.ScriptUtils;
 import io.github.moonlightmaya.vanilla.VanillaPart;
 import io.github.moonlightmaya.vanilla.VanillaRenderer;
-import org.joml.Vector2d;
-import org.joml.Vector3d;
-import org.joml.Vector4d;
+import org.joml.*;
 import petpet.external.PetPetInstance;
 import petpet.external.PetPetReflector;
 import petpet.lang.compile.Compiler;
@@ -106,6 +105,9 @@ public class AspectScriptHandler {
         instance.registerClass(Vector2d.class, Vectors.VEC_2);
         instance.registerClass(Vector3d.class, Vectors.VEC_3);
         instance.registerClass(Vector4d.class, Vectors.VEC_4);
+        instance.registerClass(Matrix2d.class, Matrices.MAT_2);
+        instance.registerClass(Matrix3d.class, Matrices.MAT_3);
+        instance.registerClass(Matrix4d.class, Matrices.MAT_4);
 
         //Events
         instance.registerClass(AspectEvent.class, PetPetReflector.reflect(AspectEvent.class, "Event"));
