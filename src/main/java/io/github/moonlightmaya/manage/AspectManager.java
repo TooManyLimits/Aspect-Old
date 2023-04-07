@@ -4,8 +4,9 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.data.importing.AspectImporter;
-import io.github.moonlightmaya.util.DisplayUtils;
+import io.github.moonlightmaya.util.EntityUtils;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ public class AspectManager {
     /**
      * Global map from entity UUIDs to complete Aspect instances.
      */
-    private static final Map<UUID, Aspect> ENTITY_ASPECTS = new HashMap<>();
+    private static final Map<UUID, Aspect> ASPECTS = new HashMap<>();
 
     /**
      * A queue of all tasks which need to be done relating to avatar management.
@@ -52,6 +53,24 @@ public class AspectManager {
         while (!TASKS.isEmpty()) {
             TASKS.poll().run(); //Poll the task and run it
         }
+
+        //Tick each Aspect
+        for (Aspect aspect : ASPECTS.values()) {
+            ClientWorld world = MinecraftClient.getInstance().world;
+            if (world != null) {
+                Entity user = EntityUtils.getEntityByUUID(world, aspect.userUUID);
+                if (user != null) {
+                    if (!aspect.entityEverLoaded) {
+                        //If entity was never loaded before, run this
+                        aspect.onEntityFirstLoad(user);
+                        aspect.entityEverLoaded = true;
+                    }
+                    aspect.scriptHandler.callEvent("tick");
+                }
+                aspect.entityWasLoaded = user != null;
+                aspect.scriptHandler.callEvent("world_tick");
+            }
+        }
     }
 
     /**
@@ -59,8 +78,8 @@ public class AspectManager {
      * If the entity has no equipped aspect, returns null.
      */
     @Nullable
-    public static Aspect getAspect(UUID entityUUID) {
-        return ENTITY_ASPECTS.get(entityUUID);
+    public static Aspect getAspect(UUID uuid) {
+        return ASPECTS.get(uuid);
     }
 
     /**
@@ -71,7 +90,12 @@ public class AspectManager {
      */
     public static void setAspect(UUID entityUUID, Aspect aspect) {
         clearAspect(entityUUID); //Clear the old aspect first
-        TASKS.add(() -> ENTITY_ASPECTS.put(entityUUID, aspect)); //Then apply the new aspect
+        TASKS.add(() -> {
+            //Put the aspect in the map
+            ASPECTS.put(entityUUID, aspect);
+            //Also run the main script if it exists
+            aspect.scriptHandler.runMain();
+        }); //Then apply the new aspect
     }
 
     /**
@@ -80,7 +104,7 @@ public class AspectManager {
      */
     public static void clearAspect(UUID entityUUID) {
         TASKS.add(() -> {
-            Aspect oldAspect = ENTITY_ASPECTS.remove(entityUUID);
+            Aspect oldAspect = ASPECTS.remove(entityUUID);
             if (oldAspect != null) oldAspect.destroy(); //destroy the old aspect
         });
     }
@@ -90,9 +114,9 @@ public class AspectManager {
      */
     public static void clearAllAspects() {
         TASKS.add(() -> {
-            for (Aspect aspect : ENTITY_ASPECTS.values())
+            for (Aspect aspect : ASPECTS.values())
                 aspect.destroy();
-            ENTITY_ASPECTS.clear();
+            ASPECTS.clear();
         });
     }
 
@@ -122,13 +146,13 @@ public class AspectManager {
         return IN_PROGRESS_TIMESTAMPS.get(entityUUID).incrementAndGet();
     }
 
-    private static void finishLoadingTask(UUID entityUUID, int requestId, Aspect aspect,
+    private static void finishLoadingTask(UUID userUUID, int requestId, Aspect aspect,
                                           Throwable error, Consumer<Throwable> errorCallback) {
         if (error == null) {
             //Check if this was the most recent request
-            if (IN_PROGRESS_TIMESTAMPS.get(entityUUID).get() == requestId) {
+            if (IN_PROGRESS_TIMESTAMPS.get(userUUID).get() == requestId) {
                 //If so, then submit the task to set aspect:
-                setAspect(entityUUID, aspect);
+                setAspect(userUUID, aspect);
             }
             //Otherwise, this request is outdated. Destroy the aspect
             //and do not set it.
@@ -143,26 +167,26 @@ public class AspectManager {
     /**
      * Load an aspect from a local file system folder
      */
-    public static void loadAspectFromFolder(Entity entity, Path folder, Consumer<Throwable> errorCallback) {
+    public static void loadAspectFromFolder(UUID userUUID, Path folder, Consumer<Throwable> errorCallback) {
         //Save my id.
-        final int myId = cancelAspectLoading(entity.getUuid());
+        final int myId = cancelAspectLoading(userUUID);
         new AspectImporter(folder)
-                .doImport()
-                .thenApply(mats -> new Aspect(entity, mats))
-                .whenComplete((aspect, error) -> finishLoadingTask(entity.getUuid(), myId, aspect, error, errorCallback));
+                .doImport() //doImport is asynchronous, so the following steps will be as well
+                .thenApply(mats -> new Aspect(userUUID, mats))
+                .whenComplete((aspect, error) -> finishLoadingTask(userUUID, myId, aspect, error, errorCallback));
     }
 
     /**
      * Load an aspect from binary data
      */
-    public static void loadAspectFromData(Entity entity, byte[] data, Consumer<Throwable> errorCallback) {
-        final int myId = cancelAspectLoading(entity.getUuid());
+    public static void loadAspectFromData(UUID userUUID, byte[] data, Consumer<Throwable> errorCallback) {
+        final int myId = cancelAspectLoading(userUUID);
         CompletableFuture.supplyAsync(() -> data)
                 .thenApply(ByteArrayInputStream::new)
                 .thenApply(DataInputStream::new)
                 .thenApply(BaseStructures.AspectStructure::read)
-                .thenApply(mats -> new Aspect(entity, mats))
-                .whenComplete((aspect, error) -> finishLoadingTask(entity.getUuid(), myId, aspect, error, errorCallback));
+                .thenApply(mats -> new Aspect(userUUID, mats))
+                .whenComplete((aspect, error) -> finishLoadingTask(userUUID, myId, aspect, error, errorCallback));
     }
 
 }

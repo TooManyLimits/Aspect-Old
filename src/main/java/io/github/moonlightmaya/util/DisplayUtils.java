@@ -23,7 +23,7 @@ public class DisplayUtils {
         AspectMod.LOGGER.error(message + ": ", error);
         if (reportToChat)
             MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(
-                    Text.literal(message + ": " + error)
+                    Text.literal(message + ": " + error.getMessage())
                             .formatted(Formatting.RED)
             );
     }

@@ -2,11 +2,14 @@ package io.github.moonlightmaya.script;
 
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.model.AspectModelPart;
+import io.github.moonlightmaya.model.WorldRootModelPart;
 import io.github.moonlightmaya.script.apis.math.Vectors;
 import io.github.moonlightmaya.script.events.AspectEvent;
 import io.github.moonlightmaya.script.events.EventHandler;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.ScriptUtils;
+import io.github.moonlightmaya.vanilla.VanillaPart;
+import io.github.moonlightmaya.vanilla.VanillaRenderer;
 import org.joml.Vector2d;
 import org.joml.Vector3d;
 import org.joml.Vector4d;
@@ -18,6 +21,7 @@ import petpet.lang.parse.Parser;
 import petpet.lang.run.JavaFunction;
 import petpet.lang.run.PetPetClosure;
 import petpet.lang.run.PetPetException;
+import petpet.types.PetPetList;
 import petpet.types.PetPetTable;
 
 import java.util.HashMap;
@@ -71,8 +75,27 @@ public class AspectScriptHandler {
      * Run the "main" script!
      */
     public void runMain() {
-        String main = "main";
-        requireFunction.call(main);
+        //If there are no compiled scripts, just do nothing
+        if (compiledScripts.size() > 0) {
+            String main = "main"; //Maybe changeable later
+            try {
+                requireFunction.call(main);
+            } catch (Throwable t) {
+                error = t;
+                DisplayUtils.displayError(t.getMessage(), shouldPrintToChat);
+            }
+        }
+    }
+
+    PetPetTable<String, Object> modelsTable = new PetPetTable<>();
+
+    /**
+     * When the user of the Aspect this script handler is for
+     * first loads in, we add the related fields into the script environment.
+     */
+    public void onEntityFirstLoad() {
+        modelsTable.put("vanilla", aspect.vanillaRenderer);
+        modelsTable.put("entity", aspect.entityRoot);
     }
 
     /**
@@ -88,9 +111,12 @@ public class AspectScriptHandler {
         instance.registerClass(AspectEvent.class, PetPetReflector.reflect(AspectEvent.class, "Event"));
 
         //Model Parts
-        //instance.registerClass(WorldRootModelPart.class, PetPetReflector.reflect(WorldRootModelPart.class, "WorldRootModelPart"));
+        instance.registerClass(WorldRootModelPart.class, PetPetReflector.reflect(WorldRootModelPart.class, "WorldRootModelPart"));
         instance.registerClass(AspectModelPart.class, PetPetReflector.reflect(AspectModelPart.class, "ModelPart"));
 
+        //Vanilla renderer
+        instance.registerClass(VanillaRenderer.class, PetPetReflector.reflect(VanillaRenderer.class, "VanillaRenderer"));
+        instance.registerClass(VanillaPart.class, PetPetReflector.reflect(VanillaPart.class, "VanillaPart"));
     }
 
     /**
@@ -106,16 +132,18 @@ public class AspectScriptHandler {
         instance.setGlobal("require", requireFunction);
 
         //Models
-        PetPetTable models = new PetPetTable();
-        models.put("entity", aspect.entityRoot);
-        instance.setGlobal("models", models);
+        instance.setGlobal("models", modelsTable);
+
+        //World roots in models
+        PetPetList<WorldRootModelPart> worldRoots = new PetPetList<>(aspect.worldRoots.size());
+        worldRoots.addAll(aspect.worldRoots);
+        modelsTable.put("world", worldRoots);
 
         //Events
         //Code for events is all inside EventHandler, which
         //deals with creating the events and also adding it
         //as a global variable
         eventHandler = new EventHandler(instance);
-
     }
 
     /**

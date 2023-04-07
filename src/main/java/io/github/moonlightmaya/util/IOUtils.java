@@ -38,6 +38,11 @@ public class IOUtils {
         return path;
     }
 
+    public static String trimPathStringToModFolder(Path p) {
+        Path modFolder = getOrCreateModFolder();
+        if (modFolder == null) return "<Error finding/creating mod folder>";
+        return modFolder.relativize(p).toString();
+    }
 
     /**
      * Doesn't recurse because im too dumb

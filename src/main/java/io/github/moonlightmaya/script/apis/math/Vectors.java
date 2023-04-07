@@ -411,7 +411,4 @@ public class Vectors {
         };
     }
 
-
-
-
 }

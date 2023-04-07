@@ -51,7 +51,9 @@ public class EventHandler {
     }
 
     static {
+        defineEvent("world_tick", 0);
         defineEvent("tick", 0);
+        defineEvent("world_render", 1);
         defineEvent("render", 1);
     }
 

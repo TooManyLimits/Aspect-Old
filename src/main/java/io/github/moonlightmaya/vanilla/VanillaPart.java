@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import petpet.external.PetPetWhitelist;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.stream.Stream;
 /**
  * Interface for an aspect to interact with vanilla ModelPart objects
  */
+@PetPetWhitelist
 public class VanillaPart {
 
     public final ModelPart referencedPart;
@@ -82,5 +84,16 @@ public class VanillaPart {
             inverseDefaultTransform.rotate(new Quaternionf().rotationZYX(roll, yaw, pitch));
         }
         inverseDefaultTransform.invert();
+    }
+
+    // @PetPetWhitelist
+    // public Matrix4d getMatrix() {/*TODO*/}
+
+    // @PetPetWhitelist
+    // public Matrix4d setMatrix() {/*TODO*/}
+
+    @PetPetWhitelist
+    public VanillaPart __get_str(String s) {
+        return children.get(s);
     }
 }

@@ -67,9 +67,9 @@ public class VanillaModelPartSorter {
             }
 
             //In the default case we'll still store the model parts, just with default number keys
-            int i = 0;
-            while (bodyParts.hasNext()) result.put(i, bodyParts.next());
-            while (headParts.hasNext()) result.put(i, headParts.next());
+            double i = 0;
+            while (bodyParts.hasNext()) result.put(i++, bodyParts.next());
+            while (headParts.hasNext()) result.put(i++, headParts.next());
 
         } else if (model instanceof SinglePartEntityModel<?> singlePart) {
             //Single part models just have a single part :p

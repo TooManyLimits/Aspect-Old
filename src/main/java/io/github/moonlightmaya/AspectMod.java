@@ -57,7 +57,7 @@ public class AspectMod implements ClientModInitializer {
             arg.executes(context -> {
                 Entity player = MinecraftClient.getInstance().player;
                 String name = StringArgumentType.getString(context, "aspect_name");
-                AspectManager.loadAspectFromFolder(player, IOUtils.getOrCreateModFolder().resolve(name),
+                AspectManager.loadAspectFromFolder(player.getUuid(), IOUtils.getOrCreateModFolder().resolve(name),
                         t -> DisplayUtils.displayError("Failed to load aspect", t, true));
                 return 1;
             });
@@ -72,7 +72,7 @@ public class AspectMod implements ClientModInitializer {
                 if (target != null) {
                     String name = StringArgumentType.getString(context, "aspect_name");
                     context.getSource().sendFeedback(Text.literal("Applying to " + target.getName()));
-                    AspectManager.loadAspectFromFolder(target, IOUtils.getOrCreateModFolder().resolve(name),
+                    AspectManager.loadAspectFromFolder(target.getUuid(), IOUtils.getOrCreateModFolder().resolve(name),
                             t -> DisplayUtils.displayError("Failed to load aspect", t, true));
                     return 1;
                 } else {
@@ -90,7 +90,7 @@ public class AspectMod implements ClientModInitializer {
                 String name = StringArgumentType.getString(context, "aspect_name");
                 Path folder = IOUtils.getOrCreateModFolder().resolve(name);
                 for (Entity target : MinecraftClient.getInstance().world.getEntities()) {
-                    AspectManager.loadAspectFromFolder(target, folder,
+                    AspectManager.loadAspectFromFolder(target.getUuid(), folder,
                             t -> DisplayUtils.displayError("Failed to load aspect", t, true));
                 }
                 return 1;

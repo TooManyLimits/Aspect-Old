@@ -15,16 +15,25 @@ import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.entity.Entity;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * An entity can equip one or more Aspects, which will alter the entity's physical appearance.
  */
 public class Aspect {
 
-    //Variables temporarily public for testing
-    public final AspectModelPart entityRoot;
-    public final List<WorldRootModelPart> worldRoots;
+    /**
+     * The roots of the different model part instances, as well as their temporarily held data.
+     * The data is saved from when the Aspect instance is first constructed. Then, when the user of the
+     * Aspect loads in for the first time, the data is converted into the model parts themselves, and the
+     * data is discarded.
+     */
+    public AspectModelPart entityRoot; private BaseStructures.ModelPartStructure entityRootData;
+    public List<WorldRootModelPart> worldRoots;
+
+
     public final List<AspectTexture> textures;
 
     public final Map<String, String> scripts;
@@ -32,11 +41,14 @@ public class Aspect {
     public final VanillaRenderer vanillaRenderer = new VanillaRenderer();
     public final AspectScriptHandler scriptHandler;
 
-    public final Entity user; //the entity using this aspect
+    //The uuid of the entity using this aspect. Even if the entity itself is unloaded, the aspect itself lives on,
+    //and the Aspect is attached to the UUID rather than the actual entity.
+    public final UUID userUUID;
+
     public final UUID aspectId; //uuid of this aspect itself
 
-    public Aspect(Entity user, BaseStructures.AspectStructure materials) {
-        this.user = user;
+    public Aspect(UUID userUUID, BaseStructures.AspectStructure materials) {
+        this.userUUID = userUUID;
         this.aspectId = UUID.randomUUID();
 
         //Load textures first, needed for making model parts
@@ -51,15 +63,12 @@ public class Aspect {
             }
         }
 
-        //Also grab vanilla model data for the entity
-        EntityModel<?> model = RenderUtils.getModel(user);
-        if (model != null) {
-            vanillaRenderer.initVanillaParts(VanillaModelPartSorter.getModelInfo(model));
-        }
+        //Save the entity root data
+        entityRootData = materials.entityRoot();
 
-        entityRoot = new AspectModelPart(materials.entityRoot(), this, null);
+        //World roots don't need the entity itself. Since they render as part of the world,
+        //They cannot interact with vanilla model parents (at least through parent types).
         worldRoots = new ArrayList<>(materials.worldRoots().size());
-
         for (BaseStructures.ModelPartStructure worldRoot : materials.worldRoots())
             worldRoots.add(new WorldRootModelPart(worldRoot, this));
 
@@ -72,6 +81,29 @@ public class Aspect {
         scriptHandler = new AspectScriptHandler(this);
     }
 
+    /**
+     * When the entity first loads in, this aspect should finish creating its model.
+     * The following booleans are based on:
+     * - Whether the entity was loaded last tick
+     * - Whether the entity was ever loaded before
+     */
+    public boolean entityWasLoaded;
+    public boolean entityEverLoaded;
+    public void onEntityFirstLoad(Entity user) {
+        //Generate vanilla data for parent part purposes
+        EntityModel<?> model = RenderUtils.getModel(user);
+        if (model != null) {
+            vanillaRenderer.initVanillaParts(VanillaModelPartSorter.getModelInfo(model));
+        }
+
+        //Discard the data after, no longer needed
+        entityRoot = new AspectModelPart(entityRootData, this, null);
+        entityRootData = null;
+
+        //Notify the script
+        scriptHandler.onEntityFirstLoad();
+    }
+
     public void renderEntity(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, int light) {
         scriptHandler.callEvent("render", MinecraftClient.getInstance().getTickDelta());
         matrixStack.multiply(vanillaRenderer.aspectModelTransform);
@@ -82,8 +114,13 @@ public class Aspect {
         return aspectId;
     }
 
-    public boolean hasScripts() {
-        return scripts.size() > 0;
+    /**
+     * Runs the main script if it exists
+     */
+    public void runScript() {
+        if (scripts.size() > 0) {
+            scriptHandler.runMain();
+        }
     }
 
     /**

@@ -46,10 +46,10 @@ public class AspectImporter {
         CompletableFuture.runAsync(() -> {
             try {
                 if (!Files.exists(rootPath))
-                    throw new AspectImporterException("Folder " + rootPath + " does not exist");
+                    throw new AspectImporterException("Folder " + IOUtils.trimPathStringToModFolder(rootPath) + " does not exist");
 
                 if (!Files.exists(rootPath.resolve("aspect.json")))
-                    throw new AspectImporterException("Folder " + rootPath + " has no aspect.json");
+                    throw new AspectImporterException("Folder " + IOUtils.trimPathStringToModFolder(rootPath) + " has no aspect.json");
 
                 //Read the globally shared textures to here
                 textures = getTextures();

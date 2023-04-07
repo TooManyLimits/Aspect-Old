@@ -3,8 +3,12 @@ package io.github.moonlightmaya.vanilla;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.util.MathUtils;
 import net.minecraft.client.model.ModelPart;
+import org.joml.Matrix4d;
 import org.joml.Matrix4f;
+import org.joml.Vector3d;
 import org.joml.Vector3f;
+import petpet.external.PetPetWhitelist;
+import petpet.types.PetPetTable;
 
 import java.util.*;
 
@@ -12,6 +16,7 @@ import java.util.*;
  * Meant to interface with elements of an EntityRenderer
  * or one of its subclasses.
  */
+@PetPetWhitelist
 public class VanillaRenderer {
 
     /**
@@ -58,8 +63,8 @@ public class VanillaRenderer {
      * wearing this aspect. These are calculated once for an aspect when it is
      * seen, and then not again until some kind of reload occurs.
      */
-    public Map<Object, VanillaPart> vanillaParts;
-    public Map<ModelPart, VanillaPart> vanillaPartInverse;
+    public Map<Object, VanillaPart> vanillaParts = new HashMap<>();
+    public Map<ModelPart, VanillaPart> vanillaPartInverse = new HashMap<>();
 
     /**
      * Generate the map from objects to root vanilla parts.
@@ -71,9 +76,7 @@ public class VanillaRenderer {
      * across multiple Aspects.
      */
     public void initVanillaParts(Map<Object, ModelPart> vanillaModel) {
-        //Create vanilla part map from the vanilla model data
-        vanillaParts = new HashMap<>();
-        vanillaPartInverse = new HashMap<>();
+        //Fill vanilla part map from the vanilla model data
         for (Map.Entry<Object, ModelPart> entry : vanillaModel.entrySet()) {
             if (vanillaPartInverse.containsKey(entry.getValue())) {
                 //Make sure to use the same underlying part for aliases
@@ -84,6 +87,20 @@ public class VanillaRenderer {
                 newPart.traverse().forEach(p -> vanillaPartInverse.put(p.referencedPart, p));
             }
         }
+        //Set the petpet field
+        parts = new PetPetTable<>();
+        parts.putAll(vanillaParts);
     }
 
+    //PETPET METHODS
+    @PetPetWhitelist(forceImmutable = true)
+    public PetPetTable<Object, VanillaPart> parts; //Set by initVanillaParts()
+
+//    @PetPetWhitelist
+//    public Matrix4d getMatrix() {/*TODO*/}
+
+    @PetPetWhitelist
+    public Vector3d getOffset() {
+        return new Vector3d(renderOffset);
+    }
 }
