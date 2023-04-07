@@ -45,6 +45,7 @@ public class AspectModelPart {
     @PetPetWhitelist
     public Boolean visible = null;
 
+    @PetPetWhitelist
     public VanillaPart vanillaParent; //The vanilla part that this will take transforms from
 
     //Whether this part needs its matrix recalculated. After calling rot(), pos(), etc. this will be set to true.
@@ -92,16 +93,17 @@ public class AspectModelPart {
         if (baseStructure.cubeData() != null)
             genCubeRenderData(baseStructure.cubeData());
 
-        if (type == ModelPartType.GROUP) {
-            for (Map.Entry<Object, VanillaPart> entry : owningAspect.vanillaRenderer.vanillaParts.entrySet()) {
-                if (entry.getKey() instanceof String str) {
-                    if (name.substring(0, Math.min(str.length(), name.length())).equalsIgnoreCase(str)) {
-                        vanillaParent = entry.getValue();
-                        break;
-                    }
-                }
-            }
-        }
+        //Perhaps not necessary, and can be done through a petpet script run at startup!
+//        if (type == ModelPartType.GROUP) {
+//            for (Map.Entry<Object, VanillaPart> entry : owningAspect.vanillaRenderer.vanillaParts.entrySet()) {
+//                if (entry.getKey() instanceof String str) {
+//                    if (name.substring(0, Math.min(str.length(), name.length())).equalsIgnoreCase(str)) {
+//                        vanillaParent = entry.getValue();
+//                        break;
+//                    }
+//                }
+//            }
+//        }
 
     }
 
@@ -471,6 +473,12 @@ public class AspectModelPart {
         PetPetList<AspectModelPart> childrenCopy = new PetPetList<>();
         childrenCopy.addAll(children);
         return childrenCopy;
+    }
+
+    @PetPetWhitelist
+    public AspectModelPart vanillaParent(VanillaPart vanillaPart) {
+        vanillaParent = vanillaPart;
+        return this;
     }
 
     private HashMap<String, AspectModelPart> cachedPartMap;

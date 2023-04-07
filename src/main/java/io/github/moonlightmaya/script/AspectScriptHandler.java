@@ -94,7 +94,7 @@ public class AspectScriptHandler {
      * first loads in, we add the related fields into the script environment.
      */
     public void onEntityFirstLoad() {
-        modelsTable.put("vanilla", aspect.vanillaRenderer);
+        instance.setGlobal("vanilla", aspect.vanillaRenderer);
         modelsTable.put("entity", aspect.entityRoot);
     }
 
