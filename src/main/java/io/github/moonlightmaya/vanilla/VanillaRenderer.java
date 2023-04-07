@@ -103,4 +103,9 @@ public class VanillaRenderer {
     public Vector3d getOffset() {
         return new Vector3d(renderOffset);
     }
+
+    @PetPetWhitelist
+    public String __tostring() {
+        return "VanillaRenderer";
+    }
 }

@@ -3,11 +3,11 @@ package io.github.moonlightmaya.vanilla;
 import io.github.moonlightmaya.mixin.ModelPartAccessor;
 import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.model.ModelTransform;
-import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
-import org.joml.Vector3f;
 import petpet.external.PetPetWhitelist;
+import petpet.types.PetPetList;
+import petpet.types.PetPetTable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +21,7 @@ public class VanillaPart {
 
     public final ModelPart referencedPart;
 
-    private final Map<String, VanillaPart> children = new HashMap<>();
+    private final Map<String, VanillaPart> javaChildren = new HashMap<>();
 
     /**
      * The transform applied _by vanilla_ to this part, which
@@ -53,15 +53,19 @@ public class VanillaPart {
     public VanillaPart(ModelPart part) {
         this.referencedPart = part;
         for (Map.Entry<String, ModelPart> child : ((ModelPartAccessor) (Object) part).getChildren().entrySet()) {
-            children.put(child.getKey(), new VanillaPart(child.getValue()));
+            javaChildren.put(child.getKey(), new VanillaPart(child.getValue()));
         }
 
         //Read the default transform and store its inverse for later
         readDefaultTransform();
+
+        //Store the petpet field
+        children = new PetPetTable<>();
+        children.putAll(javaChildren);
     }
 
     public Stream<VanillaPart> traverse() {
-        return Stream.concat(Stream.of(this), this.children.values().stream().flatMap(VanillaPart::traverse));
+        return Stream.concat(Stream.of(this), this.javaChildren.values().stream().flatMap(VanillaPart::traverse));
     }
 
     /**
@@ -94,6 +98,14 @@ public class VanillaPart {
 
     @PetPetWhitelist
     public VanillaPart __get_str(String s) {
-        return children.get(s);
+        return javaChildren.get(s);
+    }
+
+    @PetPetWhitelist
+    public final PetPetTable<Object, VanillaPart> children;
+
+    @PetPetWhitelist
+    public String __tostring() {
+        return "VanillaPart";
     }
 }
