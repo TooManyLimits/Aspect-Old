@@ -3,6 +3,7 @@ package io.github.moonlightmaya.vanilla;
 import io.github.moonlightmaya.mixin.ModelPartAccessor;
 import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.model.ModelTransform;
+import org.joml.Matrix4d;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import petpet.external.PetPetWhitelist;
@@ -27,13 +28,24 @@ public class VanillaPart {
      * The transform applied _by vanilla_ to this part, which
      * we save and can then later query from code.
      */
-    public final Matrix4f savedTransform = new Matrix4f();
+    public final Matrix4d savedTransform = new Matrix4d();
 
     /**
      * The transform applied _to the vanilla part_ by aspect,
      * which can be modified through code.
      */
-    public final Matrix4f appliedTransform = new Matrix4f();
+    public final Matrix4d appliedTransform = new Matrix4d();
+
+    /**
+     * Whether to override the visibility of the
+     * model part
+     */
+    public Boolean appliedVisibility = null;
+
+    /**
+     * The saved vanilla part's visibility, for *reading* purposes
+     */
+    public boolean savedVisibility = true;
 
     /**
      * The inverse of the "default transform" of the model part.
@@ -107,5 +119,27 @@ public class VanillaPart {
     @PetPetWhitelist
     public String __tostring() {
         return "VanillaPart";
+    }
+
+    @PetPetWhitelist
+    public Matrix4d getMatrix() {
+        return savedTransform;
+    }
+
+    @PetPetWhitelist
+    public boolean getVisible() {
+        return savedVisibility;
+    }
+
+    @PetPetWhitelist
+    public VanillaPart matrix(Matrix4d mat) {
+        appliedTransform.set(mat);
+        return this;
+    }
+
+    @PetPetWhitelist
+    public VanillaPart visible(Boolean b) {
+        appliedVisibility = b;
+        return this;
     }
 }

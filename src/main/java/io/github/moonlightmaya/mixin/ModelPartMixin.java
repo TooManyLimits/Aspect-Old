@@ -7,6 +7,7 @@ import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.lwjgl.BufferUtils;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -23,18 +24,54 @@ public abstract class ModelPartMixin {
 
     @Shadow public float pitch;
     @Shadow public float yaw;
-    @Shadow public float roll;
-    @Shadow public float pivotZ;
     @Shadow public float pivotX;
     @Shadow public float pivotY;
+    @Shadow public boolean visible;
+
+    @Shadow public abstract void setAngles(float pitch, float yaw, float roll);
+
     //reuse variables to not allocate more than necessary
     private static final Matrix3f aspect$tempMatrix = new Matrix3f();
     private static final Matrix4f aspect$tempMatrix2 = new Matrix4f();
     private static final MatrixStack aspect$helperStack = new MatrixStack();
+    private boolean aspect$savedVisibility;
 
+    /**
+     * At the very beginning of the method, set visibility to true.
+     * This is done to bypass the return statement at the beginning, and ensure that
+     * part matrices are updated unconditionally.
+     */
+    @Inject(method = "render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;IIFFFF)V",
+            at = @At("HEAD"))
+    public void atBeginning(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha, CallbackInfo ci) {
+        aspect$savedVisibility = visible;
+        visible = true;
+    }
+
+    /**
+     * Before the call to rotate(), take stock of the situation.
+     * Grab the matrix before the part was transformed, and after the
+     * part was transformed.
+     *
+     * The reason that we grab the post-transformation matrix *before* the
+     * call to rotate is because MC's rotate() operates in a different space
+     * than that of Aspects. The values of certain axes are negated, and
+     * translations are applied, which complicates matters. The call to
+     * loadCurrentTransformToHelperStack() is what applies the *real* transformations,
+     * as Aspect would see them. If we injected after the call to rotate(), not only
+     * would we need to apply Aspect's version of the rotation method, we'd also need
+     * to reverse the vanilla one first.
+     *
+     * We also save this matrix on a stack. In case this part has any children, we want
+     * their transforms to be calculated relative to their parent, not relative to the
+     * global entity transform.
+     */
     @Inject(method = "render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;IIFFFF)V",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/model/ModelPart;rotate(Lnet/minecraft/client/util/math/MatrixStack;)V", shift = At.Shift.BEFORE))
     public void beforeRotate(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha, CallbackInfo ci) {
+        //Reset visibility, we made it past the return statement, so we can set it back without fear
+        //of the call being canceled
+        visible = aspect$savedVisibility;
 
         //Guard this all inside the if statement. If there's no aspect currently being rendered,
         //Don't bother doing anything to the model part.
@@ -45,6 +82,9 @@ public abstract class ModelPartMixin {
             VanillaPart vanillaPart = topRenderer.vanillaPartInverse.get(this);
 
             if (vanillaPart != null) {
+
+                //Save the visibility in the vanilla part
+                vanillaPart.savedVisibility = aspect$savedVisibility;
 
                 //Get the matrices before rendering this model part, and
                 //the matrices after, then cancel them out to get the
@@ -84,10 +124,8 @@ public abstract class ModelPartMixin {
 
     /**
      * Just after the rotate() call, where the model part
-     * applies its own transform to the matrix stack, we
-     * inject here to compare this matrix against the one
-     * that was previously set inside
-     * LivingEntityRendererMixin.saveModelTransform().
+     * applies its own transform to the matrix stack, we now
+     * apply any customizations that an Aspect has made.
      */
     @Inject(method = "render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;IIFFFF)V",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/model/ModelPart;rotate(Lnet/minecraft/client/util/math/MatrixStack;)V", shift = At.Shift.AFTER))
@@ -101,8 +139,9 @@ public abstract class ModelPartMixin {
             if (vanillaPart != null) {
                 //Now that we've saved the thing applied by vanilla,
                 //we'll apply Aspect's modification matrix on top of it.
-                matrices.multiplyPositionMatrix(vanillaPart.appliedTransform);
-                aspect$tempMatrix.set(vanillaPart.appliedTransform).normal();
+                aspect$tempMatrix2.set(vanillaPart.appliedTransform);
+                matrices.multiplyPositionMatrix(aspect$tempMatrix2);
+                aspect$tempMatrix.set(aspect$tempMatrix2).normal();
                 matrices.peek().getNormalMatrix().mul(aspect$tempMatrix);
             }
         }
@@ -121,8 +160,30 @@ public abstract class ModelPartMixin {
     }
 
     /**
+     * We forced the part's visibility to true unconditionally earlier,
+     * but now we may want it to respect vanilla's desire to have the part
+     * hidden. Here, we can cancel the call to render cuboids if the part
+     * is supposed to be hidden.
+     */
+    @Inject(method = "renderCuboids", at = @At("HEAD"), cancellable = true)
+    public void beforeRenderCuboids(MatrixStack.Entry entry, VertexConsumer vertexConsumer, int light, int overlay, float red, float green, float blue, float alpha, CallbackInfo ci) {
+        if (!VanillaRenderer.CURRENT_RENDERER.isEmpty()) {
+            VanillaRenderer topRenderer = VanillaRenderer.CURRENT_RENDERER.peek();
+            VanillaPart vanillaPart = topRenderer.vanillaPartInverse.get(this);
+            if (vanillaPart != null) {
+                //If the _applied_ visibility is null, then defer to the saved visibility.
+                //If non-null, then use it.
+                if (vanillaPart.appliedVisibility == null ? !aspect$savedVisibility : !vanillaPart.appliedVisibility)
+                    ci.cancel();
+            }
+        }
+
+    }
+
+    /**
      * Loads the current transform into the helper stack, but with
-     * the pitch and yaw inverted, because yeah
+     * the pitch and yaw inverted, and x and y pivot negated,
+     * because yeah
      */
     private void loadCurrentTransformToHelperStack() {
         aspect$helperStack.loadIdentity();

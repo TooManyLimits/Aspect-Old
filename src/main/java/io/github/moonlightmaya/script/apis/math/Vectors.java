@@ -8,6 +8,7 @@ import petpet.lang.run.PetPetException;
 public class Vectors {
 
     public static final PetPetClass VEC_2, VEC_3, VEC_4;
+    public static final JavaFunction VEC_2_CREATE, VEC_3_CREATE, VEC_4_CREATE;
 
     /**
      * Variety of helpers which were introduced to register for all three vectors at once
@@ -50,6 +51,10 @@ public class Vectors {
             VEC_2 = new PetPetClass("vec2");
             VEC_3 = new PetPetClass("vec3");
             VEC_4 = new PetPetClass("vec4");
+
+            VEC_2_CREATE = new JavaFunction(Vectors.class, "create2", false);
+            VEC_3_CREATE = new JavaFunction(Vectors.class, "create3", false);
+            VEC_4_CREATE = new JavaFunction(Vectors.class, "create4", false);
 
             //Length and length^2
             registerHelper("len", "length", new Class[0]);
@@ -175,6 +180,19 @@ public class Vectors {
         } catch (Exception e) {
             throw new RuntimeException("joml has done a cringe :(", e);
         }
+    }
+
+
+    public static Vector2d create2(double x, double y) {
+        return new Vector2d(x, y);
+    }
+
+    public static Vector3d create3(double x, double y, double z) {
+        return new Vector3d(x, y, z);
+    }
+
+    public static Vector4d create4(double x, double y, double z, double w) {
+        return new Vector4d(x, y, z, w);
     }
 
     /**

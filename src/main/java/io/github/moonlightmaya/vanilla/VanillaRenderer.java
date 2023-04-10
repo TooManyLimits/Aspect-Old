@@ -34,7 +34,7 @@ public class VanillaRenderer {
      * The transformation applied to the entire model,
      * as calculated in LivingEntityRenderer.render().
      */
-    public final Matrix4f aspectModelTransform = new Matrix4f();
+    public final Matrix4d aspectModelTransform = new Matrix4d();
 
     /**
      * Matrix containing the entire stack of vanilla transforms, including
@@ -45,12 +45,17 @@ public class VanillaRenderer {
     public final Matrix4f savedVanillaModelTransform = new Matrix4f();
 
     /**
+     * The transform applied *by aspect* to the vanilla model
+     */
+    public final Matrix4f appliedVanillaModelTransform = new Matrix4f();
+
+    /**
      * The "render offset" of the entity, as applied in the entity render
      * dispatcher. Turns out that we don't need to use this while rendering,
      * but it's saved in case someone feels like knowing the value for some
      * reason.
      */
-    public final Vector3f renderOffset = new Vector3f();
+    public final Vector3d renderOffset = new Vector3d();
 
     /**
      * A helper stack of matrices which deals with canceling out rotations of parents
@@ -96,12 +101,20 @@ public class VanillaRenderer {
     @PetPetWhitelist(forceImmutable = true)
     public PetPetTable<Object, VanillaPart> parts; //Set by initVanillaParts()
 
-//    @PetPetWhitelist
-//    public Matrix4d getMatrix() {/*TODO*/}
 
     @PetPetWhitelist
     public Vector3d getOffset() {
-        return new Vector3d(renderOffset);
+        return renderOffset;
+    }
+
+    @PetPetWhitelist
+    public Matrix4d getMatrix() {
+        return aspectModelTransform;
+    }
+
+    @PetPetWhitelist
+    public void matrix(Matrix4d mat) {
+        appliedVanillaModelTransform.set(mat);
     }
 
     @PetPetWhitelist

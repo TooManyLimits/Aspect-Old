@@ -91,6 +91,12 @@ public class AspectMatrixStack {
         posMatrix.normal(normal);
         normalMatrices.get(curIndex).mul(normal);
     }
+    private static final Matrix3d normalD = new Matrix3d();
+    public void multiply(Matrix4d posMatrix) {
+        positionMatrices.get(curIndex).mul(posMatrix);
+        posMatrix.normal(normalD);
+        normalMatrices.get(curIndex).mul(normalD);
+    }
 
     public void push() {
         curIndex++;

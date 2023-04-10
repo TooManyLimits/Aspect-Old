@@ -7,6 +7,8 @@ import net.minecraft.client.render.entity.LivingEntityRenderer;
 import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
+import org.joml.Matrix3d;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,6 +23,7 @@ public abstract class LivingEntityRendererMixin {
 
     @Shadow protected EntityModel<?> model;
     private final Matrix4f aspect$preTransformSnapshot = new Matrix4f();
+    private final Matrix3f aspect$tempMatrix = new Matrix3f();
 
     @Inject(method = "render(Lnet/minecraft/entity/LivingEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V",
             at = @At("HEAD"))
@@ -56,8 +59,17 @@ public abstract class LivingEntityRendererMixin {
             aspect$preTransformSnapshot.translate(0, 1.500f, 0);
             aspect$preTransformSnapshot.scale(-1f, -1f, 1f);
 
+            //Multiply in the applied transform, to both the snapshot and the vanilla matrix stack
+            aspect$preTransformSnapshot.mul(topRenderer.appliedVanillaModelTransform);
+
+            matrixStack.multiplyPositionMatrix(topRenderer.appliedVanillaModelTransform);
+            aspect$tempMatrix.set(topRenderer.appliedVanillaModelTransform).normal();
+            matrixStack.peek().getNormalMatrix().mul(aspect$tempMatrix);
+
             //Save this matrix in the currently set vanilla renderer, as its "aspectModelTransform".
             topRenderer.aspectModelTransform.set(aspect$preTransformSnapshot);
+
+
         }
 
     }

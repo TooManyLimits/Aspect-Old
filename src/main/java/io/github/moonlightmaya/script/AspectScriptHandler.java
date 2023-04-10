@@ -95,6 +95,7 @@ public class AspectScriptHandler {
     public void onEntityFirstLoad() {
         instance.setGlobal("vanilla", aspect.vanillaRenderer);
         modelsTable.put("entity", aspect.entityRoot);
+        callEvent("user_init");
     }
 
     /**
@@ -128,6 +129,14 @@ public class AspectScriptHandler {
         //Print functions, if should print
         instance.setGlobal("print", shouldPrintToChat ? DisplayUtils.PRINT_FUNCTION : ScriptUtils.DO_NOTHING_1_ARG);
         instance.setGlobal("log", shouldPrintToChat ? DisplayUtils.PRINT_FUNCTION : ScriptUtils.DO_NOTHING_1_ARG);
+
+        //Math structures
+        instance.setGlobal("vec2", Vectors.VEC_2_CREATE);
+        instance.setGlobal("vec3", Vectors.VEC_3_CREATE);
+        instance.setGlobal("vec4", Vectors.VEC_4_CREATE);
+        instance.setGlobal("mat2", Matrices.MAT_2_CREATE);
+        instance.setGlobal("mat3", Matrices.MAT_3_CREATE);
+        instance.setGlobal("mat4", Matrices.MAT_4_CREATE);
 
         //Require
         requireFunction = setupRequire();
@@ -207,6 +216,10 @@ public class AspectScriptHandler {
                 }
             }
         };
+    }
+
+    public void setGlobal(String name, Object o) {
+        instance.setGlobal(name, o);
     }
 
     public Object callEvent(String eventName, Object... args) {

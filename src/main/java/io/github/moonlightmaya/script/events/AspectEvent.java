@@ -1,10 +1,13 @@
 package io.github.moonlightmaya.script.events;
 
+import org.apache.commons.lang3.mutable.MutableBoolean;
 import petpet.external.PetPetWhitelist;
 import petpet.lang.run.PetPetCallable;
 import petpet.lang.run.PetPetException;
 
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 @PetPetWhitelist

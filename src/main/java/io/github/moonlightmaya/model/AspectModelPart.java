@@ -286,6 +286,7 @@ public class AspectModelPart {
         return children != null;
     }
 
+    private static final Matrix4f tempMatrixSavedTransform = new Matrix4f();
     private void recalculateMatrixIfNecessary() {
         if (needsMatrixRecalculation || vanillaParent != null) {
             //Scale down the pivot value, it's in "block" units
@@ -293,7 +294,8 @@ public class AspectModelPart {
 
             if (vanillaParent != null) {
                 positionMatrix.mul(vanillaParent.inverseDefaultTransform);
-                positionMatrix.mul(vanillaParent.savedTransform);
+                tempMatrixSavedTransform.set(vanillaParent.savedTransform);
+                positionMatrix.mul(tempMatrixSavedTransform);
             }
 
             positionMatrix
@@ -466,6 +468,20 @@ public class AspectModelPart {
     @PetPetWhitelist
     public String bbType() {
         return type.name();
+    }
+
+    @PetPetWhitelist
+    public AspectModelPart visible(Boolean b) {
+        this.visible = b;
+        return this;
+    }
+
+    @PetPetWhitelist
+    public AspectModelPart matrix(Matrix4d mat) {
+        this.positionMatrix.set(mat);
+        this.positionMatrix.normal(normalMatrix);
+        this.needsMatrixRecalculation = false;
+        return this;
     }
 
     @PetPetWhitelist

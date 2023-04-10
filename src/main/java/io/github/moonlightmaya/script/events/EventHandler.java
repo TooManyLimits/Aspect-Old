@@ -24,7 +24,7 @@ public class EventHandler {
         PetPetTable<String, AspectEvent> table = new PetPetTable<>();
         for (Pair<String, Integer> type : EVENT_TYPES) {
             AspectEvent event = new AspectEvent(type.getA(), type.getB());
-            events.put(type.getA(), event);
+            events.put(type.getA(), event); //build the java-side and petpet-side mappings
             table.put(type.getA(), event);
         }
         instance.setGlobal("events", table);
@@ -53,8 +53,13 @@ public class EventHandler {
     static {
         defineEvent("world_tick", 0);
         defineEvent("tick", 0);
+
         defineEvent("world_render", 1);
         defineEvent("render", 1);
+
+        defineEvent("user_init", 0);
+        defineEvent("user_load", 0);
+        defineEvent("user_unload", 0);
     }
 
 

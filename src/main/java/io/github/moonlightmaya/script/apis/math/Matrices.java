@@ -8,6 +8,7 @@ import petpet.lang.run.PetPetException;
 public class Matrices {
 
     public static final PetPetClass MAT_2, MAT_3, MAT_4;
+    public static final JavaFunction MAT_2_CREATE, MAT_3_CREATE, MAT_4_CREATE;
 
 
     private static void registerHelper(String petpetName, String javaName, Class<?>... args) {
@@ -47,6 +48,10 @@ public class Matrices {
             MAT_2 = new PetPetClass("mat2");
             MAT_3 = new PetPetClass("mat3");
             MAT_4 = new PetPetClass("mat4");
+
+            MAT_2_CREATE = new JavaFunction(Matrices.class, "create2", false);
+            MAT_3_CREATE = new JavaFunction(Matrices.class, "create3", false);
+            MAT_4_CREATE = new JavaFunction(Matrices.class, "create4", false);
 
             //Common
             registerHelper("det", "determinant");
@@ -168,6 +173,18 @@ public class Matrices {
     }
 
     //Other functions
+
+    public static Matrix2d create2() {
+        return new Matrix2d();
+    }
+
+    public static Matrix3d create3() {
+        return new Matrix3d();
+    }
+
+    public static Matrix4d create4() {
+        return new Matrix4d();
+    }
 
     private static void setupFields() throws NoSuchFieldException {
         for (int i = 0; i < 3; i++) {

@@ -30,7 +30,7 @@ public class EntityRenderDispatcherMixin {
         if (aspect != null) {
             VanillaRenderer.CURRENT_RENDERER.push(aspect.vanillaRenderer);
             //Just saving this render offset in case someone wants to access it, even though it's not used in rendering
-            aspect.vanillaRenderer.renderOffset.set((float) offset.x, (float) offset.y, (float) offset.z);
+            aspect.vanillaRenderer.renderOffset.set(offset.x, offset.y, offset.z);
         }
 
     }

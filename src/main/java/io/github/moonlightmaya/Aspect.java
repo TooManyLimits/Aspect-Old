@@ -6,12 +6,14 @@ import io.github.moonlightmaya.model.WorldRootModelPart;
 import io.github.moonlightmaya.script.AspectScriptHandler;
 import io.github.moonlightmaya.texture.AspectTexture;
 import io.github.moonlightmaya.util.AspectMatrixStack;
+import io.github.moonlightmaya.util.EntityUtils;
 import io.github.moonlightmaya.util.RenderUtils;
 import io.github.moonlightmaya.vanilla.VanillaModelPartSorter;
 import io.github.moonlightmaya.vanilla.VanillaRenderer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.model.EntityModel;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 
 import java.io.IOException;
@@ -81,14 +83,7 @@ public class Aspect {
         scriptHandler = new AspectScriptHandler(this);
     }
 
-    /**
-     * When the entity first loads in, this aspect should finish creating its model.
-     * The following booleans are based on:
-     * - Whether the entity was loaded last tick
-     * - Whether the entity was ever loaded before
-     */
-    public boolean entityWasLoaded;
-    public boolean entityEverLoaded;
+
     public void onEntityFirstLoad(Entity user) {
         //Generate vanilla data for parent part purposes
         EntityModel<?> model = RenderUtils.getModel(user);
@@ -115,12 +110,54 @@ public class Aspect {
     }
 
     /**
-     * Runs the main script if it exists
+     * When the entity first loads in, this aspect should finish creating its model.
+     * The following booleans are based on:
+     * - Whether the entity was ever loaded at all since this aspect was created
+     * - The last known entity which used this aspect
      */
-    public void runScript() {
-        if (scripts.size() > 0) {
-            scriptHandler.runMain();
+    private boolean userEverLoaded;
+    private Entity user;
+    public void tick() {
+        ClientWorld world = MinecraftClient.getInstance().world;
+        if (world != null) {
+            if (user != null) {
+                //We already know the user, and they currently exist
+                //Let's see if they've unloaded:
+                if (user.isRemoved() || user.world != world) {
+                    //They've unloaded! Let's call the event, and set the user to null.
+                    scriptHandler.callEvent("user_unload");
+                    scriptHandler.setGlobal("user", null);
+                    user = null;
+                }
+            }
+            if (user == null) {
+                //Currently user does not exist :( check if they do now:
+                Entity found = EntityUtils.getEntityByUUID(world, userUUID);
+                if (found != null) {
+                    //Ok, we found them! Add them to the script environment
+                    //And set the user to be this entity we found with the proper uuid
+                    scriptHandler.setGlobal("user", found);
+                    user = found;
+
+                    //If this is the first time the user loaded in, call the setup
+                    if (!userEverLoaded) {
+                        userEverLoaded = true;
+                        onEntityFirstLoad(user);
+                    }
+
+                    //Either way, first time or not, let's call their user_load
+                    scriptHandler.callEvent("user_load");
+                }
+            }
+
+            if (user != null) {
+                //If the user is still here at the end of it all, let's tick() them
+                scriptHandler.callEvent("tick");
+            }
         }
+
+        //Always call world tick
+        scriptHandler.callEvent("world_tick");
     }
 
     /**

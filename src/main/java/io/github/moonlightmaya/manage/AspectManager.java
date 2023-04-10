@@ -55,22 +55,8 @@ public class AspectManager {
         }
 
         //Tick each Aspect
-        for (Aspect aspect : ASPECTS.values()) {
-            ClientWorld world = MinecraftClient.getInstance().world;
-            if (world != null) {
-                Entity user = EntityUtils.getEntityByUUID(world, aspect.userUUID);
-                if (user != null) {
-                    if (!aspect.entityEverLoaded) {
-                        //If entity was never loaded before, run this
-                        aspect.onEntityFirstLoad(user);
-                        aspect.entityEverLoaded = true;
-                    }
-                    aspect.scriptHandler.callEvent("tick");
-                }
-                aspect.entityWasLoaded = user != null;
-                aspect.scriptHandler.callEvent("world_tick");
-            }
-        }
+        for (Aspect aspect : ASPECTS.values())
+            aspect.tick();
     }
 
     /**
