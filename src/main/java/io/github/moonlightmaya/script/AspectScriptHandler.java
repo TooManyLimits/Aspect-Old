@@ -97,7 +97,7 @@ public class AspectScriptHandler {
     public void onEntityFirstLoad() {
         instance.setGlobal("vanilla", aspect.vanillaRenderer);
         modelsTable.put("entity", aspect.entityRoot);
-        callEvent("user_init");
+        callEvent(EventHandler.USER_INIT);
     }
 
     /**
@@ -162,8 +162,12 @@ public class AspectScriptHandler {
         //as a global variable
         eventHandler = new EventHandler(instance);
 
-        //World
-        setGlobal("world", MinecraftClient.getInstance().world);
+        //Other APIs not shown here:
+
+        //world api: set during aspect.tick()
+        //user api: set during aspect.tick()
+        //vanilla api: set when the user's entity first loads in
+
     }
 
     /**

@@ -4,6 +4,7 @@ import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.model.WorldRootModelPart;
 import io.github.moonlightmaya.script.AspectScriptHandler;
+import io.github.moonlightmaya.script.events.EventHandler;
 import io.github.moonlightmaya.texture.AspectTexture;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.util.EntityUtils;
@@ -100,7 +101,7 @@ public class Aspect {
     }
 
     public void renderEntity(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, int light) {
-        scriptHandler.callEvent("render", MinecraftClient.getInstance().getTickDelta());
+        scriptHandler.callEvent(EventHandler.RENDER, MinecraftClient.getInstance().getTickDelta());
         matrixStack.multiply(vanillaRenderer.aspectModelTransform);
         entityRoot.render(vcp, matrixStack, light);
     }
@@ -117,15 +118,21 @@ public class Aspect {
      */
     private boolean userEverLoaded;
     private Entity user;
-    public void tick() {
-        ClientWorld world = MinecraftClient.getInstance().world;
+    private ClientWorld lastWorld; //the last known world this aspect was in
+    public void tick(ClientWorld world) {
+        //If the world changed, change the global var
+        if (world != lastWorld) {
+            scriptHandler.setGlobal("world", world);
+            scriptHandler.callEvent(EventHandler.WORLD_CHANGE);
+            lastWorld = world;
+        }
         if (world != null) {
             if (user != null) {
                 //We already know the user, and they currently exist
                 //Let's see if they've unloaded:
                 if (user.isRemoved() || user.world != world) {
                     //They've unloaded! Let's call the event, and set the user to null.
-                    scriptHandler.callEvent("user_unload");
+                    scriptHandler.callEvent(EventHandler.USER_UNLOAD);
                     scriptHandler.setGlobal("user", null);
                     user = null;
                 }
@@ -146,18 +153,17 @@ public class Aspect {
                     }
 
                     //Either way, first time or not, let's call their user_load
-                    scriptHandler.callEvent("user_load");
+                    scriptHandler.callEvent(EventHandler.USER_LOAD);
                 }
             }
-
             if (user != null) {
                 //If the user is still here at the end of it all, let's tick() them
-                scriptHandler.callEvent("tick");
+                scriptHandler.callEvent(EventHandler.TICK);
             }
-        }
 
-        //Always call world tick
-        scriptHandler.callEvent("world_tick");
+            //Always call world tick, if a world exists
+            scriptHandler.callEvent(EventHandler.WORLD_TICK);
+        }
     }
 
     /**

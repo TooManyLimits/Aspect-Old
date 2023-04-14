@@ -46,7 +46,7 @@ public class AspectMod implements ClientModInitializer {
         LOGGER.info("Hello Aspect!");
 
         //Setup global ticking objects
-        ClientTickEvents.START_CLIENT_TICK.register(AspectManager::tick);
+        ClientTickEvents.START_WORLD_TICK.register(AspectManager::tick);
 
         //Register testing command
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {

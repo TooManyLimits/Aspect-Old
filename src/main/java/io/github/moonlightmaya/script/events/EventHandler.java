@@ -43,23 +43,38 @@ public class EventHandler {
      * Defines a new event, which will then be added to every Aspect's
      * events table upon creation.
      *
-     * Public in case other mods later want to add their own new events.
+     * Public in case other mods later want to add their own new events,
+     * and also is not an enum, for the same reason. Enums are hard for
+     * other mods to extend.
      */
     private static final Set<Pair<String, Integer>> EVENT_TYPES = new HashSet<>();
     public static void defineEvent(String name, int argCount) {
         EVENT_TYPES.add(new Pair<>(name, argCount));
     }
 
+    public static final String
+            WORLD_TICK = "world_tick",
+            TICK = "tick",
+            WORLD_RENDER = "world_render",
+            RENDER = "render",
+            USER_INIT = "user_init",
+            USER_LOAD = "user_load",
+            USER_UNLOAD = "user_unload",
+            WORLD_CHANGE = "world_change";
+
+
     static {
-        defineEvent("world_tick", 0);
-        defineEvent("tick", 0);
+        defineEvent(WORLD_TICK, 0);
+        defineEvent(TICK, 0);
 
-        defineEvent("world_render", 1);
-        defineEvent("render", 1);
+        defineEvent(WORLD_RENDER, 1);
+        defineEvent(RENDER, 1);
 
-        defineEvent("user_init", 0);
-        defineEvent("user_load", 0);
-        defineEvent("user_unload", 0);
+        defineEvent(USER_INIT, 0);
+        defineEvent(USER_LOAD, 0);
+        defineEvent(USER_UNLOAD, 0);
+
+        defineEvent(WORLD_CHANGE, 0);
     }
 
 

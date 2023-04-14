@@ -8,6 +8,7 @@ import io.github.moonlightmaya.util.EntityUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
@@ -46,7 +47,7 @@ public class AspectManager {
     /**
      * Global tick method for the aspect manager. Called each client tick.
      */
-    public static void tick(MinecraftClient client) {
+    public static void tick(ClientWorld world) {
         assert RenderSystem.isOnRenderThreadOrInit(); //assertion to hopefully avoid some annoying threading issues
 
         //Each tick, perform tasks waiting in the queue.
@@ -56,7 +57,7 @@ public class AspectManager {
 
         //Tick each Aspect
         for (Aspect aspect : ASPECTS.values())
-            aspect.tick();
+            aspect.tick(world);
     }
 
     /**
