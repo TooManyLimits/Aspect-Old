@@ -3,14 +3,16 @@ package io.github.moonlightmaya.script;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.model.WorldRootModelPart;
+import io.github.moonlightmaya.script.apis.WorldAPI;
 import io.github.moonlightmaya.script.apis.math.Matrices;
 import io.github.moonlightmaya.script.apis.math.Vectors;
 import io.github.moonlightmaya.script.events.AspectEvent;
 import io.github.moonlightmaya.script.events.EventHandler;
 import io.github.moonlightmaya.util.DisplayUtils;
-import io.github.moonlightmaya.util.ScriptUtils;
 import io.github.moonlightmaya.vanilla.VanillaPart;
 import io.github.moonlightmaya.vanilla.VanillaRenderer;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.world.ClientWorld;
 import org.joml.*;
 import petpet.external.PetPetInstance;
 import petpet.external.PetPetReflector;
@@ -120,6 +122,9 @@ public class AspectScriptHandler {
         //Vanilla renderer
         instance.registerClass(VanillaRenderer.class, PetPetReflector.reflect(VanillaRenderer.class, "VanillaRenderer"));
         instance.registerClass(VanillaPart.class, PetPetReflector.reflect(VanillaPart.class, "VanillaPart"));
+
+        //World
+        instance.registerClass(ClientWorld.class, WorldAPI.WORLD_CLASS);
     }
 
     /**
@@ -127,23 +132,24 @@ public class AspectScriptHandler {
      */
     private void setupGlobals() {
         //Print functions, if should print
-        instance.setGlobal("print", shouldPrintToChat ? DisplayUtils.PRINT_FUNCTION : ScriptUtils.DO_NOTHING_1_ARG);
-        instance.setGlobal("log", shouldPrintToChat ? DisplayUtils.PRINT_FUNCTION : ScriptUtils.DO_NOTHING_1_ARG);
+        JavaFunction printFunc = getPrintFunction();
+        setGlobal("print", printFunc);
+        setGlobal("log", printFunc);
 
         //Math structures
-        instance.setGlobal("vec2", Vectors.VEC_2_CREATE);
-        instance.setGlobal("vec3", Vectors.VEC_3_CREATE);
-        instance.setGlobal("vec4", Vectors.VEC_4_CREATE);
-        instance.setGlobal("mat2", Matrices.MAT_2_CREATE);
-        instance.setGlobal("mat3", Matrices.MAT_3_CREATE);
-        instance.setGlobal("mat4", Matrices.MAT_4_CREATE);
+        setGlobal("vec2", Vectors.VEC_2_CREATE);
+        setGlobal("vec3", Vectors.VEC_3_CREATE);
+        setGlobal("vec4", Vectors.VEC_4_CREATE);
+        setGlobal("mat2", Matrices.MAT_2_CREATE);
+        setGlobal("mat3", Matrices.MAT_3_CREATE);
+        setGlobal("mat4", Matrices.MAT_4_CREATE);
 
         //Require
         requireFunction = setupRequire();
-        instance.setGlobal("require", requireFunction);
+        setGlobal("require", requireFunction);
 
         //Models
-        instance.setGlobal("models", modelsTable);
+        setGlobal("models", modelsTable);
 
         //World roots in models
         PetPetList<WorldRootModelPart> worldRoots = new PetPetList<>(aspect.worldRoots.size());
@@ -155,6 +161,9 @@ public class AspectScriptHandler {
         //deals with creating the events and also adding it
         //as a global variable
         eventHandler = new EventHandler(instance);
+
+        //World
+        setGlobal("world", MinecraftClient.getInstance().world);
     }
 
     /**
@@ -214,6 +223,20 @@ public class AspectScriptHandler {
                     //Type handling
                     throw new PetPetException("Attempt to call require() with non-string argument " + arg);
                 }
+            }
+        };
+    }
+
+    /**
+     * Create a print function
+     */
+    private JavaFunction getPrintFunction() {
+        return new JavaFunction(true, 1) {
+            @Override
+            public Object invoke(Object o) {
+                if (shouldPrintToChat)
+                    DisplayUtils.displayPetPetMessage(instance.interpreter.getString(o));
+                return null;
             }
         };
     }

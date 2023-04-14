@@ -1,4 +1,4 @@
-package io.github.moonlightmaya.mixin;
+package io.github.moonlightmaya.mixin.world;
 
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.AspectMod;

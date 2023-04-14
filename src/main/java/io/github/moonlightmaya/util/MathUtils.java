@@ -1,12 +1,14 @@
 package io.github.moonlightmaya.util;
 
+import net.minecraft.util.math.BlockPos;
 import org.joml.Matrix4f;
+import org.joml.Vector3d;
 
 import java.util.ArrayList;
 
 public class MathUtils {
 
-
+    public static final Vector3d ZERO_VEC_3 = new Vector3d();
 
 
     /**

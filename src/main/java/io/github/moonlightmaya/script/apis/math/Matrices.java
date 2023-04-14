@@ -78,6 +78,7 @@ public class Matrices {
             registerHelperCType("mul", "mul");
             registerHelperCType("mulR", "mulLocal");
 
+            //Scale
             MAT_2.addMethod("scale_1", new JavaFunction(Matrices.class, "scale2", false));
             MAT_3.addMethod("scale_1", new JavaFunction(Matrices.class, "scale3", false));
             MAT_4.addMethod("scale_1", new JavaFunction(Matrices.class, "scale4", false));

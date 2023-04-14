@@ -7,10 +7,12 @@ import org.joml.Matrix4d;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import petpet.external.PetPetWhitelist;
-import petpet.types.PetPetList;
 import petpet.types.PetPetTable;
+import petpet.types.immutable.PetPetTableView;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -21,8 +23,9 @@ import java.util.stream.Stream;
 public class VanillaPart {
 
     public final ModelPart referencedPart;
+    public final List<Object> names = new ArrayList<>(); //names for this part
 
-    private final Map<String, VanillaPart> javaChildren = new HashMap<>();
+    private final HashMap<String, VanillaPart> childrenBacking = new PetPetTable<>(); //backing map for the children
 
     /**
      * The transform applied _by vanilla_ to this part, which
@@ -65,19 +68,18 @@ public class VanillaPart {
     public VanillaPart(ModelPart part) {
         this.referencedPart = part;
         for (Map.Entry<String, ModelPart> child : ((ModelPartAccessor) (Object) part).getChildren().entrySet()) {
-            javaChildren.put(child.getKey(), new VanillaPart(child.getValue()));
+            childrenBacking.put(child.getKey(), new VanillaPart(child.getValue()));
         }
 
         //Read the default transform and store its inverse for later
         readDefaultTransform();
 
         //Store the petpet field
-        children = new PetPetTable<>();
-        children.putAll(javaChildren);
+        children = new PetPetTableView<>(childrenBacking);
     }
 
     public Stream<VanillaPart> traverse() {
-        return Stream.concat(Stream.of(this), this.javaChildren.values().stream().flatMap(VanillaPart::traverse));
+        return Stream.concat(Stream.of(this), this.childrenBacking.values().stream().flatMap(VanillaPart::traverse));
     }
 
     /**
@@ -102,23 +104,17 @@ public class VanillaPart {
         inverseDefaultTransform.invert();
     }
 
-    // @PetPetWhitelist
-    // public Matrix4d getMatrix() {/*TODO*/}
-
-    // @PetPetWhitelist
-    // public Matrix4d setMatrix() {/*TODO*/}
-
     @PetPetWhitelist
     public VanillaPart __get_str(String s) {
-        return javaChildren.get(s);
+        return childrenBacking.get(s);
     }
 
     @PetPetWhitelist
-    public final PetPetTable<Object, VanillaPart> children;
+    public final PetPetTableView<String, VanillaPart> children;
 
     @PetPetWhitelist
     public String __tostring() {
-        return "VanillaPart";
+        return "VanillaPart(names=" + names + ")";
     }
 
     @PetPetWhitelist

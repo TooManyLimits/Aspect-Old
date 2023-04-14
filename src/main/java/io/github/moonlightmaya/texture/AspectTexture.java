@@ -61,15 +61,17 @@ public class AspectTexture extends ResourceTexture {
 
     @Override
     public void close() {
-        //No need to close multiple times
-        if (isClosed) return;
+        RenderUtils.executeOnRenderThread(() -> {
+            //No need to close multiple times
+            if (isClosed) return;
 
-        image.close(); //Close the native image resource
-        this.clearGlId(); //Delete the texture handle in openGL
+            image.close(); //Close the native image resource
+            this.clearGlId(); //Delete the texture handle in openGL
 
-        //Ensure this method isn't run again on the same texture, and inform
-        //other method calls that this texture is not in a usable state
-        isClosed = true;
+            //Ensure this method isn't run again on the same texture, and inform
+            //other method calls that this texture is not in a usable state
+            isClosed = true;
+        });
     }
 
     /**

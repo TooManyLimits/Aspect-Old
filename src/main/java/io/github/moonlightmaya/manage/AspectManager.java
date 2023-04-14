@@ -35,7 +35,7 @@ public class AspectManager {
     private static final Map<UUID, Aspect> ASPECTS = new HashMap<>();
 
     /**
-     * A queue of all tasks which need to be done relating to avatar management.
+     * A queue of all tasks which need to be done relating to aspect management.
      * There will be helper methods in this class to submit certain tasks to the queue.
      *
      * SHOULD NOT modify the Aspect maps outside of processing tasks!
@@ -139,6 +139,7 @@ public class AspectManager {
             if (IN_PROGRESS_TIMESTAMPS.get(userUUID).get() == requestId) {
                 //If so, then submit the task to set aspect:
                 setAspect(userUUID, aspect);
+                return;
             }
             //Otherwise, this request is outdated. Destroy the aspect
             //and do not set it.

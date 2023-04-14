@@ -6,10 +6,11 @@
   "mixins": [
   ],
   "client": [
+    "world.ClientWorldInvoker",
     "EntityRenderDispatcherMixin",
     "ModelPartAccessor",
     "ModelPartMixin",
-    "WorldRendererMixin",
+    "world.WorldRendererMixin",
     "entity_renderers.EntityRendererMixin",
     "entity_renderers.LivingEntityRendererMixin",
     "entity_renderers.specific.PlayerEntityRendererMixin",

@@ -91,6 +91,7 @@ public class VanillaRenderer {
                 vanillaParts.put(entry.getKey(), newPart);
                 newPart.traverse().forEach(p -> vanillaPartInverse.put(p.referencedPart, p));
             }
+            vanillaParts.get(entry.getKey()).names.add(entry.getKey());
         }
         //Set the petpet field
         parts = new PetPetTable<>();

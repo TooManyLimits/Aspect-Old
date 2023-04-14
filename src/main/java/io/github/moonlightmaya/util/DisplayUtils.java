@@ -5,6 +5,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import petpet.lang.run.Interpreter;
 import petpet.lang.run.JavaFunction;
 import petpet.types.PetPetString;
 
@@ -39,19 +40,15 @@ public class DisplayUtils {
     }
 
 
-    /**
-     * Keep the print function in here
-     */
-    public static final JavaFunction PRINT_FUNCTION = new JavaFunction(DisplayUtils.class, "displayPetPetMessage", false);
+
     /**
      * Displays the given message to chat with the PetPet header,
      * indicating the message is from the PetPet script.
      */
-    public static void displayPetPetMessage(Object message) {
-        String string = PetPetString.valueOf(message);
+    public static void displayPetPetMessage(String message) {
         Text text = Text.empty()
                 .append(Text.literal("[PetPet] ").formatted(Formatting.AQUA))
-                .append(Text.literal(string));
+                .append(Text.literal(message));
         MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(text);
     }
 
