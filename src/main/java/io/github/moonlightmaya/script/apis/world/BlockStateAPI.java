@@ -1,5 +1,6 @@
 package io.github.moonlightmaya.script.apis.world;
 
+import io.github.moonlightmaya.util.MathUtils;
 import io.github.moonlightmaya.util.NbtUtils;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -35,7 +36,7 @@ public class BlockStateAPI {
         genWorldPosAcceptors("isTranslucent", BlockState::isTranslucent);
         genWorldPosAcceptors("getOpacity", BlockState::getOpacity);
         genWorldPosAcceptors("isSolidBlock", BlockState::isSolidBlock);
-        genWorldPosAcceptors("getMapColor", BlockState::getMapColor); //ehhh could be better
+
         genWorldPosAcceptors("isFullCube", BlockState::isFullCube);
         genWorldPosAcceptors("hasEmissiveLighting", BlockState::hasEmissiveLighting);
         genWorldPosAcceptors("getHardness", BlockState::getHardness);
@@ -44,16 +45,15 @@ public class BlockStateAPI {
 
         genWorldPosAcceptors("toStateString", (state, world, pos) -> {
             BlockEntity be = world.getBlockEntity(pos);
-            NbtCompound nbt = be != null ? be.createNbt() : new NbtCompound();
-            return BlockArgumentParser.stringifyBlockState(state) + nbt;
+            return BlockArgumentParser.stringifyBlockState(state) + (be == null ? "{}" : be.createNbt().toString());
         });
         genWorldPosAcceptors("getEntityData", (state, world, pos) -> {
             BlockEntity be = world.getBlockEntity(pos);
-            NbtCompound nbt = be != null ? be.createNbt() : new NbtCompound();
-            return NbtUtils.toPetPet(nbt);
+            return NbtUtils.toPetPet(be == null ? new NbtCompound() : be.createNbt());
         });
 
-        genWorldPosAcceptorWithTransformer("hasCollision", BlockState::getCollisionShape, shape -> !shape.isEmpty());
+        genWorldPosAcceptorsWithTransformer("hasCollision", BlockState::getCollisionShape, shape -> !shape.isEmpty());
+        genWorldPosAcceptorsWithTransformer("getMapColor", BlockState::getMapColor, i -> MathUtils.intToRGBA(i.color));
     }
 
     @PetPetWhitelist
@@ -70,7 +70,7 @@ public class BlockStateAPI {
         return state.isOpaque();
     }
     @PetPetWhitelist
-    public static boolean emitsRedstone(BlockState state) {
+    public static boolean emitsRedstonePower(BlockState state) {
         return state.emitsRedstonePower();
     }
     @PetPetWhitelist
@@ -170,7 +170,7 @@ public class BlockStateAPI {
     }
 
     //Same concept, but with an additional transformer function applied to the output.
-    private static <T, S> void genWorldPosAcceptorWithTransformer(String name, TriFunction<BlockState, World, BlockPos, T> baseFunc, Function<T, S> outputTransformer) {
+    private static <T, S> void genWorldPosAcceptorsWithTransformer(String name, TriFunction<BlockState, World, BlockPos, T> baseFunc, Function<T, S> outputTransformer) {
         BLOCK_STATE_CLASS.addMethod(name + "_0", new JavaFunction(false, 1) {
             @Override
             public Object invoke(Object blockState) {

@@ -1,14 +1,27 @@
 package io.github.moonlightmaya.util;
 
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import org.joml.Matrix4f;
 import org.joml.Vector3d;
+import org.joml.Vector4d;
 
 import java.util.ArrayList;
 
 public class MathUtils {
 
     public static final Vector3d ZERO_VEC_3 = new Vector3d();
+
+    //Minecraft int colors are stored as ARGB in ints
+    public static Vector4d intToRGBA(int color) {
+        return new Vector4d(
+                ((color >> 16) & 0xff) / 255.0,
+                ((color >> 8) & 0xff) / 255.0,
+                ((color >> 0) & 0xff) / 255.0,
+                ((color >> 24) & 0xff) / 255.0
+        );
+    }
+
 
 
     /**
