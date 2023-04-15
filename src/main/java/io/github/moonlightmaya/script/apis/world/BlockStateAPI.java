@@ -1,5 +1,6 @@
 package io.github.moonlightmaya.script.apis.world;
 
+import io.github.moonlightmaya.util.ItemUtils;
 import io.github.moonlightmaya.util.MathUtils;
 import io.github.moonlightmaya.util.NbtUtils;
 import net.minecraft.block.BlockState;
@@ -107,7 +108,8 @@ public class BlockStateAPI {
     }
     @PetPetWhitelist
     public static ItemStack asItem(BlockState state) {
-        return state.getBlock().asItem().getDefaultStack();
+        //check stack shouldnt be necessary but just in case
+        return ItemUtils.checkStack(state.getBlock().asItem().getDefaultStack());
     }
     @PetPetWhitelist
     public static PetPetTable<String, PetPetList<?>> getProperties(BlockState state) {
