@@ -2,6 +2,7 @@ package io.github.moonlightmaya.util;
 
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 import org.joml.Vector3d;
 import org.joml.Vector4d;
@@ -20,6 +21,10 @@ public class MathUtils {
                 ((color >> 0) & 0xff) / 255.0,
                 ((color >> 24) & 0xff) / 255.0
         );
+    }
+
+    public static Vector3d fromVec3d(Vec3d mcVec) {
+        return new Vector3d(mcVec.x, mcVec.y, mcVec.z);
     }
 
 

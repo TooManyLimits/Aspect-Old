@@ -107,7 +107,7 @@ public class BlockStateAPI {
     }
     @PetPetWhitelist
     public static ItemStack asItem(BlockState state) {
-        return new ItemStack(state.getBlock().asItem());
+        return state.getBlock().asItem().getDefaultStack();
     }
     @PetPetWhitelist
     public static PetPetTable<String, PetPetList<?>> getProperties(BlockState state) {
