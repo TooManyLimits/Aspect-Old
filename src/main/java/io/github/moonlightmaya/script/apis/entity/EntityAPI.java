@@ -10,7 +10,9 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.InventoryOwner;
 import net.minecraft.entity.RideableInventory;
+import net.minecraft.entity.passive.CatEntity;
 import net.minecraft.entity.passive.FoxEntity;
+import net.minecraft.entity.passive.OcelotEntity;
 import net.minecraft.entity.vehicle.VehicleInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
@@ -79,8 +81,15 @@ public class EntityAPI {
         add(UUID.fromString("cbb5b758-b72f-4bdd-80cb-7be302e087a0"));
         add(UUID.fromString("7fd819d1-f8a2-48d3-9f69-fd5394f47030"));
         add(UUID.fromString("d2cf91ee-1d33-4ede-9468-f22d8ab750b2"));
+        add(UUID.fromString("dbe051b7-1e9a-433c-893e-96a89e93449e"));
     }};
-
+    private static final Set<UUID> cats = new HashSet<>() {{
+        add(UUID.fromString("50de3aff-e8ef-4d55-9092-f96b7b40de7a"));
+        add(UUID.fromString("93ab815f-92ab-4ea0-a768-c576896c52a8"));
+        add(UUID.fromString("7c85c805-a137-4671-bc79-89c8480c2548"));
+        add(UUID.fromString("ec3161aa-beb2-44cf-9c69-2adbde06d6fb"));
+        add(UUID.fromString("e2d8edf0-69b0-4c49-8315-2907f571d157"));
+    }};
 
     @PetPetWhitelist
     public static boolean isOnFire(Entity entity) {
@@ -95,12 +104,12 @@ public class EntityAPI {
         return entity.getFrozenTicks();
     }
     @PetPetWhitelist
-    public static boolean isCutie(Entity entity) {
-        return true;
-    }
-    @PetPetWhitelist
     public static boolean isFox(Entity entity) {
         return (entity instanceof FoxEntity) || foxes.contains(entity.getUuid());
+    }
+    @PetPetWhitelist
+    public static boolean isCat(Entity entity) {
+        return (entity instanceof CatEntity) || (entity instanceof OcelotEntity) || cats.contains(entity.getUuid());
     }
     @PetPetWhitelist
     public static String getPose(Entity entity) {

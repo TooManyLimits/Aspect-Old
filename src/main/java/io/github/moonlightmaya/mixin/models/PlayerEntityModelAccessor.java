@@ -10,4 +10,5 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 public interface PlayerEntityModelAccessor {
     @Accessor ModelPart getCloak();
     @Accessor ModelPart getEar();
+    @Accessor boolean getThinArms();
 }
