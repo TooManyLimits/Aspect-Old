@@ -1,31 +1,28 @@
-package io.github.moonlightmaya.script.apis;
+package io.github.moonlightmaya.script.apis.world;
 
-import io.github.moonlightmaya.mixin.world.ClientWorldInvoker;
-import io.github.moonlightmaya.util.MathUtils;
+import io.github.moonlightmaya.util.EntityUtils;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
 import net.minecraft.world.LightType;
 import net.minecraft.world.LunarWorldView;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.dimension.DimensionType;
 import org.joml.Vector3d;
-import org.joml.Vector3dc;
 import petpet.external.PetPetReflector;
 import petpet.external.PetPetWhitelist;
 import petpet.lang.run.*;
 import petpet.types.PetPetList;
-import petpet.types.immutable.PetPetListView;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.function.ToIntFunction;
 
+@PetPetWhitelist
 public class WorldAPI {
 
     public static final PetPetClass WORLD_CLASS;
@@ -33,12 +30,6 @@ public class WorldAPI {
     static {
         //Custom methods, inside the WorldAPI class
         WORLD_CLASS = PetPetReflector.reflect(WorldAPI.class, "World");
-
-        //Vanilla methods, yoink
-        WORLD_CLASS.addMethod("getTime_0", new JavaFunction(World.class, "getTime", true));
-        WORLD_CLASS.addMethod("getTimeOfDay_0", new JavaFunction(ClientWorld.class, "getTimeOfDay", true));
-        WORLD_CLASS.addMethod("getDimension", new JavaFunction(World.class, "getDimension", true)); //Need to register DimensionType class
-        WORLD_CLASS.addMethod("getMoonPhase", new JavaFunction(LunarWorldView.class, "getMoonPhase", true));
 
         ((JavaFunction) WORLD_CLASS.methods.get("eachBlock_3")).costPenalizer = i -> {
             Vector3d max = (Vector3d) i.peek(1);
@@ -68,6 +59,10 @@ public class WorldAPI {
     }
 
     @PetPetWhitelist
+    public static double getTime_0(ClientWorld world) {
+        return world.getTime();
+    }
+    @PetPetWhitelist
     public static double getTime_1(ClientWorld world, double delta) {
         return world.getTime() + delta;
     }
@@ -76,9 +71,26 @@ public class WorldAPI {
         return speed * (world.getTime() + delta);
     }
     @PetPetWhitelist
-    public static double getTimeOfDay_1(ClientWorld world, double delta) {
-        return world.getTime() + delta;
+    public static double getTimeOfDay_0(ClientWorld world) {
+        return world.getTimeOfDay();
     }
+    @PetPetWhitelist
+    public static double getTimeOfDay_1(ClientWorld world, double delta) {
+        return world.getTimeOfDay() + delta;
+    }
+    @PetPetWhitelist
+    public static DimensionType getDimension(ClientWorld world) {
+        return world.getDimension();
+    }
+    @PetPetWhitelist
+    public static String getDimensionName(ClientWorld world) {
+        return world.getDimensionKey().getValue().toString();
+    }
+    @PetPetWhitelist
+    public static double getMoonPhase(ClientWorld world) {
+        return world.getMoonPhase();
+    }
+
     @PetPetWhitelist
     public static PetPetList<Entity> getEntities(ClientWorld world) {
         PetPetList<Entity> entities = new PetPetList<>();
@@ -87,7 +99,7 @@ public class WorldAPI {
     }
     @PetPetWhitelist
     public static Entity getEntity(ClientWorld world, UUID uuid) {
-        return ((ClientWorldInvoker) world).getEntityLookup().get(uuid);
+        return EntityUtils.getEntityByUUID(world, uuid);
     }
     @PetPetWhitelist
     public static double getStrongRedstone_1(ClientWorld world, Vector3d pos) {

@@ -3,7 +3,10 @@ package io.github.moonlightmaya.script;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.model.WorldRootModelPart;
-import io.github.moonlightmaya.script.apis.WorldAPI;
+import io.github.moonlightmaya.script.apis.world.BiomeAPI;
+import io.github.moonlightmaya.script.apis.world.BlockStateAPI;
+import io.github.moonlightmaya.script.apis.world.DimensionAPI;
+import io.github.moonlightmaya.script.apis.world.WorldAPI;
 import io.github.moonlightmaya.script.apis.math.Matrices;
 import io.github.moonlightmaya.script.apis.math.Vectors;
 import io.github.moonlightmaya.script.events.AspectEvent;
@@ -11,8 +14,10 @@ import io.github.moonlightmaya.script.events.EventHandler;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.vanilla.VanillaPart;
 import io.github.moonlightmaya.vanilla.VanillaRenderer;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.dimension.DimensionType;
 import org.joml.*;
 import petpet.external.PetPetInstance;
 import petpet.external.PetPetReflector;
@@ -125,6 +130,9 @@ public class AspectScriptHandler {
 
         //World
         instance.registerClass(ClientWorld.class, WorldAPI.WORLD_CLASS);
+        instance.registerClass(BlockState.class, BlockStateAPI.BLOCK_STATE_CLASS);
+        instance.registerClass(DimensionType.class, DimensionAPI.DIMENSION_CLASS);
+        instance.registerClass(Biome.class, BiomeAPI.BIOME_CLASS);
     }
 
     /**

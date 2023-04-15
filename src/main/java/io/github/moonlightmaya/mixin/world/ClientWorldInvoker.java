@@ -10,6 +10,6 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 public interface ClientWorldInvoker {
 
     @Invoker("getEntityLookup")
-    EntityLookup<Entity> getEntityLookup();
+    EntityLookup<Entity> aspect$getEntityLookup();
 
 }

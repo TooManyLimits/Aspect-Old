@@ -36,6 +36,9 @@ public class Aspect {
     public AspectModelPart entityRoot; private BaseStructures.ModelPartStructure entityRootData;
     public List<WorldRootModelPart> worldRoots;
 
+    //whether the aspect is finished loading in. Some processes are asynchronous relative to the constructor
+    // (namely, loading textures), so we don't want to try setting this aspect until everything is ready
+    public boolean isReady;
 
     public final List<AspectTexture> textures;
 
@@ -65,6 +68,8 @@ public class Aspect {
                 throw new RuntimeException("Error importing texture " + base.name() + "!");
             }
         }
+        //Set the aspect to be ready, *after* all textures finish "uploadIfNeeded()"
+        RenderUtils.executeOnRenderThread(() -> isReady = true);
 
         //Save the entity root data
         entityRootData = materials.entityRoot();

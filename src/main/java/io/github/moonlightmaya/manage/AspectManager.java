@@ -51,7 +51,11 @@ public class AspectManager {
         assert RenderSystem.isOnRenderThreadOrInit(); //assertion to hopefully avoid some annoying threading issues
 
         //Each tick, perform tasks waiting in the queue.
-        while (!TASKS.isEmpty()) {
+        //Reason for "for" loop instead of "while" is that some tasks
+        //may add new ones to the queue, to be processed on the next tick,
+        // for example setAspect if the aspect isn't ready yet
+        int numTasks = TASKS.size();
+        for (int i = 0; i < numTasks; i++) {
             TASKS.poll().run(); //Poll the task and run it
         }
 
@@ -78,10 +82,15 @@ public class AspectManager {
     public static void setAspect(UUID entityUUID, Aspect aspect) {
         clearAspect(entityUUID); //Clear the old aspect first
         TASKS.add(() -> {
-            //Put the aspect in the map
-            ASPECTS.put(entityUUID, aspect);
-            //Also run the main script if it exists
-            aspect.scriptHandler.runMain();
+            //Put the aspect in the map if it's ready
+            if (aspect.isReady) {
+                ASPECTS.put(entityUUID, aspect);
+                //Also run the main script if it exists
+                aspect.scriptHandler.runMain();
+            } else {
+                //Otherwise, try again next tick
+                setAspect(entityUUID, aspect);
+            }
         }); //Then apply the new aspect
     }
 
