@@ -3,6 +3,10 @@ package io.github.moonlightmaya.script;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.model.WorldRootModelPart;
+import io.github.moonlightmaya.script.apis.ItemStackAPI;
+import io.github.moonlightmaya.script.apis.entity.EntityAPI;
+import io.github.moonlightmaya.script.apis.entity.LivingEntityAPI;
+import io.github.moonlightmaya.script.apis.entity.PlayerAPI;
 import io.github.moonlightmaya.script.apis.world.BiomeAPI;
 import io.github.moonlightmaya.script.apis.world.BlockStateAPI;
 import io.github.moonlightmaya.script.apis.world.DimensionAPI;
@@ -16,6 +20,10 @@ import io.github.moonlightmaya.vanilla.VanillaPart;
 import io.github.moonlightmaya.vanilla.VanillaRenderer;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.dimension.DimensionType;
 import org.joml.*;
@@ -65,6 +73,8 @@ public class AspectScriptHandler {
 
         //Create new instance
         instance = new PetPetInstance();
+
+        instance.debugBytecode = true;
 
         //Compile all the scripts
         compiledScripts = new HashMap<>();
@@ -131,8 +141,14 @@ public class AspectScriptHandler {
         //World
         instance.registerClass(ClientWorld.class, WorldAPI.WORLD_CLASS);
         instance.registerClass(BlockState.class, BlockStateAPI.BLOCK_STATE_CLASS);
+        instance.registerClass(ItemStack.class, ItemStackAPI.ITEMSTACK_CLASS);
         instance.registerClass(DimensionType.class, DimensionAPI.DIMENSION_CLASS);
         instance.registerClass(Biome.class, BiomeAPI.BIOME_CLASS);
+
+        //Entity
+        instance.registerClass(Entity.class, EntityAPI.ENTITY_CLASS);
+        instance.registerClass(LivingEntity.class, LivingEntityAPI.LIVING_ENTITY_CLASS);
+        instance.registerClass(PlayerEntity.class, PlayerAPI.PLAYER_CLASS);
     }
 
     /**
@@ -175,7 +191,6 @@ public class AspectScriptHandler {
         //world api: set during aspect.tick()
         //user api: set during aspect.tick()
         //vanilla api: set when the user's entity first loads in
-
     }
 
     /**
@@ -257,15 +272,29 @@ public class AspectScriptHandler {
         instance.setGlobal(name, o);
     }
 
-    public Object callEvent(String eventName, Object... args) {
-        if (isErrored()) return null;
+    public void callEvent(String eventName, Object... args) {
+        if (isErrored()) return;
         try {
-            return eventHandler.callEvent(eventName, args);
+            eventHandler.callEvent(eventName, args);
         } catch (Throwable t) {
             error = t;
             DisplayUtils.displayError(t.getMessage(), shouldPrintToChat);
-            return null;
         }
+    }
+
+    /**
+     * Calls the event in the "piped" format. If the aspect
+     * is errored, just returns the provided arg back.
+     */
+    public Object callEventPiped(String eventName, Object arg) {
+        if (isErrored()) return arg;
+        try {
+            return eventHandler.callEventPiped(eventName, arg);
+        } catch (Throwable t) {
+            error = t;
+            DisplayUtils.displayError(t.getMessage(), shouldPrintToChat);
+        }
+        return arg;
     }
 
     public boolean isErrored() {

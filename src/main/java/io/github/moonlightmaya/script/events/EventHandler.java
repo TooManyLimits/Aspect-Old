@@ -1,6 +1,5 @@
 package io.github.moonlightmaya.script.events;
 
-import io.github.moonlightmaya.script.AspectScriptHandler;
 import oshi.util.tuples.Pair;
 import petpet.external.PetPetInstance;
 import petpet.types.PetPetTable;
@@ -35,8 +34,17 @@ public class EventHandler {
      * The result is the result of the final function
      * registered, or null if none are registered.
      */
-    public Object callEvent(String name, Object... args) {
-        return events.get(name).execute(args);
+    public void callEvent(String name, Object... args) {
+        events.get(name).execute(args);
+    }
+
+    /**
+     * Calls the event in the "piped" style, with the
+     * given arg. The result of a call is passed to
+     * the next call.
+     */
+    public Object callEventPiped(String name, Object arg) {
+        return events.get(name).executePiped(arg);
     }
 
     /**
@@ -45,7 +53,7 @@ public class EventHandler {
      *
      * Public in case other mods later want to add their own new events,
      * and also is not an enum, for the same reason. Enums are hard for
-     * other mods to extend.
+     * other mods to extend, and add their own events.
      */
     private static final Set<Pair<String, Integer>> EVENT_TYPES = new HashSet<>();
     public static void defineEvent(String name, int argCount) {

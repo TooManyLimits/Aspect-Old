@@ -24,28 +24,13 @@ public class PlayerAPI {
         PLAYER_CLASS.methods.putAll(LivingEntityAPI.LIVING_ENTITY_CLASS.methods);
     }
 
-    @PetPetWhitelist
-    public static double getExperienceProgress(PlayerEntity player) {
-        return player.experienceProgress;
-    }
-    @PetPetWhitelist
-    public static double getChargedAttackDelay(PlayerEntity player) {
-        return player.getAttackCooldownProgressPerTick();
-    }
-    @PetPetWhitelist
-    public static String getModelType(PlayerEntity player) {
-        PlayerListEntry entry = EntityUtils.getPlayerListEntry(player.getUuid());
-        return (entry != null ? entry.getModel() : DefaultSkinHelper.getModel(player.getUuid())).toUpperCase();
-    }
+    /**
+     * booleans
+     */
     @PetPetWhitelist
     public static boolean hasCape(PlayerEntity player) {
         PlayerListEntry entry = EntityUtils.getPlayerListEntry(player.getUuid());
         return entry != null && entry.hasCape();
-    }
-    @PetPetWhitelist
-    public static String getGamemode(PlayerEntity player) {
-        PlayerListEntry entry = EntityUtils.getPlayerListEntry(player.getUuid());
-        return entry == null ? null : entry.getGameMode().name();
     }
     @PetPetWhitelist
     public static boolean hasSkin(PlayerEntity player) {
@@ -53,20 +38,8 @@ public class PlayerAPI {
         return entry != null && entry.hasSkinTexture();
     }
     @PetPetWhitelist
-    public static double getFood(PlayerEntity player) {
-        return player.getHungerManager().getFoodLevel();
-    }
-    @PetPetWhitelist
-    public static double getSaturation(PlayerEntity player) {
-        return player.getHungerManager().getSaturationLevel();
-    }
-    @PetPetWhitelist
     public static boolean isCutie(PlayerEntity player) {
         return true;
-    }
-    @PetPetWhitelist
-    public static double getExhaustion(PlayerEntity player) {
-        return player.getHungerManager().getExhaustion();
     }
     @PetPetWhitelist
     public static boolean isSkinLayerVisible(PlayerEntity player, String part) {
@@ -79,17 +52,57 @@ public class PlayerAPI {
         }
     }
     @PetPetWhitelist
+    public static boolean isFishing(PlayerEntity player) {
+        return player.fishHook != null;
+    }
+
+    /**
+     * numbers
+     */
+    @PetPetWhitelist
     public static double getExperienceLevel(PlayerEntity player) {
         return player.experienceLevel;
+    }
+    @PetPetWhitelist
+    public static double getExperienceProgress(PlayerEntity player) {
+        return player.experienceProgress;
+    }
+    @PetPetWhitelist
+    public static double getChargedAttackDelay(PlayerEntity player) {
+        return player.getAttackCooldownProgressPerTick();
+    }
+    @PetPetWhitelist
+    public static double getFood(PlayerEntity player) {
+        return player.getHungerManager().getFoodLevel();
+    }
+    @PetPetWhitelist
+    public static double getSaturation(PlayerEntity player) {
+        return player.getHungerManager().getSaturationLevel();
+    }
+    @PetPetWhitelist
+    public static double getExhaustion(PlayerEntity player) {
+        return player.getHungerManager().getExhaustion();
+    }
+
+    /**
+     * other
+     */
+    @PetPetWhitelist
+    public static String getModelType(PlayerEntity player) {
+        PlayerListEntry entry = EntityUtils.getPlayerListEntry(player.getUuid());
+        return (entry != null ? entry.getModel() : DefaultSkinHelper.getModel(player.getUuid())).toUpperCase();
+    }
+    @PetPetWhitelist
+    public static String getGamemode(PlayerEntity player) {
+        PlayerListEntry entry = EntityUtils.getPlayerListEntry(player.getUuid());
+        return entry == null ? null : entry.getGameMode().name();
     }
     @PetPetWhitelist
     public static PetPetTable<String, Object> getShoulderEntity(PlayerEntity player, boolean rightShoulder) {
         return NbtUtils.toPetPet(rightShoulder ? player.getShoulderEntityRight() : player.getShoulderEntityLeft());
     }
-    @PetPetWhitelist
-    public static boolean isFishing(PlayerEntity player) {
-        return player.fishHook != null;
-    }
+
+    //Extras
 
     @PetPetWhitelist
     public String __tostring(PlayerEntity player) {

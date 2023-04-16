@@ -57,10 +57,7 @@ public class BlockStateAPI {
         genWorldPosAcceptorsWithTransformer("getMapColor", BlockState::getMapColor, i -> MathUtils.intToRGBA(i.color));
     }
 
-    @PetPetWhitelist
-    public static String getID(BlockState state) {
-        return Registries.BLOCK.getId(state.getBlock()).toString();
-    }
+    // boolean
 
     @PetPetWhitelist
     public static boolean hasBlockEntity(BlockState state) {
@@ -74,18 +71,9 @@ public class BlockStateAPI {
     public static boolean emitsRedstonePower(BlockState state) {
         return state.emitsRedstonePower();
     }
-    @PetPetWhitelist
-    public static PetPetList<String> getTags(BlockState state) {
-        PetPetList<String> list = new PetPetList<>();
-        state.streamTags().map(TagKey::id).map(Identifier::toString).forEach(list::add);
-        return list;
-    }
-    @PetPetWhitelist
-    public static PetPetList<String> getFluidTags(BlockState state) {
-        PetPetList<String> list = new PetPetList<>();
-        state.getFluidState().streamTags().map(TagKey::id).map(Identifier::toString).forEach(list::add);
-        return list;
-    }
+
+    // numbers
+
     @PetPetWhitelist
     public static double getSlipperiness(BlockState state) {
         return state.getBlock().getSlipperiness();
@@ -105,6 +93,26 @@ public class BlockStateAPI {
     @PetPetWhitelist
     public static double getJumpVelocityMultiplier(BlockState state) {
         return state.getBlock().getJumpVelocityMultiplier();
+    }
+
+    // other
+
+    @PetPetWhitelist
+    public static String getID(BlockState state) {
+        return Registries.BLOCK.getId(state.getBlock()).toString();
+    }
+
+    @PetPetWhitelist
+    public static PetPetList<String> getTags(BlockState state) {
+        PetPetList<String> list = new PetPetList<>();
+        state.streamTags().map(TagKey::id).map(Identifier::toString).forEach(list::add);
+        return list;
+    }
+    @PetPetWhitelist
+    public static PetPetList<String> getFluidTags(BlockState state) {
+        PetPetList<String> list = new PetPetList<>();
+        state.getFluidState().streamTags().map(TagKey::id).map(Identifier::toString).forEach(list::add);
+        return list;
     }
     @PetPetWhitelist
     public static ItemStack asItem(BlockState state) {
@@ -173,41 +181,7 @@ public class BlockStateAPI {
 
     //Same concept, but with an additional transformer function applied to the output.
     private static <T, S> void genWorldPosAcceptorsWithTransformer(String name, TriFunction<BlockState, World, BlockPos, T> baseFunc, Function<T, S> outputTransformer) {
-        BLOCK_STATE_CLASS.addMethod(name + "_0", new JavaFunction(false, 1) {
-            @Override
-            public Object invoke(Object blockState) {
-                return outputTransformer.apply(baseFunc.apply((BlockState) blockState, MinecraftClient.getInstance().world, BlockPos.ORIGIN));
-            }
-        });
-        BLOCK_STATE_CLASS.addMethod(name + "_1", new JavaFunction(false, 2) {
-            @Override
-            public Object invoke(Object blockState, Object pos) {
-                Vector3d p = (Vector3d) pos;
-                return outputTransformer.apply(baseFunc.apply((BlockState) blockState, MinecraftClient.getInstance().world, new BlockPos(p.x, p.y, p.z)));
-            }
-        });
-        BLOCK_STATE_CLASS.addMethod(name + "_2", new JavaFunction(false, 3) {
-            @Override
-            public Object invoke(Object blockState, Object pos, Object world) {
-                Vector3d p = (Vector3d) pos;
-                return outputTransformer.apply(baseFunc.apply((BlockState) blockState, (World) world, new BlockPos(p.x, p.y, p.z)));
-            }
-        });
-        BLOCK_STATE_CLASS.addMethod(name + "_3", new JavaFunction(false, 4) {
-            @Override
-            public Object invoke(Object blockState, Object x, Object y, Object z) {
-                return outputTransformer.apply(baseFunc.apply((BlockState) blockState, MinecraftClient.getInstance().world, new BlockPos((Double) x, (Double) y, (Double) z)));
-            }
-        });
-        BLOCK_STATE_CLASS.addMethod(name + "_4", new JavaFunction(false, 5) {
-            @Override
-            public Object invoke(Object blockState, Object x, Object y, Object z, Object world) {
-                return outputTransformer.apply(baseFunc.apply((BlockState) blockState, (World) world, new BlockPos((Double) x, (Double) y, (Double) z)));
-            }
-        });
+        genWorldPosAcceptors(name, (state, world, pos) -> outputTransformer.apply(baseFunc.apply(state, world, pos)));
     }
-
-
-
 
 }

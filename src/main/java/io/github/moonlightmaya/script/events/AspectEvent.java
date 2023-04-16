@@ -1,14 +1,11 @@
 package io.github.moonlightmaya.script.events;
 
-import org.apache.commons.lang3.mutable.MutableBoolean;
 import petpet.external.PetPetWhitelist;
 import petpet.lang.run.PetPetCallable;
 import petpet.lang.run.PetPetException;
 
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 @PetPetWhitelist
 public class AspectEvent {
@@ -16,15 +13,36 @@ public class AspectEvent {
     /**
      * Maintains the list of all registered functions to the event
      */
-    private final Set<PetPetCallable> registered = new LinkedHashSet<>();
+    private final LinkedHashSet<PetPetCallable> registered = new LinkedHashSet<>();
 
-    private boolean currentlyRunning;
+    private final ConcurrentLinkedQueue<PetPetCallable> toRegister = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<PetPetCallable> toRemove = new ConcurrentLinkedQueue<>();
+    private boolean shouldClear = false;
     private final String name;
     private final int expectedArgCount;
 
     public AspectEvent(String name, int expectedArgCount) {
         this.name = name;
         this.expectedArgCount = expectedArgCount;
+    }
+
+    private void flushQueues() {
+        if (shouldClear) {
+            registered.clear();
+            toRegister.clear();
+            toRemove.clear();
+            shouldClear = false;
+            return;
+        }
+        while (!toRegister.isEmpty())
+            registered.add(toRegister.poll());
+        while (!toRemove.isEmpty())
+            registered.remove(toRemove.poll());
+    }
+
+    @PetPetWhitelist
+    public void clear() {
+        shouldClear = true;
     }
 
     /**
@@ -35,10 +53,7 @@ public class AspectEvent {
     public void add(PetPetCallable function) {
         if (expectedArgCount != function.paramCount())
             throw new PetPetException("Event " + name + " expects a " + expectedArgCount + "-arg function, but received a " + function.paramCount() + "-arg function");
-        if (currentlyRunning)
-            throw new PetPetException("Cannot add to an event while inside that event");
-        if (!registered.add(function))
-            throw new PetPetException("Attempt to register the same function to an event multiple times");
+        toRegister.add(function);
     }
 
     /**
@@ -47,27 +62,35 @@ public class AspectEvent {
      * false if it wasn't inside the event
      */
     @PetPetWhitelist
-    public boolean remove(PetPetCallable function) {
-        if (currentlyRunning)
-            throw new PetPetException("Cannot remove from an event while inside that event!");
-        return registered.remove(function);
+    public void remove(PetPetCallable function) {
+        toRemove.add(function);
     }
 
     /**
      * Executes the event.
-     * The boolean flag ensures that the list cannot be
-     * modified while it's being iterated.
+     * The set of registered functions cannot be modified while
+     * inside the iteration.
      * The given args will be passed to each function in the call.
-     *
-     * Return value is the result of the final function call, or null if none
      */
-    public Object execute(Object... args) {
-        currentlyRunning = true;
-        Object o = null;
+    public void execute(Object... args) {
+        flushQueues();
         for (PetPetCallable func : registered)
-            o = func.call(args);
-        currentlyRunning = false;
-        return o;
+            func.call(args);
+    }
+
+    /**
+     * Executes the function in a "piped" manner.
+     * The initial object is passed in to the
+     * first function, then the output of this
+     * function is passed to the next, and so on.
+     * Eventually, the final object after passing
+     * through all registered functions is returned.
+     */
+    public Object executePiped(Object arg) {
+        flushQueues();
+        for (PetPetCallable func : registered)
+            arg = func.call(arg);
+        return arg;
     }
 
     @Override

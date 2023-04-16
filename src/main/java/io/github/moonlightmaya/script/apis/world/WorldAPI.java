@@ -5,12 +5,8 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.LightType;
-import net.minecraft.world.LunarWorldView;
-import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.dimension.DimensionType;
 import org.joml.Vector3d;
@@ -98,8 +94,8 @@ public class WorldAPI {
         return entities;
     }
     @PetPetWhitelist
-    public static Entity getEntity(ClientWorld world, UUID uuid) {
-        return EntityUtils.getEntityByUUID(world, uuid);
+    public static Entity getEntity(ClientWorld world, String uuid) {
+        return EntityUtils.getEntityByUUID(world, UUID.fromString(uuid));
     }
     @PetPetWhitelist
     public static double getStrongRedstone_1(ClientWorld world, Vector3d pos) {
@@ -124,6 +120,14 @@ public class WorldAPI {
     @PetPetWhitelist
     public static Biome getBiome_3(ClientWorld world, double x, double y, double z) {
         return world.getBiome(new BlockPos(x, y, z)).value();
+    }
+    @PetPetWhitelist
+    public static String getBiomeID_1(ClientWorld world, Vector3d pos) {
+        return world.getBiome(new BlockPos(pos.x, pos.y, pos.z)).getKey().map(k -> k.getValue().toString()).orElse(null);
+    }
+    @PetPetWhitelist
+    public static String getBiomeID_3(ClientWorld world, double x, double y, double z) {
+        return world.getBiome(new BlockPos(x, y, z)).getKey().map(k -> k.getValue().toString()).orElse(null);
     }
     @PetPetWhitelist
     public static BlockState getBlockState_1(ClientWorld world, Vector3d pos) {
