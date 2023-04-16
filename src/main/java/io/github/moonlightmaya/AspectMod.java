@@ -105,6 +105,26 @@ public class AspectMod implements ClientModInitializer {
             });
             aspect.then(clear);
 
+            LiteralArgumentBuilder<FabricClientCommandSource> run = literal("run");
+            RequiredArgumentBuilder<FabricClientCommandSource, String> code = RequiredArgumentBuilder.argument("code", StringArgumentType.greedyString());
+            code.executes(context -> {
+                Entity player = MinecraftClient.getInstance().player;
+                String theCode = StringArgumentType.getString(context, "code");
+                Aspect playerAspect = AspectManager.getAspect(player.getUuid());
+                if (playerAspect == null)
+                    DisplayUtils.displayError("Failed to run code, no active environment", true);
+                else {
+                    try {
+                        playerAspect.scriptHandler.runCode("run", theCode);
+                    } catch (Throwable t) {
+                        DisplayUtils.displayError(t.getMessage(), t, true);
+                    }
+                }
+                return 1;
+            });
+            run.then(code);
+            aspect.then(run);
+
             dispatcher.register(aspect);
         });
 

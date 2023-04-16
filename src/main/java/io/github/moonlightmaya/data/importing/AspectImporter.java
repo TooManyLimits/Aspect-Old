@@ -57,9 +57,12 @@ public class AspectImporter {
                 scripts = getScripts();
                 //Get entity model parts:
                 BaseStructures.ModelPartStructure entityRoot = getEntityModels();
+                //Get world model parts:
+                List<BaseStructures.ModelPartStructure> worldRoots = getWorldRoots();
+
 
                 result.complete(new BaseStructures.AspectStructure(
-                        entityRoot, List.of(),
+                        entityRoot, worldRoots,
                         Lists.newArrayList(textures.values()),
                         scripts
                 ));
@@ -111,6 +114,21 @@ public class AspectImporter {
                 "entity", new Vector3f(), new Vector3f(), new Vector3f(), true,
                 bbmodels, AspectModelPart.ModelPartType.GROUP, null
         );
+    }
+
+    private List<BaseStructures.ModelPartStructure> getWorldRoots() throws IOException, AspectImporterException {
+        Path p = rootPath.resolve("world");
+        List<File> files = IOUtils.getByExtension(p, "bbmodel");
+        List<BaseStructures.ModelPartStructure> bbmodels = new ArrayList<>(files.size());
+        for (File f : files) {
+            //Read to a bbmodel object, and handle it
+            String str = Files.readString(f.toPath());
+            JsonStructures.BBModel bbmodel = gson.fromJson(str, JsonStructures.BBModel.class);
+            bbmodel.fixedOutliner = bbmodel.getGson().fromJson(bbmodel.outliner, JsonStructures.Part[].class);
+            String fileName = f.getName().substring(0, f.getName().length() - ".bbmodel".length()); //remove .bbmodel
+            bbmodels.add(handleBBModel(bbmodel, fileName));
+        }
+        return bbmodels;
     }
 
     /**

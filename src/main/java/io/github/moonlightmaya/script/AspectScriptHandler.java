@@ -103,6 +103,10 @@ public class AspectScriptHandler {
         }
     }
 
+    public void runCode(String name, String code) throws Exception {
+        instance.runScript(name, code);
+    }
+
     PetPetTable<String, Object> modelsTable = new PetPetTable<>();
 
     /**
@@ -176,8 +180,9 @@ public class AspectScriptHandler {
         setGlobal("models", modelsTable);
 
         //World roots in models
-        PetPetList<WorldRootModelPart> worldRoots = new PetPetList<>(aspect.worldRoots.size());
-        worldRoots.addAll(aspect.worldRoots);
+        PetPetTable<String, WorldRootModelPart> worldRoots = new PetPetTable<>(aspect.worldRoots.size());
+        for (WorldRootModelPart worldRootModelPart : aspect.worldRoots)
+            worldRoots.put(worldRootModelPart.name, worldRootModelPart);
         modelsTable.put("world", worldRoots);
 
         //Events
