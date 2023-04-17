@@ -175,6 +175,7 @@ public class Aspect {
      * Render the world-parented parts
      */
     public void renderWorld(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {
+        scriptHandler.callEvent(EventHandler.WORLD_RENDER, MinecraftClient.getInstance().getTickDelta());
         for (WorldRootModelPart worldRoot : worldRoots) {
             worldRoot.render(vcp, matrixStack);
         }

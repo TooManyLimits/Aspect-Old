@@ -115,7 +115,8 @@ public class AspectMod implements ClientModInitializer {
                     DisplayUtils.displayError("Failed to run code, no active environment", true);
                 else {
                     try {
-                        playerAspect.scriptHandler.runCode("run", theCode);
+                        Object result = playerAspect.scriptHandler.runCode("run", theCode);
+                        DisplayUtils.displayPetPetMessage(playerAspect.scriptHandler.getStringFor(result));
                     } catch (Throwable t) {
                         DisplayUtils.displayError(t.getMessage(), t, true);
                     }

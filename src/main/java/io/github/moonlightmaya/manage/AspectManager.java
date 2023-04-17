@@ -4,8 +4,10 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.data.importing.AspectImporter;
+import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.util.EntityUtils;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.world.World;
@@ -62,6 +64,19 @@ public class AspectManager {
         //Tick each Aspect
         for (Aspect aspect : ASPECTS.values())
             aspect.tick(world);
+    }
+
+    /**
+     * Called when rendering the world. Attempts to render every single loaded Aspect's world parts.
+     * @param vcp The vertex consumer provider which will be used for this rendering operation.
+     * @param matrices Matrices translated to be centered at 0,0,0. This is then added to by the
+     *                 world part's worldPos() vector.
+     */
+    public static void renderWorld(VertexConsumerProvider vcp, AspectMatrixStack matrices) {
+        for (Aspect aspect : ASPECTS.values()) {
+            //For each loaded aspect, render its world parts
+            aspect.renderWorld(vcp, matrices);
+        }
     }
 
     /**

@@ -74,7 +74,7 @@ public class AspectScriptHandler {
         //Create new instance
         instance = new PetPetInstance();
 
-        instance.debugBytecode = true;
+//        instance.debugBytecode = true;
 
         //Compile all the scripts
         compiledScripts = new HashMap<>();
@@ -103,8 +103,8 @@ public class AspectScriptHandler {
         }
     }
 
-    public void runCode(String name, String code) throws Exception {
-        instance.runScript(name, code);
+    public Object runCode(String name, String code) throws Exception {
+        return instance.runScript(name, code);
     }
 
     PetPetTable<String, Object> modelsTable = new PetPetTable<>();
@@ -267,7 +267,7 @@ public class AspectScriptHandler {
             @Override
             public Object invoke(Object o) {
                 if (shouldPrintToChat)
-                    DisplayUtils.displayPetPetMessage(instance.interpreter.getString(o));
+                    DisplayUtils.displayPetPetMessage(getStringFor(o));
                 return null;
             }
         };
@@ -275,6 +275,10 @@ public class AspectScriptHandler {
 
     public void setGlobal(String name, Object o) {
         instance.setGlobal(name, o);
+    }
+
+    public String getStringFor(Object o) {
+        return instance.interpreter.getString(o);
     }
 
     public void callEvent(String eventName, Object... args) {
