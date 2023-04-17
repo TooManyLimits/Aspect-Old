@@ -34,7 +34,7 @@ public class BlockStateAPI {
     static {
         BLOCK_STATE_CLASS = PetPetReflector.reflect(BlockStateAPI.class, "BlockState");
 
-        genWorldPosAcceptors("isTranslucent", BlockState::isTranslucent);
+        genWorldPosAcceptors("isTranslucent", BlockState::isTransparent);
         genWorldPosAcceptors("getOpacity", BlockState::getOpacity);
         genWorldPosAcceptors("isSolidBlock", BlockState::isSolidBlock);
 
@@ -155,26 +155,36 @@ public class BlockStateAPI {
             @Override
             public Object invoke(Object blockState, Object pos) {
                 Vector3d p = (Vector3d) pos;
-                return baseFunc.apply((BlockState) blockState, MinecraftClient.getInstance().world, new BlockPos(p.x, p.y, p.z));
+                return baseFunc.apply((BlockState) blockState, MinecraftClient.getInstance().world, new BlockPos((int) p.x, (int) p.y, (int) p.z));
             }
         });
         BLOCK_STATE_CLASS.addMethod(name + "_2", new JavaFunction(false, 3) {
             @Override
             public Object invoke(Object blockState, Object pos, Object world) {
                 Vector3d p = (Vector3d) pos;
-                return baseFunc.apply((BlockState) blockState, (World) world, new BlockPos(p.x, p.y, p.z));
+                return baseFunc.apply((BlockState) blockState, (World) world, new BlockPos((int) p.x, (int) p.y, (int) p.z));
             }
         });
         BLOCK_STATE_CLASS.addMethod(name + "_3", new JavaFunction(false, 4) {
             @Override
             public Object invoke(Object blockState, Object x, Object y, Object z) {
-                return baseFunc.apply((BlockState) blockState, MinecraftClient.getInstance().world, new BlockPos((Double) x, (Double) y, (Double) z));
+                BlockPos pos = new BlockPos(
+                        ((Number) x).intValue(),
+                        ((Number) y).intValue(),
+                        ((Number) z).intValue()
+                );
+                return baseFunc.apply((BlockState) blockState, MinecraftClient.getInstance().world, pos);
             }
         });
         BLOCK_STATE_CLASS.addMethod(name + "_4", new JavaFunction(false, 5) {
             @Override
             public Object invoke(Object blockState, Object x, Object y, Object z, Object world) {
-                return baseFunc.apply((BlockState) blockState, (World) world, new BlockPos((Double) x, (Double) y, (Double) z));
+                BlockPos pos = new BlockPos(
+                        ((Number) x).intValue(),
+                        ((Number) y).intValue(),
+                        ((Number) z).intValue()
+                );
+                return baseFunc.apply((BlockState) blockState, (World) world, pos);
             }
         });
     }

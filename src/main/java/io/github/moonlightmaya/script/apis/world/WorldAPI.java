@@ -48,7 +48,7 @@ public class WorldAPI {
     }
 
     private static <T> T acceptPosOrElse(ClientWorld world, double x, double y, double z, Function<BlockPos, T> ifLoaded, T ifUnloaded) {
-        BlockPos blockPos = new BlockPos(x, y, z);
+        BlockPos blockPos = new BlockPos((int) x, (int) y, (int) z);
         if (world.getChunk(blockPos) == null)
             return ifUnloaded;
         return ifLoaded.apply(blockPos);
@@ -115,19 +115,19 @@ public class WorldAPI {
     }
     @PetPetWhitelist
     public static Biome getBiome_1(ClientWorld world, Vector3d pos) {
-        return world.getBiome(new BlockPos(pos.x, pos.y, pos.z)).value();
+        return world.getBiome(new BlockPos((int) pos.x, (int) pos.y, (int) pos.z)).value();
     }
     @PetPetWhitelist
     public static Biome getBiome_3(ClientWorld world, double x, double y, double z) {
-        return world.getBiome(new BlockPos(x, y, z)).value();
+        return world.getBiome(new BlockPos((int) x, (int) y, (int) z)).value();
     }
     @PetPetWhitelist
     public static String getBiomeID_1(ClientWorld world, Vector3d pos) {
-        return world.getBiome(new BlockPos(pos.x, pos.y, pos.z)).getKey().map(k -> k.getValue().toString()).orElse(null);
+        return world.getBiome(new BlockPos((int) pos.x, (int) pos.y, (int) pos.z)).getKey().map(k -> k.getValue().toString()).orElse(null);
     }
     @PetPetWhitelist
     public static String getBiomeID_3(ClientWorld world, double x, double y, double z) {
-        return world.getBiome(new BlockPos(x, y, z)).getKey().map(k -> k.getValue().toString()).orElse(null);
+        return world.getBiome(new BlockPos((int) x, (int) y, (int) z)).getKey().map(k -> k.getValue().toString()).orElse(null);
     }
     @PetPetWhitelist
     public static BlockState getBlockState_1(ClientWorld world, Vector3d pos) {
@@ -145,8 +145,8 @@ public class WorldAPI {
     public static void eachBlock_7(ClientWorld world, double minX, double minY, double minZ, double maxX, double maxY, double maxZ, PetPetCallable func) {
         if (func.paramCount() != 4)
             throw new PetPetException("world.eachBlock() expects a function with 4 params, but you passed in one with " + func.paramCount() + " params");
-        BlockPos a = new BlockPos(minX, minY, minZ);
-        BlockPos b = new BlockPos(maxX, maxY, maxZ);
+        BlockPos a = new BlockPos((int) minX, (int) minY, (int) minZ);
+        BlockPos b = new BlockPos((int) maxX, (int) maxY, (int) maxZ);
         //If any part of the region is unloaded, then do nothing
         if (!world.isRegionLoaded(a, b))
             return;

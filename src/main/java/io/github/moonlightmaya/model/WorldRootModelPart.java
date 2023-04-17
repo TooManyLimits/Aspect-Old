@@ -67,7 +67,7 @@ public class WorldRootModelPart extends AspectModelPart {
         matrixStack.translate(worldPos);
 
         //This is how minecraft selects the light level for rendering an entity
-        BlockPos lightChoosePos = new BlockPos(worldPos.x, worldPos.y, worldPos.z);
+        BlockPos lightChoosePos = new BlockPos((int) worldPos.x, (int) worldPos.y, (int) worldPos.z);
         int light = LightmapTextureManager.pack(
                 world.getLightLevel(LightType.BLOCK, lightChoosePos),
                 world.getLightLevel(LightType.SKY, lightChoosePos)

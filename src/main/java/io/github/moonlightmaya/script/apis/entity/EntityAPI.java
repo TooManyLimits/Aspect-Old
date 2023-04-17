@@ -113,7 +113,7 @@ public class EntityAPI {
     @PetPetWhitelist
     public static boolean isInRain(Entity entity) {
         BlockPos pos = entity.getBlockPos();
-        return (entity.world.hasRain(pos)) || entity.world.hasRain(new BlockPos(pos.getX(), entity.getBoundingBox().maxY, pos.getZ()));
+        return (entity.world.hasRain(pos)) || entity.world.hasRain(new BlockPos(pos.getX(), (int) entity.getBoundingBox().maxY, pos.getZ()));
     }
 
     /**
