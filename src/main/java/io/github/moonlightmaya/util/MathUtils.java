@@ -1,7 +1,6 @@
 package io.github.moonlightmaya.util;
 
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 import org.joml.Vector3d;
@@ -27,6 +26,13 @@ public class MathUtils {
         return new Vector3d(mcVec.x, mcVec.y, mcVec.z);
     }
 
+    public static BlockPos getBlockPos(Vector3d vec) {
+        return getBlockPos(vec.x, vec.y, vec.z);
+    }
+
+    public static BlockPos getBlockPos(double x, double y, double z) {
+        return new BlockPos((int) Math.floor(x), (int) Math.floor(y), (int) Math.floor(z));
+    }
 
 
     /**

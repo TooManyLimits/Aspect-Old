@@ -1,6 +1,7 @@
 package io.github.moonlightmaya.script.apis.world;
 
 import io.github.moonlightmaya.util.EntityUtils;
+import io.github.moonlightmaya.util.MathUtils;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.world.ClientWorld;
@@ -145,8 +146,8 @@ public class WorldAPI {
     public static void eachBlock_7(ClientWorld world, double minX, double minY, double minZ, double maxX, double maxY, double maxZ, PetPetCallable func) {
         if (func.paramCount() != 4)
             throw new PetPetException("world.eachBlock() expects a function with 4 params, but you passed in one with " + func.paramCount() + " params");
-        BlockPos a = new BlockPos((int) minX, (int) minY, (int) minZ);
-        BlockPos b = new BlockPos((int) maxX, (int) maxY, (int) maxZ);
+        BlockPos a = MathUtils.getBlockPos(minX, minY, minZ);
+        BlockPos b = MathUtils.getBlockPos(maxX, maxY, maxZ);
         //If any part of the region is unloaded, then do nothing
         if (!world.isRegionLoaded(a, b))
             return;

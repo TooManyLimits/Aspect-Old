@@ -3,6 +3,7 @@ package io.github.moonlightmaya.model;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.util.AspectMatrixStack;
+import io.github.moonlightmaya.util.MathUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.render.LightmapTextureManager;
@@ -67,7 +68,7 @@ public class WorldRootModelPart extends AspectModelPart {
         matrixStack.translate(worldPos);
 
         //This is how minecraft selects the light level for rendering an entity
-        BlockPos lightChoosePos = new BlockPos((int) worldPos.x, (int) worldPos.y, (int) worldPos.z);
+        BlockPos lightChoosePos = MathUtils.getBlockPos(worldPos);
         int light = LightmapTextureManager.pack(
                 world.getLightLevel(LightType.BLOCK, lightChoosePos),
                 world.getLightLevel(LightType.SKY, lightChoosePos)

@@ -154,37 +154,25 @@ public class BlockStateAPI {
         BLOCK_STATE_CLASS.addMethod(name + "_1", new JavaFunction(false, 2) {
             @Override
             public Object invoke(Object blockState, Object pos) {
-                Vector3d p = (Vector3d) pos;
-                return baseFunc.apply((BlockState) blockState, MinecraftClient.getInstance().world, new BlockPos((int) p.x, (int) p.y, (int) p.z));
+                return baseFunc.apply((BlockState) blockState, MinecraftClient.getInstance().world, MathUtils.getBlockPos((Vector3d) pos));
             }
         });
         BLOCK_STATE_CLASS.addMethod(name + "_2", new JavaFunction(false, 3) {
             @Override
             public Object invoke(Object blockState, Object pos, Object world) {
-                Vector3d p = (Vector3d) pos;
-                return baseFunc.apply((BlockState) blockState, (World) world, new BlockPos((int) p.x, (int) p.y, (int) p.z));
+                return baseFunc.apply((BlockState) blockState, (World) world, MathUtils.getBlockPos((Vector3d) pos));
             }
         });
         BLOCK_STATE_CLASS.addMethod(name + "_3", new JavaFunction(false, 4) {
             @Override
             public Object invoke(Object blockState, Object x, Object y, Object z) {
-                BlockPos pos = new BlockPos(
-                        ((Number) x).intValue(),
-                        ((Number) y).intValue(),
-                        ((Number) z).intValue()
-                );
-                return baseFunc.apply((BlockState) blockState, MinecraftClient.getInstance().world, pos);
+                return baseFunc.apply((BlockState) blockState, MinecraftClient.getInstance().world, MathUtils.getBlockPos((Double) x, (Double) y, (Double) z));
             }
         });
         BLOCK_STATE_CLASS.addMethod(name + "_4", new JavaFunction(false, 5) {
             @Override
             public Object invoke(Object blockState, Object x, Object y, Object z, Object world) {
-                BlockPos pos = new BlockPos(
-                        ((Number) x).intValue(),
-                        ((Number) y).intValue(),
-                        ((Number) z).intValue()
-                );
-                return baseFunc.apply((BlockState) blockState, (World) world, pos);
+                return baseFunc.apply((BlockState) blockState, (World) world, MathUtils.getBlockPos((Double) x, (Double) y, (Double) z));
             }
         });
     }
