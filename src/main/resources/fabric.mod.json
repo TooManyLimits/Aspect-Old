@@ -4,7 +4,7 @@
   "version": "${version}",
 
   "name": "Aspect",
-  "description": "Allows extreme customization of the player character! A spiritual successor to the Figura mod, focusing on script safety and ease of use without compromising on players' creative freedom.",
+  "description": "A character customization mod inspired by Figura, focusing on clean code, performance, and ease of use without compromising on players' creative freedom.",
   "authors": [
     "Limit System"
   ],

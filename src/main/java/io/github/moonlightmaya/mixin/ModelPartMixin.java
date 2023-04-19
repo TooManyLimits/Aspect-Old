@@ -177,9 +177,10 @@ public abstract class ModelPartMixin {
                     ci.cancel();
             }
         }
-        //even if there isn't an aspect rendering currently, we need to remember that if the visibility were set
-        //to false, then it should never have begun rendering here in the first place. Cancel if that was the case
-        else if (!aspect$savedVisibility) ci.cancel();
+        //even if there isn't an aspect rendering currently, or there's no vanilla part, we need to remember that
+        //if the visibility were set to false, then it should never have begun rendering here in the first place.
+        //Cancel if that was the case
+        if (!aspect$savedVisibility) ci.cancel();
     }
 
     /**
