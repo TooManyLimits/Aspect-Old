@@ -28,7 +28,7 @@ public class Matrices {
     private static void registerHelperDType(String petpetName, String javaName) {
         MAT_2.addMethod(petpetName + "_2", new JavaFunction(Matrix2d.class, javaName, true, double.class, double.class));
         MAT_3.addMethod(petpetName + "_3", new JavaFunction(Matrix3d.class, javaName, true, double.class, double.class, double.class));
-        MAT_4.addMethod(petpetName + "_4", new JavaFunction(Matrix4d.class, javaName, true, double.class, double.class, double.class));
+        MAT_4.addMethod(petpetName + "_3", new JavaFunction(Matrix4d.class, javaName, true, double.class, double.class, double.class));
     }
 
     private static void registerHelperCType(String petpetName, String javaName) {

@@ -56,7 +56,7 @@ public class AspectModelPart {
     //Mesh data is position, texture, normal, with (optionally) skinning information.
     //max 24 verts per cube, made into a thread local because multiple threads can build vertex data at once
     private static final ThreadLocal<float[]> sharedTempCubeData = ThreadLocal.withInitial(() -> new float[(3+2+3+1) * 24]);
-    private float[] tempCubeData;
+    private final float[] tempCubeData;
     public float[] vertexData; //null if no vertices in this part. in the case of non-float values like short, we cast the float down.
 
     public final Aspect owningAspect; //The aspect that this model part is inside
@@ -127,7 +127,7 @@ public class AspectModelPart {
     }
 
     public void setPos(float x, float y, float z) {
-        partPos.set(x, y, z);
+        partPos.set(x / 16f, y / 16f, z / 16f);
         needsMatrixRecalculation = true;
     }
 
@@ -428,6 +428,10 @@ public class AspectModelPart {
     public AspectModelPart pos_1(Vector3d v) {
         return pos_3(v.x, v.y, v.z);
     }
+    @PetPetWhitelist
+    public Vector3d pos_0() {
+        return new Vector3d(partPos).mul(16d);
+    }
 
     @PetPetWhitelist
     public AspectModelPart rot_3(double x, double y, double z) {
@@ -435,15 +439,23 @@ public class AspectModelPart {
         return this;
     }
     @PetPetWhitelist
-    public AspectModelPart rot_1(Object r) {
-        if (r instanceof Quaterniond quat) {
-            setRot(quat);
-            return this;
-        } else if (r instanceof Vector3d v) {
-            return rot_3(v.x, v.y, v.z);
-        }
-        //Wish I could get the PetPetClass's name, but this will have to do
-        throw new PetPetException("Attempt to call rot() with object that is not vec3 or quat. type is " + r.getClass().getSimpleName());
+    public AspectModelPart rot_1(Vector3d v) {
+        return rot_3(v.x, v.y, v.z);
+    }
+
+    @PetPetWhitelist
+    public Vector3d rot_0() {
+        return new Vector3d(partRot.getEulerAnglesXYZ(new Vector3f()));
+    }
+
+    //@PetPetWhitelist
+    public AspectModelPart quat_1(Quaterniond quat) {
+        setRot(quat);
+        return this;
+    }
+    //@PetPetWhitelist
+    public Quaterniond quat_0() {
+        return new Quaterniond(partRot);
     }
 
     @PetPetWhitelist
@@ -456,6 +468,10 @@ public class AspectModelPart {
         return scale_3(v.x, v.y, v.z);
     }
     @PetPetWhitelist
+    public Vector3d scale_0() {
+        return new Vector3d(partScale);
+    }
+    @PetPetWhitelist
     public AspectModelPart piv_3(double x, double y, double z) {
         setPivot((float) x, (float) y, (float) z);
         return this;
@@ -463,6 +479,10 @@ public class AspectModelPart {
     @PetPetWhitelist
     public AspectModelPart piv_1(Vector3d v) {
         return piv_3(v.x, v.y, v.z);
+    }
+    @PetPetWhitelist
+    public Vector3d piv_0(Vector3d v) {
+        return new Vector3d(partPivot);
     }
 
     @PetPetWhitelist
@@ -480,6 +500,10 @@ public class AspectModelPart {
     public AspectModelPart matrix(Matrix4d mat) {
         this.positionMatrix.set(mat);
         this.positionMatrix.normal(normalMatrix);
+        partPos.zero();
+        partRot.identity();
+        partPivot.zero();
+        partScale.set(1);
         this.needsMatrixRecalculation = false;
         return this;
     }
