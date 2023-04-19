@@ -14,7 +14,7 @@
   },
 
   "license": "CC0-1.0",
-  "icon": "assets/aspect/icon.png",
+  "icon": "assets/aspect/mask256.png",
 
   "environment": "*",
   "entrypoints": {
