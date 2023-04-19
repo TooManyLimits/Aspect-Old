@@ -30,9 +30,18 @@ public class JsonStructures {
     public record Resolution(int width, int height) {}
 
     public record Part(String name, float color, Vector3f origin, Vector3f rotation, Boolean visibility, String type,
-                       String uuid, Vector3f from, Vector3f to, CubeFaces faces, JsonStructures.Part[] children) {
+                       String uuid, Vector3f from, Vector3f to, Double inflate, CubeFaces faces, JsonStructures.Part[] children) {
             public BaseStructures.ModelPartStructure toBaseStructure(List<Integer> texMapper, Resolution resolution) throws AspectImporter.AspectImporterException {
+
                 List<BaseStructures.CubeFaces> faces = null;
+
+                //Parse inflate
+                if (inflate != null && from != null && to != null) {
+                    float f = inflate.floatValue();
+                    to.add(f,f,f);
+                    from.sub(f,f,f);
+                }
+
                 if (this.faces != null) {
                     faces = this.faces.toBaseStructure(texMapper, resolution);
                     int n = faces.size();
@@ -154,6 +163,7 @@ public class JsonStructures {
                 return uuidPartMap.get(element.getAsString());
             } else {
                 JsonObject json = (JsonObject) element;
+                if (json.has("inflate")) System.out.println("AAAAA");
                 return new Part(
                         ctx.deserialize(json.get("name"), String.class),
                         ctx.deserialize(json.get("color"), float.class),
@@ -164,6 +174,7 @@ public class JsonStructures {
                         ctx.deserialize(json.get("uuid"), String.class),
                         ctx.deserialize(json.get("from"), Vector3f.class),
                         ctx.deserialize(json.get("to"), Vector3f.class),
+                        ctx.deserialize(json.get("inflate"), Double.class),
                         ctx.deserialize(json.get("faces"), CubeFaces.class),
                         ctx.deserialize(json.get("children"), Part[].class)
                 );
