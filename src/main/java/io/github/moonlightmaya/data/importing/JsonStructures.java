@@ -163,7 +163,6 @@ public class JsonStructures {
                 return uuidPartMap.get(element.getAsString());
             } else {
                 JsonObject json = (JsonObject) element;
-                if (json.has("inflate")) System.out.println("AAAAA");
                 return new Part(
                         ctx.deserialize(json.get("name"), String.class),
                         ctx.deserialize(json.get("color"), float.class),
