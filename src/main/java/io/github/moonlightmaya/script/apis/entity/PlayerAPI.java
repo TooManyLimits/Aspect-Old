@@ -19,9 +19,6 @@ public class PlayerAPI {
 
     static {
         PLAYER_CLASS = PetPetReflector.reflect(PlayerAPI.class, "Player");
-
-        //TODO: Make it extend, once that feature is in PetPet
-        PLAYER_CLASS.methods.putAll(LivingEntityAPI.LIVING_ENTITY_CLASS.methods);
     }
 
     /**

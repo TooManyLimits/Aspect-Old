@@ -20,5 +20,4 @@ public class ItemStackAPI {
         return Registries.ITEM.getId(itemStack.getItem()).toString();
     }
 
-    
 }

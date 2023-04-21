@@ -24,9 +24,8 @@ import java.util.Map;
  */
 @PetPetWhitelist
 public class AspectModelPart {
-    @PetPetWhitelist
+
     public final String name;
-    @PetPetWhitelist(forceImmutable = true)
     public AspectModelPart parent;
 
     private final ModelPartType type;
@@ -42,10 +41,8 @@ public class AspectModelPart {
     public final Vector3f partPos = new Vector3f();
     public final Quaternionf partRot = new Quaternionf();
     public final Vector3f partScale = new Vector3f(1, 1, 1);
-    @PetPetWhitelist
     public Boolean visible = null;
 
-    @PetPetWhitelist
     public VanillaPart vanillaParent; //The vanilla part that this will take transforms from
 
     //Whether this part needs its matrix recalculated. After calling rot(), pos(), etc. this will be set to true.
@@ -491,9 +488,14 @@ public class AspectModelPart {
     }
 
     @PetPetWhitelist
-    public AspectModelPart visible(Boolean b) {
+    public AspectModelPart visible_1(Boolean b) {
         this.visible = b;
         return this;
+    }
+
+    @PetPetWhitelist
+    public Boolean visible_0() {
+        return visible;
     }
 
     @PetPetWhitelist
@@ -516,9 +518,14 @@ public class AspectModelPart {
     }
 
     @PetPetWhitelist
-    public AspectModelPart vanillaParent(VanillaPart vanillaPart) {
+    public AspectModelPart vanillaParent_1(VanillaPart vanillaPart) {
         vanillaParent = vanillaPart;
         return this;
+    }
+
+    @PetPetWhitelist
+    public VanillaPart vanillaParent_0() {
+        return vanillaParent;
     }
 
     private HashMap<String, AspectModelPart> cachedPartMap;
@@ -540,6 +547,16 @@ public class AspectModelPart {
         if (children == null) return null;
         if (arg < 0 || arg >= children.size()) return null;
         return children.get(arg);
+    }
+
+    @PetPetWhitelist
+    public String name() {
+        return name;
+    }
+
+    @PetPetWhitelist
+    public AspectModelPart parent() {
+        return parent;
     }
 
     @Override

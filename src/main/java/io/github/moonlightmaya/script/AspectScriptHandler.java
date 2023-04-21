@@ -33,6 +33,7 @@ import petpet.lang.compile.Compiler;
 import petpet.lang.lex.Lexer;
 import petpet.lang.parse.Parser;
 import petpet.lang.run.JavaFunction;
+import petpet.lang.run.PetPetClass;
 import petpet.lang.run.PetPetClosure;
 import petpet.lang.run.PetPetException;
 import petpet.types.PetPetList;
@@ -124,35 +125,38 @@ public class AspectScriptHandler {
      */
     private void registerTypes() {
         //Math
-        instance.registerClass(Vector2d.class, Vectors.VEC_2);
-        instance.registerClass(Vector3d.class, Vectors.VEC_3);
-        instance.registerClass(Vector4d.class, Vectors.VEC_4);
-        instance.registerClass(Matrix2d.class, Matrices.MAT_2);
-        instance.registerClass(Matrix3d.class, Matrices.MAT_3);
-        instance.registerClass(Matrix4d.class, Matrices.MAT_4);
+        instance.registerClass(Vector2d.class, Vectors.VEC_2.copy().makeEditable());
+        instance.registerClass(Vector3d.class, Vectors.VEC_3.copy().makeEditable());
+        instance.registerClass(Vector4d.class, Vectors.VEC_4.copy().makeEditable());
+        instance.registerClass(Matrix2d.class, Matrices.MAT_2.copy().makeEditable());
+        instance.registerClass(Matrix3d.class, Matrices.MAT_3.copy().makeEditable());
+        instance.registerClass(Matrix4d.class, Matrices.MAT_4.copy().makeEditable());
 
         //Events
-        instance.registerClass(AspectEvent.class, PetPetReflector.reflect(AspectEvent.class, "Event"));
+        instance.registerClass(AspectEvent.class, PetPetReflector.reflect(AspectEvent.class, "Event").copy().makeEditable());
 
         //Model Parts
-        instance.registerClass(WorldRootModelPart.class, PetPetReflector.reflect(WorldRootModelPart.class, "WorldRootModelPart"));
-        instance.registerClass(AspectModelPart.class, PetPetReflector.reflect(AspectModelPart.class, "ModelPart"));
+        PetPetClass modelPartClass = PetPetReflector.reflect(AspectModelPart.class, "ModelPart").copy().makeEditable();
+        instance.registerClass(AspectModelPart.class, modelPartClass);
+        instance.registerClass(WorldRootModelPart.class, PetPetReflector.reflect(WorldRootModelPart.class, "WorldRootModelPart").copy().makeEditable().setParent(modelPartClass));
 
         //Vanilla renderer
-        instance.registerClass(VanillaRenderer.class, PetPetReflector.reflect(VanillaRenderer.class, "VanillaRenderer"));
-        instance.registerClass(VanillaPart.class, PetPetReflector.reflect(VanillaPart.class, "VanillaPart"));
+        instance.registerClass(VanillaRenderer.class, PetPetReflector.reflect(VanillaRenderer.class, "VanillaRenderer").copy().makeEditable());
+        instance.registerClass(VanillaPart.class, PetPetReflector.reflect(VanillaPart.class, "VanillaPart").copy().makeEditable());
 
         //World
-        instance.registerClass(ClientWorld.class, WorldAPI.WORLD_CLASS);
-        instance.registerClass(BlockState.class, BlockStateAPI.BLOCK_STATE_CLASS);
-        instance.registerClass(ItemStack.class, ItemStackAPI.ITEMSTACK_CLASS);
-        instance.registerClass(DimensionType.class, DimensionAPI.DIMENSION_CLASS);
-        instance.registerClass(Biome.class, BiomeAPI.BIOME_CLASS);
+        instance.registerClass(ClientWorld.class, WorldAPI.WORLD_CLASS.copy().makeEditable());
+        instance.registerClass(BlockState.class, BlockStateAPI.BLOCK_STATE_CLASS.copy().makeEditable());
+        instance.registerClass(ItemStack.class, ItemStackAPI.ITEMSTACK_CLASS.copy().makeEditable());
+        instance.registerClass(DimensionType.class, DimensionAPI.DIMENSION_CLASS.copy().makeEditable());
+        instance.registerClass(Biome.class, BiomeAPI.BIOME_CLASS.copy().makeEditable());
 
         //Entity
-        instance.registerClass(Entity.class, EntityAPI.ENTITY_CLASS);
-        instance.registerClass(LivingEntity.class, LivingEntityAPI.LIVING_ENTITY_CLASS);
-        instance.registerClass(PlayerEntity.class, PlayerAPI.PLAYER_CLASS);
+        PetPetClass entityClass = EntityAPI.ENTITY_CLASS.copy().makeEditable();
+        instance.registerClass(Entity.class, entityClass);
+        PetPetClass livingEntityClass = LivingEntityAPI.LIVING_ENTITY_CLASS.copy().makeEditable().setParent(entityClass);
+        instance.registerClass(LivingEntity.class, livingEntityClass);
+        instance.registerClass(PlayerEntity.class, PlayerAPI.PLAYER_CLASS.copy().makeEditable().setParent(livingEntityClass));
     }
 
     /**

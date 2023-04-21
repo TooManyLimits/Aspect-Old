@@ -16,9 +16,6 @@ public class LivingEntityAPI {
 
     static {
         LIVING_ENTITY_CLASS = PetPetReflector.reflect(LivingEntityAPI.class, "LivingEntity");
-
-        //TODO: Make it extend, once that feature is in PetPet
-        LIVING_ENTITY_CLASS.methods.putAll(EntityAPI.ENTITY_CLASS.methods);
     }
 
     /**

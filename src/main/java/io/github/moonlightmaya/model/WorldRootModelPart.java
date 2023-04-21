@@ -44,7 +44,6 @@ public class WorldRootModelPart extends AspectModelPart {
      * people to be able to choose which dimension their parts exist in, and to prevent the parts
      * from appearing across all dimensions all the time, this field needs to exist.
      */
-    @PetPetWhitelist //Can set field directly or use method, idc
     public String dimension;
 
     public WorldRootModelPart(BaseStructures.ModelPartStructure nbt, Aspect owningAspect) {
@@ -98,13 +97,21 @@ public class WorldRootModelPart extends AspectModelPart {
         setWorldPos(v);
         return this;
     }
+    @PetPetWhitelist
+    public Vector3d worldPos_0() {
+        return new Vector3d(worldPos);
+    }
+
 
     //Also have the option to set field directly, but might as well provide a method version too i guess
     @PetPetWhitelist
-    public WorldRootModelPart dimension(String dimension) {
+    public WorldRootModelPart dimension_1(String dimension) {
         this.dimension = dimension;
         return this;
     }
-
+    @PetPetWhitelist
+    public String dimension_0() {
+        return dimension;
+    }
 
 }

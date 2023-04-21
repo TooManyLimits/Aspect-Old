@@ -73,19 +73,6 @@ public class Vectors {
             VEC_3.addMethod("cross_1", new JavaFunction(Vector3d.class, "cross", true, Vector3dc.class));
             VEC_3.addMethod("cross_3", new JavaFunction(Vector3d.class, "cross", true, double.class, double.class, double.class));
 
-            //Fields
-            VEC_2.addField("x", Vector2d.class.getField("x"), false);
-            VEC_2.addField("y", Vector2d.class.getField("y"), false);
-
-            VEC_3.addField("x", Vector3d.class.getField("x"), false);
-            VEC_3.addField("y", Vector3d.class.getField("y"), false);
-            VEC_3.addField("z", Vector3d.class.getField("z"), false);
-
-            VEC_4.addField("x", Vector4d.class.getField("x"), false);
-            VEC_4.addField("y", Vector4d.class.getField("y"), false);
-            VEC_4.addField("z", Vector4d.class.getField("z"), false);
-            VEC_4.addField("w", Vector4d.class.getField("w"), false);
-
             //Get by index
             registerHelper("__get_num", "get", int.class);
 
@@ -111,6 +98,9 @@ public class Vectors {
             VEC_4.addMethod("__get_str", new JavaFunction(Vectors.class, "swizzle4", false));
 
             //Swizzle setters (eventually, i dont feel up to it rn)
+            VEC_2.addMethod("__set_str", new JavaFunction(Vectors.class, "swizzleSet2", false));
+            VEC_3.addMethod("__set_str", new JavaFunction(Vectors.class, "swizzleSet3", false));
+            VEC_4.addMethod("__set_str", new JavaFunction(Vectors.class, "swizzleSet4", false));
 
             //In place modification functions
             registerHelper("zero", "zero");
@@ -432,6 +422,122 @@ public class Vectors {
             );
             default -> throw new PetPetException("Invalid swizzle for vec4: " + swizzler + ", must be length 2 to 4");
         };
+    }
+
+    private static void swizzleSet2Helper(Vector2d swizzlee, char c, double d) {
+        switch (c) {
+            case 'x', 'r' -> swizzlee.x = d;
+            case 'y', 'g' -> swizzlee.y = d;
+        }
+    }
+    public static Object swizzleSet2(Vector2d swizzlee, String swizzler, Object rhs) {
+        switch (swizzler.length()) {
+            case 1 -> {
+                //a single number
+                if (rhs instanceof Double d) {
+                    swizzleSet2Helper(swizzlee, swizzler.charAt(0), d);
+                } else {
+                    throw new PetPetException("Invalid swizzle RHS for vec2." + swizzler + ", expected num");
+                }
+            }
+            case 2 -> {
+                if (rhs instanceof Vector2d v) {
+                    swizzleSet2Helper(swizzlee, swizzler.charAt(0), v.x);
+                    swizzleSet2Helper(swizzlee, swizzler.charAt(1), v.y);
+                } else {
+                    throw new PetPetException("Invalid swizzle RHS for vec2." + swizzler + ", expected vec2");
+                }
+            }
+            default -> throw new PetPetException("Invalid swizzle set for vec2: " + swizzler + ", must be length 1 to 2");
+        }
+        return rhs;
+    }
+    private static void swizzleSet3Helper(Vector3d swizzlee, char c, double d) {
+        switch (c) {
+            case 'x', 'r' -> swizzlee.x = d;
+            case 'y', 'g' -> swizzlee.y = d;
+            case 'z', 'b' -> swizzlee.z = d;
+        }
+    }
+    public static Object swizzleSet3(Vector3d swizzlee, String swizzler, Object rhs) {
+        switch (swizzler.length()) {
+            case 1 -> {
+                //a single number
+                if (rhs instanceof Double d) {
+                    swizzleSet3Helper(swizzlee, swizzler.charAt(0), d);
+                } else {
+                    throw new PetPetException("Invalid swizzle RHS for vec3." + swizzler + ", expected num");
+                }
+            }
+            case 2 -> {
+                if (rhs instanceof Vector2d v) {
+                    swizzleSet3Helper(swizzlee, swizzler.charAt(0), v.x);
+                    swizzleSet3Helper(swizzlee, swizzler.charAt(1), v.y);
+                } else {
+                    throw new PetPetException("Invalid swizzle RHS for vec3." + swizzler + ", expected vec2");
+                }
+            }
+            case 3 -> {
+                if (rhs instanceof Vector3d v) {
+                    swizzleSet3Helper(swizzlee, swizzler.charAt(0), v.x);
+                    swizzleSet3Helper(swizzlee, swizzler.charAt(1), v.y);
+                    swizzleSet3Helper(swizzlee, swizzler.charAt(2), v.z);
+                } else {
+                    throw new PetPetException("Invalid swizzle RHS for vec3." + swizzler + ", expected vec3");
+                }
+            }
+            default -> throw new PetPetException("Invalid swizzle set for vec3: " + swizzler + ", must be length 1 to 3");
+        }
+        return rhs;
+    }
+    private static void swizzleSet4Helper(Vector4d swizzlee, char c, double d) {
+        switch (c) {
+            case 'x', 'r' -> swizzlee.x = d;
+            case 'y', 'g' -> swizzlee.y = d;
+            case 'z', 'b' -> swizzlee.z = d;
+            case 'w', 'a' -> swizzlee.w = d;
+        }
+    }
+    public static Object swizzleSet4(Vector4d swizzlee, String swizzler, Object rhs) {
+        switch (swizzler.length()) {
+            case 1 -> {
+                //a single number
+                if (rhs instanceof Double d) {
+                    swizzleSet4Helper(swizzlee, swizzler.charAt(0), d);
+                } else {
+                    throw new PetPetException("Invalid swizzle RHS for vec4." + swizzler + ", expected num");
+                }
+            }
+            case 2 -> {
+                if (rhs instanceof Vector2d v) {
+                    swizzleSet4Helper(swizzlee, swizzler.charAt(0), v.x);
+                    swizzleSet4Helper(swizzlee, swizzler.charAt(1), v.y);
+                } else {
+                    throw new PetPetException("Invalid swizzle RHS for vec4." + swizzler + ", expected vec2");
+                }
+            }
+            case 3 -> {
+                if (rhs instanceof Vector3d v) {
+                    swizzleSet4Helper(swizzlee, swizzler.charAt(0), v.x);
+                    swizzleSet4Helper(swizzlee, swizzler.charAt(1), v.y);
+                    swizzleSet4Helper(swizzlee, swizzler.charAt(2), v.z);
+                } else {
+                    throw new PetPetException("Invalid swizzle RHS for vec4." + swizzler + ", expected vec3");
+                }
+            }
+            case 4 -> {
+                if (rhs instanceof Vector4d v) {
+                    swizzleSet4Helper(swizzlee, swizzler.charAt(0), v.x);
+                    swizzleSet4Helper(swizzlee, swizzler.charAt(1), v.y);
+                    swizzleSet4Helper(swizzlee, swizzler.charAt(2), v.z);
+                    swizzleSet4Helper(swizzlee, swizzler.charAt(3), v.w);
+                } else {
+                    throw new PetPetException("Invalid swizzle RHS for vec4." + swizzler + ", expected vec4");
+                }
+            }
+            default -> throw new PetPetException("Invalid swizzle set for vec4: " + swizzler + ", must be length 1 to 4");
+        }
+        return rhs;
     }
 
 }

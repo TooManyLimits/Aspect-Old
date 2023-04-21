@@ -109,8 +109,12 @@ public class VanillaPart {
         return childrenBacking.get(s);
     }
 
-    @PetPetWhitelist
     public final PetPetTableView<String, VanillaPart> children;
+
+    @PetPetWhitelist
+    public final PetPetTableView<String, VanillaPart> children_0() {
+        return children;
+    }
 
     @PetPetWhitelist
     public String __tostring() {

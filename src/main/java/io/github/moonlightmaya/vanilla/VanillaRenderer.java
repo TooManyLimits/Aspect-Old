@@ -99,9 +99,12 @@ public class VanillaRenderer {
     }
 
     //PETPET METHODS
-    @PetPetWhitelist(forceImmutable = true)
     public PetPetTable<Object, VanillaPart> parts; //Set by initVanillaParts()
 
+    @PetPetWhitelist
+    public PetPetTable<Object, VanillaPart> parts() {
+        return parts;
+    }
 
     @PetPetWhitelist
     public Vector3d getOffset() {
@@ -109,13 +112,13 @@ public class VanillaRenderer {
     }
 
     @PetPetWhitelist
-    public Matrix4d getMatrix() {
-        return aspectModelTransform;
+    public void matrix_1(Matrix4d mat) {
+        appliedVanillaModelTransform.set(mat);
     }
 
     @PetPetWhitelist
-    public void matrix(Matrix4d mat) {
-        appliedVanillaModelTransform.set(mat);
+    public Matrix4d matrix_0() {
+        return aspectModelTransform;
     }
 
     @PetPetWhitelist

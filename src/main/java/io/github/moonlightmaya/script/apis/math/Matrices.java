@@ -63,9 +63,6 @@ public class Matrices {
 
             registerHelperCType("set_1", "set");
 
-            //Fields
-            setupFields();
-
             //Copy and getting by string
             registerHelperOverload("__get", "str", "getStr");
             //Get columns
@@ -185,18 +182,6 @@ public class Matrices {
 
     public static Matrix4d create4() {
         return new Matrix4d();
-    }
-
-    private static void setupFields() throws NoSuchFieldException {
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                //Cannot add fields for mat4, because internal functionings of that class forbid it, it would
-                //mess with the properties flags. Therefore, to set in mat4, use set(int, int, value).
-                MAT_3.addField("v" + i + j, Matrix3d.class.getField("m" + i + j), false);
-                if (i < 2 && j < 2)
-                    MAT_2.addField("v" + i + j, Matrix2d.class.getField("m" + i + j), false);
-            }
-        }
     }
 
     public static Vector2d getNum2(Matrix2d obj, int idx) {
