@@ -3,8 +3,6 @@ package io.github.moonlightmaya.data.importing;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import io.github.moonlightmaya.AspectMetadata;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.util.IOUtils;
@@ -12,7 +10,6 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 import petpet.types.PetPetList;
 
-import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -62,14 +59,16 @@ public class AspectImporter {
                 //Read scripts
                 scripts = getScripts();
                 //Get entity model parts:
-                BaseStructures.ModelPartStructure entityRoot = getEntityModels();
+                BaseStructures.ModelPartStructure entityRoot = getEntityRoot();
                 //Get world model parts:
                 List<BaseStructures.ModelPartStructure> worldRoots = getWorldRoots();
+                //Get hud model parts:
+                BaseStructures.ModelPartStructure hudRoot = getHudRoot();
 
 
                 result.complete(new BaseStructures.AspectStructure(
                         metadata,
-                        entityRoot, worldRoots,
+                        entityRoot, worldRoots, hudRoot,
                         Lists.newArrayList(textures.values()),
                         scripts
                 ));
@@ -120,26 +119,7 @@ public class AspectImporter {
         return texes;
     }
 
-    private BaseStructures.ModelPartStructure getEntityModels() throws IOException, AspectImporterException {
-        Path p = rootPath.resolve("entity");
-        List<File> files = IOUtils.getByExtension(p, "bbmodel");
-        List<BaseStructures.ModelPartStructure> bbmodels = new ArrayList<>(files.size());
-        for (File f : files) {
-            //Read to a bbmodel object, and handle it
-            String str = Files.readString(f.toPath());
-            JsonStructures.BBModel bbmodel = gson.fromJson(str, JsonStructures.BBModel.class);
-            bbmodel.fixedOutliner = bbmodel.getGson().fromJson(bbmodel.outliner, JsonStructures.Part[].class);
-            String fileName = f.getName().substring(0, f.getName().length() - ".bbmodel".length()); //remove .bbmodel
-            bbmodels.add(handleBBModel(bbmodel, fileName));
-        }
-        return new BaseStructures.ModelPartStructure(
-                "entity", new Vector3f(), new Vector3f(), new Vector3f(), true,
-                bbmodels, AspectModelPart.ModelPartType.GROUP, null
-        );
-    }
-
-    private List<BaseStructures.ModelPartStructure> getWorldRoots() throws IOException, AspectImporterException {
-        Path p = rootPath.resolve("world");
+    private List<BaseStructures.ModelPartStructure> compileModels(Path p) throws IOException, AspectImporterException {
         List<File> files = IOUtils.getByExtension(p, "bbmodel");
         List<BaseStructures.ModelPartStructure> bbmodels = new ArrayList<>(files.size());
         for (File f : files) {
@@ -151,6 +131,29 @@ public class AspectImporter {
             bbmodels.add(handleBBModel(bbmodel, fileName));
         }
         return bbmodels;
+    }
+
+    private BaseStructures.ModelPartStructure getEntityRoot() throws IOException, AspectImporterException {
+        Path p = rootPath.resolve("entity");
+        List<BaseStructures.ModelPartStructure> bbmodels = compileModels(p);
+        return new BaseStructures.ModelPartStructure(
+                "entity", new Vector3f(), new Vector3f(), new Vector3f(), true,
+                bbmodels, AspectModelPart.ModelPartType.GROUP, null
+        );
+    }
+
+    private BaseStructures.ModelPartStructure getHudRoot() throws IOException, AspectImporterException {
+        Path p = rootPath.resolve("hud");
+        List<BaseStructures.ModelPartStructure> bbmodels = compileModels(p);
+        return new BaseStructures.ModelPartStructure(
+                "hud", new Vector3f(), new Vector3f(), new Vector3f(), true,
+                bbmodels, AspectModelPart.ModelPartType.GROUP, null
+        );
+    }
+
+    private List<BaseStructures.ModelPartStructure> getWorldRoots() throws IOException, AspectImporterException {
+        Path p = rootPath.resolve("world");
+        return compileModels(p);
     }
 
     /**

@@ -9,7 +9,9 @@ import io.github.moonlightmaya.util.IOUtils;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.text.Text;
@@ -48,6 +50,11 @@ public class AspectMod implements ClientModInitializer {
 
         //Setup global ticking objects
         ClientTickEvents.START_WORLD_TICK.register(AspectManager::tick);
+
+        //When leaving a world, clear all aspects
+        ClientPlayConnectionEvents.DISCONNECT.register((networkHandler, client) -> {
+            AspectManager.clearAllAspects();
+        });
 
         //Register testing command
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
@@ -117,7 +124,8 @@ public class AspectMod implements ClientModInitializer {
                 else {
                     try {
                         Object result = playerAspect.scriptHandler.runCode("run", theCode);
-                        DisplayUtils.displayPetPetMessage(playerAspect.scriptHandler.getStringFor(result));
+                        if (result != null)
+                            DisplayUtils.displayPetPetMessage(playerAspect.scriptHandler.getStringFor(result));
                     } catch (PetPetException petpetError) {
                         DisplayUtils.displayError(petpetError.getMessage(), true); //don't put the exception itself, just the error
                     } catch (Throwable t) {
@@ -128,6 +136,18 @@ public class AspectMod implements ClientModInitializer {
             });
             run.then(code);
             aspect.then(run);
+
+            LiteralArgumentBuilder<FabricClientCommandSource> gui = literal("gui");
+            RequiredArgumentBuilder<FabricClientCommandSource, String> arg4 = RequiredArgumentBuilder.argument("aspect_name", StringArgumentType.greedyString());
+            arg4.executes(context -> {
+                context.getSource().sendFeedback(Text.literal("Setting GUI aspect"));
+                String name = StringArgumentType.getString(context, "aspect_name");
+                Path folder = IOUtils.getOrCreateModFolder().resolve(name);
+                AspectManager.loadGuiAspect(folder, t -> DisplayUtils.displayError("Failed to load GUI aspect", t, true));
+                return 1;
+            });
+            gui.then(arg4);
+            aspect.then(gui);
 
             dispatcher.register(aspect);
         });

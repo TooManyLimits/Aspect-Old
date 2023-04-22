@@ -84,7 +84,7 @@ public class AspectAPI {
 
     @PetPetWhitelist
     public String getUserUUID() {
-        return aspect.userUUID.toString();
+        return aspect.userUUID == null ? null : aspect.userUUID.toString();
     }
 
     public String toString() {

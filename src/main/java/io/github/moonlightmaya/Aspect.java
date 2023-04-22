@@ -13,10 +13,12 @@ import io.github.moonlightmaya.util.RenderUtils;
 import io.github.moonlightmaya.vanilla.VanillaModelPartSorter;
 import io.github.moonlightmaya.vanilla.VanillaRenderer;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
 import petpet.external.PetPetWhitelist;
 import petpet.types.PetPetTable;
@@ -38,6 +40,7 @@ public class Aspect {
      */
     public AspectModelPart entityRoot; private BaseStructures.ModelPartStructure entityRootData;
     public List<WorldRootModelPart> worldRoots;
+    public AspectModelPart hudRoot;
 
     //whether the aspect is finished loading in. Some processes are asynchronous relative to the constructor
     // (namely, loading textures), so we don't want to try setting this aspect until everything is ready
@@ -55,8 +58,8 @@ public class Aspect {
      * or has never been loaded in the first place, the aspect itself lives anyway.
      * The Aspect is attached to the UUID rather than the actual entity object.
      */
-    public final UUID userUUID;
-    public final UUID aspectUUID; //uuid of this aspect itself
+    public final @Nullable UUID userUUID;
+    public final UUID aspectUUID; //uuid of this aspect itself. not used for much
 
     /**
      * Whether this aspect is "host". This term is borrowed from Figura, and I'll try to give an explanation.
@@ -110,6 +113,9 @@ public class Aspect {
         for (BaseStructures.ModelPartStructure worldRoot : materials.worldRoots())
             worldRoots.add(new WorldRootModelPart(worldRoot, this));
 
+        //Hud root
+        hudRoot = new AspectModelPart(materials.hudRoot(), this, null);
+
         //Separate out the list of script objects into a map instead
         //Names are keys, source is values
         scripts = new HashMap<>();
@@ -139,6 +145,11 @@ public class Aspect {
         scriptHandler.callEvent(EventHandler.RENDER, MinecraftClient.getInstance().getTickDelta());
         matrixStack.multiply(vanillaRenderer.aspectModelTransform);
         entityRoot.render(vcp, matrixStack, light);
+    }
+
+    public void renderHud(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {
+        scriptHandler.callEvent(EventHandler.HUD_RENDER, MinecraftClient.getInstance().getTickDelta());
+        hudRoot.render(vcp, matrixStack, LightmapTextureManager.MAX_LIGHT_COORDINATE);
     }
 
     public UUID getAspectUUID() {

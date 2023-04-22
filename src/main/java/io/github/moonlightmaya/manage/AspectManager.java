@@ -38,6 +38,11 @@ public class AspectManager {
     private static final Map<UUID, Aspect> ASPECTS = new HashMap<>();
 
     /**
+     * The currently selected GUI Aspect
+     */
+    private static Aspect currentGuiAspect = null;
+
+    /**
      * A queue of all tasks which need to be done relating to aspect management.
      * There will be helper methods in this class to submit certain tasks to the queue.
      *
@@ -77,6 +82,9 @@ public class AspectManager {
             //For each loaded aspect, render its world parts
             aspect.renderWorld(vcp, matrices);
         }
+        //Also render the GUI aspect's world parts if it exists
+        if (getGuiAspect() != null)
+            getGuiAspect().renderWorld(vcp, matrices);
     }
 
     /**
@@ -86,6 +94,11 @@ public class AspectManager {
     @Nullable
     public static Aspect getAspect(UUID uuid) {
         return ASPECTS.get(uuid);
+    }
+
+    @Nullable
+    public static Aspect getGuiAspect() {
+        return currentGuiAspect;
     }
 
     /**
@@ -107,6 +120,27 @@ public class AspectManager {
                 setAspect(entityUUID, aspect);
             }
         }); //Then apply the new aspect
+    }
+
+    /**
+     * Submits a task to set the current gui aspect
+     * to the provided one. If there was a previous
+     * gui aspect, it is destroyed and set to null.
+     */
+    public static void setGuiAspect(Aspect aspect) {
+        TASKS.add(() -> {
+            if (currentGuiAspect != null) {
+                currentGuiAspect.destroy();
+                currentGuiAspect = null;
+            }
+            if (aspect.isReady) {
+                //Set if it's ready
+                currentGuiAspect = aspect;
+            } else {
+                //Otherwise, try again next tick
+                setGuiAspect(aspect);
+            }
+        });
     }
 
     /**
@@ -140,6 +174,7 @@ public class AspectManager {
      * once it completes. This atomic counter handles that.
      */
     private static final Map<UUID, AtomicInteger> IN_PROGRESS_TIMESTAMPS = new ConcurrentHashMap<>();
+    private static final AtomicInteger GUI_ASPECT_TIMESTAMP = new AtomicInteger();
 
     /**
      * Cancel the loading of the current aspect for this entity
@@ -199,6 +234,25 @@ public class AspectManager {
                 .thenApply(BaseStructures.AspectStructure::read)
                 .thenApply(mats -> new Aspect(userUUID, mats))
                 .whenComplete((aspect, error) -> finishLoadingTask(userUUID, myId, aspect, error, errorCallback));
+    }
+
+    //Gui aspect can only be loaded from folder
+    public static void loadGuiAspect(Path folder, Consumer<Throwable> errorCallback) {
+        final int myId = GUI_ASPECT_TIMESTAMP.incrementAndGet();
+        new AspectImporter(folder)
+                .doImport()
+                .thenApply(mats -> new Aspect(null, mats))
+                .whenComplete((aspect, error) -> {
+                    if (error == null) {
+                        if (GUI_ASPECT_TIMESTAMP.get() == myId) {
+                            setGuiAspect(aspect);
+                            return;
+                        }
+                        aspect.destroy();
+                    } else {
+                        errorCallback.accept(error.getCause());
+                    }
+                });
     }
 
 }

@@ -93,6 +93,25 @@ public class AspectEvent {
         return arg;
     }
 
+    /**
+     * Executes the function in a "piped" manner.
+     * The initial object is passed in to the
+     * first function, then the output of this
+     * function is passed to the next, and so on.
+     * Eventually, the final object after passing
+     * through all registered functions is returned.
+     */
+    public boolean executeCancellable(Object... args) {
+        flushQueues();
+        boolean cancelled = false;
+        for (PetPetCallable func : registered) {
+            Object result = func.call(args);
+            if (result instanceof Boolean b && b)
+                cancelled = true;
+        }
+        return cancelled;
+    }
+
     @Override
     public String toString() {
         return "Event(" + registered.size() + " functions)";

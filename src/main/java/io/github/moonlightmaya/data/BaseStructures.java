@@ -28,6 +28,7 @@ public class BaseStructures {
             MetadataStructure metadata,
             ModelPartStructure entityRoot,
             List<ModelPartStructure> worldRoots,
+            ModelPartStructure hudRoot,
             List<Texture> textures,
             List<Script> scripts
     ) {
@@ -38,6 +39,8 @@ public class BaseStructures {
 
             out.writeInt(worldRoots.size());
             for (ModelPartStructure worldRoot : worldRoots) worldRoot.write(out);
+
+            hudRoot.write(out);
 
             out.writeInt(textures.size());
             for (Texture texture : textures) texture.write(out);
@@ -57,6 +60,8 @@ public class BaseStructures {
                 for (int i = 0; i < numWorldRoots; i++)
                     worldRoots.add(ModelPartStructure.read(in));
 
+                ModelPartStructure hudRoot = ModelPartStructure.read(in);
+
                 int numTextures = in.readInt();
                 List<Texture> textures = numTextures > 0 ? new ArrayList<>(numTextures) : List.of();
                 for (int i = 0; i < numTextures; i++)
@@ -67,7 +72,7 @@ public class BaseStructures {
                 for (int i = 0; i < numScripts; i++)
                     scripts.add(Script.read(in));
                 return new AspectStructure(
-                        metadata, entityRoot, worldRoots, textures, scripts
+                        metadata, entityRoot, worldRoots, hudRoot, textures, scripts
                 );
             } catch (IOException e) {
                 throw new IOUtils.AspectIOException(e);

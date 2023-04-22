@@ -6,17 +6,20 @@
   "mixins": [
   ],
   "client": [
-    "world.ClientWorldInvoker",
     "EntityRenderDispatcherMixin",
     "ModelPartAccessor",
     "ModelPartMixin",
-    "world.WorldRendererMixin",
     "entity_renderers.EntityRendererMixin",
     "entity_renderers.LivingEntityRendererMixin",
     "entity_renderers.specific.PlayerEntityRendererMixin",
+    "gui.ChatScreenMixin",
+    "gui.InGameHudMixin",
+    "input.MouseMixin",
     "models.AnimalModelAccessor",
     "models.PlayerEntityModelAccessor",
-    "models.PlayerEntityModelMixin"
+    "models.PlayerEntityModelMixin",
+    "world.ClientWorldInvoker",
+    "world.WorldRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

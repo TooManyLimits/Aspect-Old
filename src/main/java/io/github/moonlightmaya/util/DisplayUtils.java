@@ -1,5 +1,6 @@
 package io.github.moonlightmaya.util;
 
+import com.google.gson.JsonParser;
 import io.github.moonlightmaya.AspectMod;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Style;
@@ -36,10 +37,19 @@ public class DisplayUtils {
                             .formatted(Formatting.RED)
             );
         }
-
     }
 
-
+    public static Text tryParseJsonText(String s) {
+        if (s == null) return Text.empty();
+        try {
+            JsonParser.parseString("a");
+            Text result = Text.Serializer.fromLenientJson(s);
+            if (result == null) return Text.literal(s);
+            return result;
+        } catch (Exception e) {
+            return Text.literal(s);
+        }
+    }
 
     /**
      * Displays the given message to chat with the PetPet header,

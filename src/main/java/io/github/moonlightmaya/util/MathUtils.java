@@ -1,6 +1,7 @@
 package io.github.moonlightmaya.util;
 
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 import org.joml.Vector3d;
@@ -63,6 +64,13 @@ public class MathUtils {
                 ((color >> 0) & 0xff) / 255.0,
                 ((color >> 24) & 0xff) / 255.0
         );
+    }
+
+    public static int RGBtoInt(Vector3d rgb) {
+        return
+                MathHelper.clamp((int) ((rgb.x) * 255), 0, 255) << 16 |
+                MathHelper.clamp((int) ((rgb.y) * 255), 0, 255) << 8 |
+                MathHelper.clamp((int) ((rgb.z) * 255), 0, 255) << 0;
     }
 
     public static Vector3d fromVec3d(Vec3d mcVec) {

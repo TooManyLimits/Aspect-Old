@@ -31,11 +31,18 @@ public class EventHandler {
 
     /**
      * Calls the given event with the given args.
-     * The result is the result of the final function
-     * registered, or null if none are registered.
      */
     public void callEvent(String name, Object... args) {
         events.get(name).execute(args);
+    }
+
+    /**
+     * Calls the given event with the given args.
+     * The result is true if any of the registered
+     * functions returned true, false otherwise
+     */
+    public boolean callEventCancellable(String name, Object... args) {
+        return events.get(name).executeCancellable(args);
     }
 
     /**
@@ -63,12 +70,24 @@ public class EventHandler {
     public static final String
             WORLD_TICK = "world_tick",
             TICK = "tick",
+
             WORLD_RENDER = "world_render",
             RENDER = "render",
+            HUD_RENDER = "hud_render",
+
             USER_INIT = "user_init",
             USER_LOAD = "user_load",
             USER_UNLOAD = "user_unload",
-            WORLD_CHANGE = "world_change";
+
+            WORLD_CHANGE = "world_change",
+
+            SEND_CHAT_MESSAGE = "send_chat_message",
+            RECEIVE_CHAT_MESSAGE = "receive_chat_message",
+
+            MOUSE_DOWN = "mouse_down",
+            MOUSE_UP = "mouse_up",
+            MOUSE_MOVE = "mouse_move",
+            MOUSE_SCROLL = "mouse_scroll";
 
 
     static {
@@ -77,12 +96,21 @@ public class EventHandler {
 
         defineEvent(WORLD_RENDER, 1);
         defineEvent(RENDER, 1);
+        defineEvent(HUD_RENDER, 1);
 
         defineEvent(USER_INIT, 0);
         defineEvent(USER_LOAD, 0);
         defineEvent(USER_UNLOAD, 0);
 
         defineEvent(WORLD_CHANGE, 0);
+
+        defineEvent(SEND_CHAT_MESSAGE, 1);
+        defineEvent(RECEIVE_CHAT_MESSAGE, 1);
+
+        defineEvent(MOUSE_DOWN, 4);
+        defineEvent(MOUSE_UP, 4);
+        defineEvent(MOUSE_MOVE, 2);
+        defineEvent(MOUSE_SCROLL, 1);
     }
 
 

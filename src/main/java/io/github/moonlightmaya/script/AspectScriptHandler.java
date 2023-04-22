@@ -5,6 +5,7 @@ import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.model.WorldRootModelPart;
 import io.github.moonlightmaya.script.apis.AspectAPI;
+import io.github.moonlightmaya.script.apis.HostAPI;
 import io.github.moonlightmaya.script.apis.ItemStackAPI;
 import io.github.moonlightmaya.script.apis.entity.EntityAPI;
 import io.github.moonlightmaya.script.apis.entity.LivingEntityAPI;
@@ -28,6 +29,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.dimension.DimensionType;
+import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 import petpet.external.PetPetInstance;
 import petpet.external.PetPetReflector;
@@ -58,13 +60,20 @@ public class AspectScriptHandler {
     private final PetPetInstance instance;
 
     private final Map<String, PetPetClosure> compiledScripts;
-    private JavaFunction requireFunction;
 
-    private EventHandler eventHandler;
 
     private Throwable error; //Null until an error occurs
 
     private boolean shouldPrintToChat = true; //Whether this Aspect should print its output to chat
+
+
+    /**
+     * Saved important script variables
+     */
+    private JavaFunction requireFunction;
+    private EventHandler eventHandler;
+    private HostAPI hostAPI;
+
 
     /**
      * When first creating the script handler, we will compile
@@ -163,6 +172,9 @@ public class AspectScriptHandler {
         //Aspect (Only the API. For explanation of why a wrapper API is needed here instead of the raw object, see AspectAPI.class.)
         instance.registerClass(AspectAPI.class, PetPetReflector.reflect(AspectAPI.class, "Aspect").copy().makeEditable());
 
+        //Host
+        instance.registerClass(HostAPI.class, PetPetReflector.reflect(HostAPI.class, "Host").copy().makeEditable());
+
         //Special permission methods for prior APIs
         entityClass.addMethod("getAspect", EntityAPI.getGetAspectMethod(aspect));
     }
@@ -196,6 +208,7 @@ public class AspectScriptHandler {
         for (WorldRootModelPart worldRootModelPart : aspect.worldRoots)
             worldRoots.put(worldRootModelPart.name, worldRootModelPart);
         modelsTable.put("world", worldRoots);
+        modelsTable.put("hud", aspect.hudRoot);
 
         //Events
         //Code for events is all inside EventHandler, which
@@ -205,6 +218,10 @@ public class AspectScriptHandler {
 
         //Aspect api
         setGlobal("aspect", new AspectAPI(aspect, true));
+
+        //Host api
+        hostAPI = new HostAPI(aspect);
+        setGlobal("host", hostAPI);
 
         //Other APIs not shown here:
 
@@ -307,6 +324,20 @@ public class AspectScriptHandler {
     }
 
     /**
+     * Return true if should cancel
+     */
+    public boolean callEventCancellable(String eventName, Object... args) {
+        if (isErrored()) return false;
+        try {
+            return eventHandler.callEventCancellable(eventName, args);
+        } catch (Throwable t) {
+            error = t;
+            DisplayUtils.displayError(t.getMessage(), shouldPrintToChat);
+            return false;
+        }
+    }
+
+    /**
      * Calls the event in the "piped" format. If the aspect
      * is errored, just returns the provided arg back.
      */
@@ -327,6 +358,15 @@ public class AspectScriptHandler {
 
     public Throwable getError() {
         return error;
+    }
+
+    /**
+     * Return the host api for this aspect, but only if it has
+     * isHost true. If not true, then it will return null.
+     * Never returns a host api without isHost permissions.
+     */
+    public @Nullable HostAPI getHostAPI() {
+        return hostAPI.isHost() ? hostAPI : null;
     }
 
 }
