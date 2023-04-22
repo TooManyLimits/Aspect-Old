@@ -3,8 +3,10 @@ package io.github.moonlightmaya.data;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.util.IOUtils;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3d;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import petpet.types.PetPetList;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -23,12 +25,15 @@ import java.util.List;
 public class BaseStructures {
 
     public record AspectStructure(
+            MetadataStructure metadata,
             ModelPartStructure entityRoot,
             List<ModelPartStructure> worldRoots,
             List<Texture> textures,
             List<Script> scripts
     ) {
         public void write(DataOutputStream out) throws IOException {
+            metadata.write(out);
+
             entityRoot.write(out);
 
             out.writeInt(worldRoots.size());
@@ -43,6 +48,8 @@ public class BaseStructures {
 
         public static AspectStructure read(DataInputStream in) throws IOUtils.AspectIOException {
             try {
+                MetadataStructure metadata = MetadataStructure.read(in);
+
                 ModelPartStructure entityRoot = ModelPartStructure.read(in);
 
                 int numWorldRoots = in.readInt();
@@ -60,13 +67,43 @@ public class BaseStructures {
                 for (int i = 0; i < numScripts; i++)
                     scripts.add(Script.read(in));
                 return new AspectStructure(
-                        entityRoot, worldRoots, textures, scripts
+                        metadata, entityRoot, worldRoots, textures, scripts
                 );
             } catch (IOException e) {
                 throw new IOUtils.AspectIOException(e);
             }
         }
     }
+
+    public record MetadataStructure(
+            String name,
+            String version,
+            Vector3f color,
+            List<String> authors
+    ) {
+        public void write(DataOutputStream out) throws IOException {
+            out.writeUTF(name);
+            out.writeUTF(version);
+            IOUtils.writeVector3f(out, color);
+            out.writeInt(authors.size());
+            for (String author : authors)
+                out.writeUTF(author);
+        }
+
+        public static MetadataStructure read(DataInputStream in) throws IOException {
+            String name = in.readUTF();
+            String version = in.readUTF();
+            Vector3f color = IOUtils.readVector3f(in);
+            int authorCount = in.readInt();
+            List<String> authors = new PetPetList<>(authorCount);
+            for (int i = 0; i < authorCount; i++)
+                authors.add(in.readUTF());
+            return new MetadataStructure(
+                    name, version, color, authors
+            );
+        }
+    }
+
 
     public record ModelPartStructure(
             String name,

@@ -1,8 +1,10 @@
 package io.github.moonlightmaya.script;
 
 import io.github.moonlightmaya.Aspect;
+import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.model.WorldRootModelPart;
+import io.github.moonlightmaya.script.apis.AspectAPI;
 import io.github.moonlightmaya.script.apis.ItemStackAPI;
 import io.github.moonlightmaya.script.apis.entity.EntityAPI;
 import io.github.moonlightmaya.script.apis.entity.LivingEntityAPI;
@@ -157,6 +159,12 @@ public class AspectScriptHandler {
         PetPetClass livingEntityClass = LivingEntityAPI.LIVING_ENTITY_CLASS.copy().makeEditable().setParent(entityClass);
         instance.registerClass(LivingEntity.class, livingEntityClass);
         instance.registerClass(PlayerEntity.class, PlayerAPI.PLAYER_CLASS.copy().makeEditable().setParent(livingEntityClass));
+
+        //Aspect (Only the API. For explanation of why a wrapper API is needed here instead of the raw object, see AspectAPI.class.)
+        instance.registerClass(AspectAPI.class, PetPetReflector.reflect(AspectAPI.class, "Aspect").copy().makeEditable());
+
+        //Special permission methods for prior APIs
+        entityClass.addMethod("getAspect", EntityAPI.getGetAspectMethod(aspect));
     }
 
     /**
@@ -194,6 +202,9 @@ public class AspectScriptHandler {
         //deals with creating the events and also adding it
         //as a global variable
         eventHandler = new EventHandler(instance);
+
+        //Aspect api
+        setGlobal("aspect", new AspectAPI(aspect, true));
 
         //Other APIs not shown here:
 

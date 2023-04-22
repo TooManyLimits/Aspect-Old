@@ -330,7 +330,7 @@ public class Vectors {
             case 'x', 'r' -> swizzlee.x;
             case 'y', 'g' -> swizzlee.y;
             case '_' -> 0;
-            default -> throw new PetPetException("Invalid swizzle for vec2, unrecognized character '" + c + "'");
+            default -> throw new PetPetException("Invalid indexer for vec2, unrecognized character '" + c + "'");
         };
     }
 
@@ -338,6 +338,7 @@ public class Vectors {
         if (swizzler.equals("c")) //copy
             return new Vector2d(swizzlee);
         return switch (swizzler.length()) {
+            case 1 -> swizzle2Help(swizzlee, swizzler.charAt(0));
             case 2 -> new Vector2d(
                     swizzle2Help(swizzlee, swizzler.charAt(0)),
                     swizzle2Help(swizzlee, swizzler.charAt(1))
@@ -353,7 +354,7 @@ public class Vectors {
                     swizzle2Help(swizzlee, swizzler.charAt(2)),
                     swizzle2Help(swizzlee, swizzler.charAt(3))
             );
-            default -> throw new PetPetException("Invalid swizzle for vec2: " + swizzler + ", must be length 2 to 4");
+            default -> throw new PetPetException("Invalid indexer for vec2: " + swizzler + ", must be length 1 to 4");
         };
     }
 
@@ -363,7 +364,7 @@ public class Vectors {
             case 'y', 'g' -> swizzlee.y;
             case 'z', 'b' -> swizzlee.z;
             case '_' -> 0;
-            default -> throw new PetPetException("Invalid swizzle for vec3, unrecognized character '" + c + "'");
+            default -> throw new PetPetException("Invalid indexer for vec3, unrecognized character '" + c + "'");
         };
     }
 
@@ -371,6 +372,7 @@ public class Vectors {
         if (swizzler.equals("c")) //copy
             return new Vector3d(swizzlee);
         return switch (swizzler.length()) {
+            case 1 -> swizzle3Help(swizzlee, swizzler.charAt(0));
             case 2 -> new Vector2d(
                     swizzle3Help(swizzlee, swizzler.charAt(0)),
                     swizzle3Help(swizzlee, swizzler.charAt(1))
@@ -386,7 +388,7 @@ public class Vectors {
                     swizzle3Help(swizzlee, swizzler.charAt(2)),
                     swizzle3Help(swizzlee, swizzler.charAt(3))
             );
-            default -> throw new PetPetException("Invalid swizzle for vec3: " + swizzler + ", must be length 2 to 4");
+            default -> throw new PetPetException("Invalid indexer for vec3: " + swizzler + ", must be length 1 to 4");
         };
     }
 
@@ -397,7 +399,7 @@ public class Vectors {
             case 'z', 'b' -> swizzlee.z;
             case 'w', 'a' -> swizzlee.w;
             case '_' -> 0;
-            default -> throw new PetPetException("Invalid swizzle for vec4, unrecognized character '" + c + "'");
+            default -> throw new PetPetException("Invalid indexer for vec4, unrecognized character '" + c + "'");
         };
     }
 
@@ -405,6 +407,7 @@ public class Vectors {
         if (swizzler.equals("c")) //copy
             return new Vector4d(swizzlee);
         return switch (swizzler.length()) {
+            case 1 -> swizzle4Help(swizzlee, swizzler.charAt(0));
             case 2 -> new Vector2d(
                     swizzle4Help(swizzlee, swizzler.charAt(0)),
                     swizzle4Help(swizzlee, swizzler.charAt(1))
@@ -420,7 +423,7 @@ public class Vectors {
                     swizzle4Help(swizzlee, swizzler.charAt(2)),
                     swizzle4Help(swizzlee, swizzler.charAt(3))
             );
-            default -> throw new PetPetException("Invalid swizzle for vec4: " + swizzler + ", must be length 2 to 4");
+            default -> throw new PetPetException("Invalid indexer for vec4: " + swizzler + ", must be length 1 to 4");
         };
     }
 

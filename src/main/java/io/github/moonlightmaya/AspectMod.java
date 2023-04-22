@@ -17,6 +17,7 @@ import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import petpet.external.PetPetInstance;
+import petpet.lang.run.PetPetException;
 
 import java.nio.file.Path;
 
@@ -117,8 +118,10 @@ public class AspectMod implements ClientModInitializer {
                     try {
                         Object result = playerAspect.scriptHandler.runCode("run", theCode);
                         DisplayUtils.displayPetPetMessage(playerAspect.scriptHandler.getStringFor(result));
+                    } catch (PetPetException petpetError) {
+                        DisplayUtils.displayError(petpetError.getMessage(), true); //don't put the exception itself, just the error
                     } catch (Throwable t) {
-                        DisplayUtils.displayError(t.getMessage(), t, true);
+                        DisplayUtils.displayError(t.getMessage(), t,true);
                     }
                 }
                 return 1;

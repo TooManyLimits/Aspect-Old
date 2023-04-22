@@ -61,7 +61,10 @@ public class WorldRootModelPart extends AspectModelPart {
     public void render(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {
         ClientWorld world = MinecraftClient.getInstance().world;
         if (world == null) return; //you have bigger problems, dont render
-        if (!Objects.equals(dimension, world.getDimensionKey().getValue().toString())) return; //Wrong dimension, don't show
+
+        // If dimension is null, then the part appears regardless of dimension
+        // If dimension is not null, then restrict the part to only appear in the provided dimension
+        if (dimension != null && !Objects.equals(dimension, world.getDimensionKey().getValue().toString())) return;
 
         matrixStack.push();
         matrixStack.translate(worldPos);

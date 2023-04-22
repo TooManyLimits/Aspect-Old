@@ -1,11 +1,15 @@
 package io.github.moonlightmaya.script.apis.entity;
 
+import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.manage.AspectManager;
+import io.github.moonlightmaya.script.annotations.AllowIfHost;
+import io.github.moonlightmaya.script.apis.AspectAPI;
 import io.github.moonlightmaya.script.apis.world.WorldAPI;
 import io.github.moonlightmaya.util.GroupUtils;
 import io.github.moonlightmaya.util.MathUtils;
 import io.github.moonlightmaya.util.NbtUtils;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.*;
 import net.minecraft.entity.boss.dragon.EnderDragonEntity;
@@ -21,7 +25,9 @@ import org.joml.Vector2d;
 import org.joml.Vector3d;
 import petpet.external.PetPetReflector;
 import petpet.external.PetPetWhitelist;
+import petpet.lang.run.JavaFunction;
 import petpet.lang.run.PetPetClass;
+import petpet.lang.run.PetPetException;
 import petpet.types.PetPetTable;
 import petpet.types.immutable.PetPetListView;
 
@@ -277,6 +283,31 @@ public class EntityAPI {
     @PetPetWhitelist
     public static boolean isHamburger(Entity entity) {
         return GroupUtils.is(entity.getUuid(), "hamburger");
+    }
+
+    /**
+     * The function(s) below this point have certain special properties.
+     * What they do will be different depending on the interpreter that
+     * calls the method, as well as the parameter.
+     *
+     * The getAspect() method returns an AspectAPI. This API is editable
+     * if and only if the entity you are grabbing the aspect of is the same
+     * as the aspect in which the script is running.
+     *
+     * Complex permissions like this require additional effort to set up,
+     * so they are implemented as their own, more elaborate, methods.
+     */
+    public static JavaFunction getGetAspectMethod(Aspect aspectOwnedByScript) {
+        return new JavaFunction(false, 1) {
+            @Override
+            public Object invoke(Object arg0) {
+                if (arg0 instanceof Entity entity) {
+                    Aspect foundAspect = AspectManager.getAspect(entity.getUuid());
+                    if (foundAspect == null) return null;
+                    return new AspectAPI(foundAspect, foundAspect == aspectOwnedByScript);
+                } else throw new PetPetException("Cannot call Entity.getAspect() on non-entity?");
+            }
+        };
     }
 
 }

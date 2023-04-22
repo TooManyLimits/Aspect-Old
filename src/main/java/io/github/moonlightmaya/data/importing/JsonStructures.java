@@ -3,13 +3,37 @@ package io.github.moonlightmaya.data.importing;
 import com.google.gson.*;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.data.BaseStructures;
+import io.github.moonlightmaya.util.MathUtils;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import petpet.types.PetPetList;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
 
 public class JsonStructures {
+
+    public static class Metadata {
+        public String name;
+        public String version;
+        public String color;
+        public String[] authors;
+
+        public BaseStructures.MetadataStructure toBaseStructure() throws AspectImporter.AspectImporterException {
+            try {
+                if (name == null) name = "";
+                if (version == null) version = "";
+                Vector3f parsedColor = MathUtils.parseColor(color);
+                List<String> authorsList = new PetPetList<>();
+                if (authors != null)
+                    authorsList.addAll(Arrays.asList(authors));
+                return new BaseStructures.MetadataStructure(name, version, parsedColor, authorsList);
+            } catch (IllegalArgumentException e) {
+                throw new AspectImporter.AspectImporterException(e.getMessage());
+            }
+        }
+    }
 
     public static class BBModel {
         public Resolution resolution;

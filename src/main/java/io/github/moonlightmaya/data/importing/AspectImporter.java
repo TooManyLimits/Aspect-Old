@@ -3,12 +3,16 @@ package io.github.moonlightmaya.data.importing;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import io.github.moonlightmaya.AspectMetadata;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.util.IOUtils;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import petpet.types.PetPetList;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -33,6 +37,7 @@ public class AspectImporter {
             .registerTypeAdapter(Vector4f.class, JsonStructures.Vector4fDeserializer.INSTANCE)
             .setPrettyPrinting().create();
 
+    private BaseStructures.MetadataStructure metadata;
     private LinkedHashMap<String, BaseStructures.Texture> textures;
     private List<BaseStructures.Script> scripts;
     private int textureOffset;
@@ -51,6 +56,7 @@ public class AspectImporter {
                 if (!Files.exists(rootPath.resolve("aspect.json")))
                     throw new AspectImporterException("Folder " + IOUtils.trimPathStringToModFolder(rootPath) + " has no aspect.json");
 
+                metadata = getMetadata();
                 //Read the globally shared textures to here
                 textures = getTextures();
                 //Read scripts
@@ -62,6 +68,7 @@ public class AspectImporter {
 
 
                 result.complete(new BaseStructures.AspectStructure(
+                        metadata,
                         entityRoot, worldRoots,
                         Lists.newArrayList(textures.values()),
                         scripts
@@ -71,6 +78,21 @@ public class AspectImporter {
             }
         });
         return result;
+    }
+
+    private BaseStructures.MetadataStructure getMetadata() throws IOException, AspectImporterException {
+        Path p = rootPath.resolve("aspect.json");
+        String json = Files.readString(p);
+        if (json.isBlank()) {
+            return new BaseStructures.MetadataStructure("", "", new Vector3f(1,1,1), new PetPetList<>());
+        }
+
+        try {
+            JsonStructures.Metadata jsonMetadata = gson.fromJson(json, JsonStructures.Metadata.class);
+            return jsonMetadata.toBaseStructure();
+        } catch (Exception e) {
+            throw new AspectImporterException("Failed to parse aspect.json - invalid format, not correct json");
+        }
     }
 
     private List<BaseStructures.Script> getScripts() throws IOException {

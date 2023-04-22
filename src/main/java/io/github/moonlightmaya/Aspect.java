@@ -4,6 +4,7 @@ import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.model.WorldRootModelPart;
 import io.github.moonlightmaya.script.AspectScriptHandler;
+import io.github.moonlightmaya.script.annotations.AllowIfHost;
 import io.github.moonlightmaya.script.events.EventHandler;
 import io.github.moonlightmaya.texture.AspectTexture;
 import io.github.moonlightmaya.util.AspectMatrixStack;
@@ -16,11 +17,13 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
+import org.joml.Vector3d;
+import petpet.external.PetPetWhitelist;
+import petpet.types.PetPetTable;
+import petpet.types.immutable.PetPetTableView;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.util.*;
-import java.util.function.Supplier;
 
 /**
  * An entity can equip one or more Aspects, which will alter the entity's physical appearance.
@@ -44,18 +47,42 @@ public class Aspect {
 
     public final Map<String, String> scripts;
 
-    public final VanillaRenderer vanillaRenderer = new VanillaRenderer();
+    public final VanillaRenderer vanillaRenderer;
     public final AspectScriptHandler scriptHandler;
 
-    //The uuid of the entity using this aspect. Even if the entity itself is unloaded, the aspect itself lives on,
-    //and the Aspect is attached to the UUID rather than the actual entity.
+    /**
+     * The uuid of the entity using this aspect. Even if the entity itself is unloaded,
+     * or has never been loaded in the first place, the aspect itself lives anyway.
+     * The Aspect is attached to the UUID rather than the actual entity object.
+     */
     public final UUID userUUID;
+    public final UUID aspectUUID; //uuid of this aspect itself
 
-    public final UUID aspectId; //uuid of this aspect itself
+    /**
+     * Whether this aspect is "host". This term is borrowed from Figura, and I'll try to give an explanation.
+     * Certain features in script are considered disallowed for Aspects other than the user's own aspects to
+     * perform. There is no backend currently, but once there is, Aspects will be downloaded off the internet.
+     * It's the purpose of this variable to determine if said aspects will be allowed to do certain actions,
+     * which may not be desirable.
+     */
+    public final boolean isHost;
+
+    /**
+     * The metadata of the Aspect. Contains various useful logistical info. See class for details.
+     */
+    public final AspectMetadata metadata;
+
+    /**
+     * PetPet table containing the variables of the aspect.
+     */
+    public final PetPetTable<Object, Object> aspectVars = new PetPetTable<>();
 
     public Aspect(UUID userUUID, BaseStructures.AspectStructure materials) {
         this.userUUID = userUUID;
-        this.aspectId = UUID.randomUUID();
+        this.aspectUUID = UUID.randomUUID();
+        this.isHost = userUUID.equals(EntityUtils.getLocalUUID());
+
+        metadata = new AspectMetadata(materials.metadata());
 
         //Load textures first, needed for making model parts
         textures = new ArrayList<>();
@@ -70,6 +97,9 @@ public class Aspect {
         }
         //Set the aspect to be ready, *after* all textures finish "uploadIfNeeded()"
         RenderUtils.executeOnRenderThread(() -> isReady = true);
+
+        //Create vanilla renderer
+        vanillaRenderer = new VanillaRenderer();
 
         //Save the entity root data
         entityRootData = materials.entityRoot();
@@ -111,8 +141,8 @@ public class Aspect {
         entityRoot.render(vcp, matrixStack, light);
     }
 
-    public UUID getAspectId() {
-        return aspectId;
+    public UUID getAspectUUID() {
+        return aspectUUID;
     }
 
     /**

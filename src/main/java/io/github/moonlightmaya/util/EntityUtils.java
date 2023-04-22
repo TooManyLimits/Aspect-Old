@@ -12,6 +12,10 @@ import java.util.UUID;
 
 public class EntityUtils {
 
+    public static UUID getLocalUUID() {
+        return MinecraftClient.getInstance().getSession().getProfile().getId();
+    }
+
     @Nullable public static Entity getEntityByUUID(ClientWorld world, UUID uuid) {
         return ((ClientWorldInvoker) world).aspect$getEntityLookup().get(uuid);
     }
