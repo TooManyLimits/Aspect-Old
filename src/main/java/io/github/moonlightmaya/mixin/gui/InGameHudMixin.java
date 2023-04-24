@@ -6,6 +6,7 @@ import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.InGameHud;
+import net.minecraft.client.render.DiffuseLighting;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
@@ -45,8 +46,10 @@ public class InGameHudMixin {
         matrixStack.push();
         matrixStack.scale(-16, -16, -16);
         RenderSystem.disableDepthTest();
+        DiffuseLighting.disableGuiDepthLighting();
         aspect.renderHud(vcp, matrixStack);
         vcp.draw();
+        DiffuseLighting.enableGuiDepthLighting();
         RenderSystem.enableDepthTest();
         matrixStack.pop();
     }

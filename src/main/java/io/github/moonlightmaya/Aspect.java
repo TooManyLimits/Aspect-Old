@@ -83,7 +83,7 @@ public class Aspect {
     public Aspect(UUID userUUID, BaseStructures.AspectStructure materials) {
         this.userUUID = userUUID;
         this.aspectUUID = UUID.randomUUID();
-        this.isHost = userUUID.equals(EntityUtils.getLocalUUID());
+        this.isHost = userUUID == null || userUUID.equals(EntityUtils.getLocalUUID());
 
         metadata = new AspectMetadata(materials.metadata());
 

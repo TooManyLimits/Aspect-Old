@@ -5,6 +5,7 @@ import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.model.WorldRootModelPart;
 import io.github.moonlightmaya.script.apis.AspectAPI;
+import io.github.moonlightmaya.script.apis.ClientAPI;
 import io.github.moonlightmaya.script.apis.HostAPI;
 import io.github.moonlightmaya.script.apis.ItemStackAPI;
 import io.github.moonlightmaya.script.apis.entity.EntityAPI;
@@ -143,8 +144,11 @@ public class AspectScriptHandler {
         instance.registerClass(Matrix3d.class, Matrices.MAT_3.copy().makeEditable());
         instance.registerClass(Matrix4d.class, Matrices.MAT_4.copy().makeEditable());
 
-        //Events
+        //Misc
         instance.registerClass(AspectEvent.class, PetPetReflector.reflect(AspectEvent.class, "Event").copy().makeEditable());
+        instance.registerClass(HostAPI.class, PetPetReflector.reflect(HostAPI.class, "Host").copy().makeEditable());
+        instance.registerClass(AspectAPI.class, PetPetReflector.reflect(AspectAPI.class, "Aspect").copy().makeEditable());
+        instance.registerClass(ClientAPI.class, PetPetReflector.reflect(ClientAPI.class, "Client").copy().makeEditable());
 
         //Model Parts
         PetPetClass modelPartClass = PetPetReflector.reflect(AspectModelPart.class, "ModelPart").copy().makeEditable();
@@ -168,12 +172,6 @@ public class AspectScriptHandler {
         PetPetClass livingEntityClass = LivingEntityAPI.LIVING_ENTITY_CLASS.copy().makeEditable().setParent(entityClass);
         instance.registerClass(LivingEntity.class, livingEntityClass);
         instance.registerClass(PlayerEntity.class, PlayerAPI.PLAYER_CLASS.copy().makeEditable().setParent(livingEntityClass));
-
-        //Aspect (Only the API. For explanation of why a wrapper API is needed here instead of the raw object, see AspectAPI.class.)
-        instance.registerClass(AspectAPI.class, PetPetReflector.reflect(AspectAPI.class, "Aspect").copy().makeEditable());
-
-        //Host
-        instance.registerClass(HostAPI.class, PetPetReflector.reflect(HostAPI.class, "Host").copy().makeEditable());
 
         //Special permission methods for prior APIs
         entityClass.addMethod("getAspect", EntityAPI.getGetAspectMethod(aspect));
@@ -222,6 +220,9 @@ public class AspectScriptHandler {
         //Host api
         hostAPI = new HostAPI(aspect);
         setGlobal("host", hostAPI);
+
+        //Client
+        setGlobal("client", new ClientAPI());
 
         //Other APIs not shown here:
 

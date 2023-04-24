@@ -19,6 +19,7 @@
     "models.PlayerEntityModelAccessor",
     "models.PlayerEntityModelMixin",
     "world.ClientWorldInvoker",
+    "world.WorldRendererAccessor",
     "world.WorldRendererMixin"
   ],
   "injectors": {

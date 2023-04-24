@@ -165,6 +165,4 @@ public class AspectMod implements ClientModInitializer {
         return new Identifier(MODID, path);
     }
 
-
-
 }

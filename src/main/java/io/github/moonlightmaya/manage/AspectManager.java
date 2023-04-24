@@ -136,6 +136,8 @@ public class AspectManager {
             if (aspect.isReady) {
                 //Set if it's ready
                 currentGuiAspect = aspect;
+                //Also run the main script if it exists
+                aspect.scriptHandler.runMain();
             } else {
                 //Otherwise, try again next tick
                 setGuiAspect(aspect);
@@ -162,6 +164,10 @@ public class AspectManager {
             for (Aspect aspect : ASPECTS.values())
                 aspect.destroy();
             ASPECTS.clear();
+            if (currentGuiAspect != null) {
+                currentGuiAspect.destroy();
+                currentGuiAspect = null;
+            }
         });
     }
 

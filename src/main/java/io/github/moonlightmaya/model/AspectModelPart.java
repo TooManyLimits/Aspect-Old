@@ -10,14 +10,12 @@ import net.minecraft.client.render.*;
 import net.minecraft.util.Identifier;
 import org.joml.*;
 import petpet.external.PetPetWhitelist;
-import petpet.lang.run.PetPetException;
 import petpet.types.PetPetList;
 
 import java.lang.Math;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * An element of a hierarchical tree structure, analogous to the structure in Blockbench as well as the file system.
@@ -34,9 +32,10 @@ public class AspectModelPart {
     //I'll leave them as float for now because double precision shouldn't be required for these parts.
     //Also, this data will need to be uploaded to the GPU.
     //The only case where double precision is necessary is for world model parts.
-    public List<AspectModelPart> children; //null if no children
+    public PetPetList<AspectModelPart> children; //null if no children
     public final Matrix4f positionMatrix = new Matrix4f();
     public final Matrix3f normalMatrix = new Matrix3f();
+    public final Matrix3f uvMatrix = new Matrix3f();
     public final Vector3f partPivot = new Vector3f();
     public final Vector3f partPos = new Vector3f();
     public final Quaternionf partRot = new Quaternionf();
@@ -104,6 +103,43 @@ public class AspectModelPart {
 
     }
 
+    private AspectModelPart(AspectModelPart base, String newPartName, boolean deepCopyChildList, boolean deepCopyVertices) {
+        this.owningAspect = base.owningAspect;
+        name = newPartName;
+        type = base.type;
+        tempCubeData = base.tempCubeData;
+        parent = base.parent;
+
+        if (deepCopyChildList) {
+            children = new PetPetList<>(base.children.size());
+            children.addAll(base.children);
+        } else {
+            children = base.children;
+        }
+
+        if (deepCopyVertices) {
+            if (base.vertexData == null) {
+                vertexData = null;
+            } else {
+                vertexData = new float[base.vertexData.length];
+                System.arraycopy(base.vertexData, 0, vertexData, 0, vertexData.length);
+            }
+        } else {
+            vertexData = base.vertexData;
+        }
+
+        partPos.set(base.partPos);
+        partRot.set(base.partRot);
+        partScale.set(base.partScale);
+        partPivot.set(base.partPivot);
+        positionMatrix.set(base.positionMatrix);
+        normalMatrix.set(base.normalMatrix);
+        needsMatrixRecalculation = base.needsMatrixRecalculation;
+
+        visible = base.visible;
+
+    }
+
     /**
      * This is a bit strange but bear with me
      * The default value for parent in the *Base Structure* is true.
@@ -168,6 +204,18 @@ public class AspectModelPart {
     public void setRot(Quaterniond rot) {
         partRot.set(rot);
         needsMatrixRecalculation = true;
+    }
+
+    public void setUV(float x, float y) {
+        uvMatrix.scaling(x, y, 1);
+    }
+
+    public void setUVMatrix(Matrix3d matrix) {
+        uvMatrix.set(
+                (float) matrix.m00, (float) matrix.m01, (float) matrix.m02,
+                (float) matrix.m10, (float) matrix.m11, (float) matrix.m12,
+                (float) matrix.m20, (float) matrix.m21, (float) matrix.m22
+        );
     }
 
     /**
@@ -284,31 +332,28 @@ public class AspectModelPart {
     }
 
     private static final Matrix4f tempMatrixSavedTransform = new Matrix4f();
-    private void recalculateMatrixIfNecessary() {
-        if (needsMatrixRecalculation || vanillaParent != null) {
-            //Scale down the pivot value, it's in "block" units
-            positionMatrix.translation(partPivot.mul(1f/16));
+    private void recalculateMatrix() {
+        //Scale down the pivot value, it's in "block" units
+        positionMatrix.translation(partPivot.mul(1f/16));
 
-            if (vanillaParent != null) {
-                positionMatrix.mul(vanillaParent.inverseDefaultTransform);
-                tempMatrixSavedTransform.set(vanillaParent.savedTransform);
-                positionMatrix.mul(tempMatrixSavedTransform);
-            }
-
-            positionMatrix
-                    .rotate(partRot)
-                    .scale(partScale)
-                    .translate(partPos)
-                    .translate(-partPivot.x, -partPivot.y, -partPivot.z);
-
-            //Scale the pivot value back up again
-            partPivot.mul(16f);
-            //Compute the normal matrix as well and store it
-            positionMatrix.normal(normalMatrix);
-            //Matrices are now calculated, don't need to be recalculated anymore for this part
-            needsMatrixRecalculation = false;
+        if (vanillaParent != null) {
+            positionMatrix.mul(vanillaParent.inverseDefaultTransform);
+            tempMatrixSavedTransform.set(vanillaParent.savedTransform);
+            positionMatrix.mul(tempMatrixSavedTransform);
         }
 
+        positionMatrix
+                .rotate(partRot)
+                .scale(partScale)
+                .translate(partPos)
+                .translate(-partPivot.x, -partPivot.y, -partPivot.z);
+
+        //Scale the pivot value back up again
+        partPivot.mul(16f);
+        //Compute the normal matrix as well and store it
+        positionMatrix.normal(normalMatrix);
+        //Matrices are now calculated, don't need to be recalculated anymore for this part
+        needsMatrixRecalculation = false;
     }
 
     private static final List<RenderLayer> DEFAULT_LAYERS = ImmutableList.of(RenderLayer.getEntityCutoutNoCull(new Identifier("textures/entity/creeper/creeper.png"))); //aww man
@@ -360,7 +405,8 @@ public class AspectModelPart {
         //Push and transform the stack, if necessary
         if (hasVertexData() || hasChildren()) {
             //Recalculate the matrices for this part if necessary, then apply them to the stack.
-            recalculateMatrixIfNecessary();
+            if (needsMatrixRecalculation || vanillaParent != null)
+                recalculateMatrix();
             matrixStack.push();
             matrixStack.multiply(positionMatrix, normalMatrix);
         }
@@ -483,6 +529,20 @@ public class AspectModelPart {
     }
 
     @PetPetWhitelist
+    public AspectModelPart uv_2(double x, double y) {
+        setUV((float) x, (float) y);
+        return this;
+    }
+    @PetPetWhitelist
+    public AspectModelPart uv_1(Vector2d vec) {
+        return uv_2(vec.x, vec.y);
+    }
+    @PetPetWhitelist
+    public Vector2d uv_0() {
+        return new Vector2d(uvMatrix.m00, uvMatrix.m11);
+    }
+
+    @PetPetWhitelist
     public String bbType() {
         return type.name();
     }
@@ -499,7 +559,7 @@ public class AspectModelPart {
     }
 
     @PetPetWhitelist
-    public AspectModelPart matrix(Matrix4d mat) {
+    public AspectModelPart matrix_1(Matrix4d mat) {
         this.positionMatrix.set(mat);
         this.positionMatrix.normal(normalMatrix);
         partPos.zero();
@@ -511,10 +571,29 @@ public class AspectModelPart {
     }
 
     @PetPetWhitelist
+    public Matrix4d matrix_0() {
+        recalculateMatrix(); //recalculate before
+        return rawMatrix();
+    }
+
+    @PetPetWhitelist
+    public Matrix4d rawMatrix() {
+        return new Matrix4d(positionMatrix);
+    }
+
+    @PetPetWhitelist
+    public AspectModelPart uvMatrix_1(Matrix3d mat) {
+        this.setUVMatrix(mat);
+        return this;
+    }
+    @PetPetWhitelist
+    public Matrix3d uvMatrix_0() {
+        return new Matrix3d(uvMatrix);
+    }
+
+    @PetPetWhitelist
     public PetPetList<AspectModelPart> getChildren() {
-        PetPetList<AspectModelPart> childrenCopy = new PetPetList<>();
-        childrenCopy.addAll(children);
-        return childrenCopy;
+        return children;
     }
 
     @PetPetWhitelist
@@ -547,6 +626,16 @@ public class AspectModelPart {
         if (children == null) return null;
         if (arg < 0 || arg >= children.size()) return null;
         return children.get(arg);
+    }
+
+    @PetPetWhitelist
+    public AspectModelPart copy_1(String name) {
+        return new AspectModelPart(this, name, false, false);
+    }
+
+    @PetPetWhitelist
+    public AspectModelPart copy_3(String name, boolean deepCopyChildList, boolean deepCopyVertices) {
+        return new AspectModelPart(this, name, deepCopyChildList, deepCopyVertices);
     }
 
     @PetPetWhitelist
