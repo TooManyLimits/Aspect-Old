@@ -73,7 +73,7 @@ public class AspectScriptHandler {
      */
     private JavaFunction requireFunction;
     private EventHandler eventHandler;
-    private HostAPI hostAPI;
+    private @Nullable HostAPI hostAPI;
 
 
     /**
@@ -218,8 +218,13 @@ public class AspectScriptHandler {
         setGlobal("aspect", new AspectAPI(aspect, true));
 
         //Host api
-        hostAPI = new HostAPI(aspect);
-        setGlobal("host", hostAPI);
+        if (aspect.isHost) {
+            hostAPI = new HostAPI(aspect);
+            setGlobal("host", hostAPI);
+        } else {
+            hostAPI = null;
+        }
+
 
         //Client
         setGlobal("client", new ClientAPI());
@@ -367,7 +372,7 @@ public class AspectScriptHandler {
      * Never returns a host api without isHost permissions.
      */
     public @Nullable HostAPI getHostAPI() {
-        return hostAPI.isHost() ? hostAPI : null;
+        return hostAPI;
     }
 
 }
