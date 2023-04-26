@@ -8,6 +8,7 @@ import io.github.moonlightmaya.script.annotations.AllowIfHost;
 import io.github.moonlightmaya.script.events.EventHandler;
 import io.github.moonlightmaya.texture.AspectTexture;
 import io.github.moonlightmaya.util.AspectMatrixStack;
+import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.EntityUtils;
 import io.github.moonlightmaya.util.RenderUtils;
 import io.github.moonlightmaya.vanilla.VanillaModelPartSorter;
@@ -53,6 +54,9 @@ public class Aspect {
     public final VanillaRenderer vanillaRenderer;
     public final AspectScriptHandler scriptHandler;
 
+    private Throwable error;
+    private ErrorLocation errorLocation;
+
     /**
      * The uuid of the entity using this aspect. Even if the entity itself is unloaded,
      * or has never been loaded in the first place, the aspect itself lives anyway.
@@ -95,7 +99,9 @@ public class Aspect {
                 tex.uploadIfNeeded(); //upload texture
                 textures.add(tex);
             } catch (IOException e) {
-                throw new RuntimeException("Error importing texture " + base.name() + "!");
+                RuntimeException re = new RuntimeException("Error importing texture " + base.name() + "!", e);
+                error(re, ErrorLocation.LOAD);
+                throw re;
             }
         }
         //Set the aspect to be ready, *after* all textures finish "uploadIfNeeded()"
@@ -127,6 +133,7 @@ public class Aspect {
 
 
     public void onEntityFirstLoad(Entity user) {
+        if (isErrored()) return;
         //Generate vanilla data for parent part purposes
         EntityModel<?> model = RenderUtils.getModel(user);
         if (model != null) {
@@ -142,14 +149,24 @@ public class Aspect {
     }
 
     public void renderEntity(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, int light) {
+        if (isErrored()) return;
         scriptHandler.callEvent(EventHandler.RENDER, MinecraftClient.getInstance().getTickDelta());
         matrixStack.multiply(vanillaRenderer.aspectModelTransform);
-        entityRoot.render(vcp, matrixStack, light);
+        try {
+            entityRoot.render(vcp, matrixStack, light);
+        } catch (Throwable t) {
+            error(t, ErrorLocation.RENDER_ENTITY);
+        }
     }
 
     public void renderHud(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {
+        if (isErrored()) return;
         scriptHandler.callEvent(EventHandler.HUD_RENDER, MinecraftClient.getInstance().getTickDelta());
-        hudRoot.render(vcp, matrixStack, LightmapTextureManager.MAX_LIGHT_COORDINATE);
+        try {
+            hudRoot.render(vcp, matrixStack, LightmapTextureManager.MAX_LIGHT_COORDINATE);
+        } catch (Throwable t) {
+            error(t, ErrorLocation.RENDER_HUD);
+        }
     }
 
     public UUID getAspectUUID() {
@@ -166,49 +183,54 @@ public class Aspect {
     private Entity user;
     private ClientWorld lastWorld; //the last known world this aspect was in
     public void tick(ClientWorld world) {
-        //If the world changed, change the global var
-        if (world != lastWorld) {
-            scriptHandler.setGlobal("world", world);
-            scriptHandler.callEvent(EventHandler.WORLD_CHANGE);
-            lastWorld = world;
-        }
-        if (world != null) {
-            if (user != null) {
-                //We already know the user, and they currently exist
-                //Let's see if they've unloaded:
-                if (user.isRemoved() || user.world != world) {
-                    //They've unloaded! Let's call the event, and set the user to null.
-                    scriptHandler.callEvent(EventHandler.USER_UNLOAD);
-                    scriptHandler.setGlobal("user", null);
-                    user = null;
-                }
+        if (isErrored()) return;
+        try {
+            //If the world changed, change the global var
+            if (world != lastWorld) {
+                scriptHandler.setGlobal("world", world);
+                scriptHandler.callEvent(EventHandler.WORLD_CHANGE);
+                lastWorld = world;
             }
-            if (user == null) {
-                //Currently user does not exist :( check if they do now:
-                Entity found = EntityUtils.getEntityByUUID(world, userUUID);
-                if (found != null) {
-                    //Ok, we found them! Add them to the script environment
-                    //And set the user to be this entity we found with the proper uuid
-                    scriptHandler.setGlobal("user", found);
-                    user = found;
-
-                    //If this is the first time the user loaded in, call the setup
-                    if (!userEverLoaded) {
-                        userEverLoaded = true;
-                        onEntityFirstLoad(user);
+            if (world != null) {
+                if (user != null) {
+                    //We already know the user, and they currently exist
+                    //Let's see if they've unloaded:
+                    if (user.isRemoved() || user.world != world) {
+                        //They've unloaded! Let's call the event, and set the user to null.
+                        scriptHandler.callEvent(EventHandler.USER_UNLOAD);
+                        scriptHandler.setGlobal("user", null);
+                        user = null;
                     }
-
-                    //Either way, first time or not, let's call their user_load
-                    scriptHandler.callEvent(EventHandler.USER_LOAD);
                 }
-            }
-            if (user != null) {
-                //If the user is still here at the end of it all, let's tick() them
-                scriptHandler.callEvent(EventHandler.TICK);
-            }
+                if (user == null) {
+                    //Currently user does not exist :( check if they do now:
+                    Entity found = EntityUtils.getEntityByUUID(world, userUUID);
+                    if (found != null) {
+                        //Ok, we found them! Add them to the script environment
+                        //And set the user to be this entity we found with the proper uuid
+                        scriptHandler.setGlobal("user", found);
+                        user = found;
 
-            //Always call world tick, if a world exists
-            scriptHandler.callEvent(EventHandler.WORLD_TICK);
+                        //If this is the first time the user loaded in, call the setup
+                        if (!userEverLoaded) {
+                            userEverLoaded = true;
+                            onEntityFirstLoad(user);
+                        }
+
+                        //Either way, first time or not, let's call their user_load
+                        scriptHandler.callEvent(EventHandler.USER_LOAD);
+                    }
+                }
+                if (user != null) {
+                    //If the user is still here at the end of it all, let's tick() them
+                    scriptHandler.callEvent(EventHandler.TICK);
+                }
+
+                //Always call world tick, if a world exists
+                scriptHandler.callEvent(EventHandler.WORLD_TICK);
+            }
+        } catch (Throwable t) {
+            error(t, ErrorLocation.TICK);
         }
     }
 
@@ -216,9 +238,14 @@ public class Aspect {
      * Render the world-parented parts
      */
     public void renderWorld(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {
+        if (isErrored()) return;
         scriptHandler.callEvent(EventHandler.WORLD_RENDER, MinecraftClient.getInstance().getTickDelta());
-        for (WorldRootModelPart worldRoot : worldRoots) {
-            worldRoot.render(vcp, matrixStack);
+        try {
+            for (WorldRootModelPart worldRoot : worldRoots) {
+                worldRoot.render(vcp, matrixStack);
+            }
+        } catch (Throwable t) {
+            error(t, ErrorLocation.RENDER_WORLD);
         }
     }
 
@@ -227,6 +254,30 @@ public class Aspect {
      */
     public void destroy() {
         //TODO
+    }
+
+    public boolean isErrored() {
+        return error != null;
+    }
+
+    public void error(Throwable t, ErrorLocation location) {
+        this.error = t;
+        this.errorLocation = location;
+        if (isHost) {
+            DisplayUtils.displayError("Equipped aspect errored in " + location.name(), error, true);
+        }
+    }
+
+    /**
+     * The possible locations of an error happening
+     */
+    public enum ErrorLocation {
+        SCRIPT,
+        RENDER_ENTITY,
+        RENDER_WORLD,
+        RENDER_HUD,
+        TICK,
+        LOAD
     }
 
 }

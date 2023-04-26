@@ -62,9 +62,6 @@ public class AspectScriptHandler {
 
     private final Map<String, PetPetClosure> compiledScripts;
 
-
-    private Throwable error; //Null until an error occurs
-
     private boolean shouldPrintToChat = true; //Whether this Aspect should print its output to chat
 
 
@@ -110,8 +107,7 @@ public class AspectScriptHandler {
             try {
                 requireFunction.call(main);
             } catch (Throwable t) {
-                error = t;
-                DisplayUtils.displayError(t.getMessage(), shouldPrintToChat);
+                error(t);
             }
         }
     }
@@ -324,8 +320,7 @@ public class AspectScriptHandler {
         try {
             eventHandler.callEvent(eventName, args);
         } catch (Throwable t) {
-            error = t;
-            DisplayUtils.displayError(t.getMessage(), shouldPrintToChat);
+            error(t);
         }
     }
 
@@ -337,8 +332,7 @@ public class AspectScriptHandler {
         try {
             return eventHandler.callEventCancellable(eventName, args);
         } catch (Throwable t) {
-            error = t;
-            DisplayUtils.displayError(t.getMessage(), shouldPrintToChat);
+            error(t);
             return false;
         }
     }
@@ -352,18 +346,18 @@ public class AspectScriptHandler {
         try {
             return eventHandler.callEventPiped(eventName, arg);
         } catch (Throwable t) {
-            error = t;
-            DisplayUtils.displayError(t.getMessage(), shouldPrintToChat);
+            error(t);
         }
         return arg;
     }
 
-    public boolean isErrored() {
-        return error != null;
+    public void error(Throwable t) {
+        aspect.error(t, Aspect.ErrorLocation.SCRIPT);
+        DisplayUtils.displayError(t.getMessage(), shouldPrintToChat);
     }
 
-    public Throwable getError() {
-        return error;
+    public boolean isErrored() {
+        return aspect.isErrored();
     }
 
     /**

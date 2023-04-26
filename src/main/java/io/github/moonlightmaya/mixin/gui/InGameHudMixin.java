@@ -20,7 +20,7 @@ public class InGameHudMixin {
 
     //When rendering hud, render the hud parts of the camera entity, and
     //also the equipped GUI entity
-    @Inject(method = "render", at = @At("HEAD"))
+    @Inject(method = "render", at = @At("RETURN"))
     public void renderStart(MatrixStack matrices, float tickDelta, CallbackInfo ci) {
         Entity cameraEntity = MinecraftClient.getInstance().getCameraEntity();
         AspectMatrixStack matrixStack = new AspectMatrixStack(matrices);
@@ -44,13 +44,16 @@ public class InGameHudMixin {
     private static void drawAspect(Aspect aspect, AspectMatrixStack matrixStack) {
         VertexConsumerProvider.Immediate vcp = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
         matrixStack.push();
+        matrixStack.translate(0, 0, 500);
         matrixStack.scale(-16, -16, -16);
-        RenderSystem.disableDepthTest();
+        //RenderSystem.disableDepthTest();
+        //RenderSystem.depthMask(false);t
         DiffuseLighting.disableGuiDepthLighting();
         aspect.renderHud(vcp, matrixStack);
         vcp.draw();
         DiffuseLighting.enableGuiDepthLighting();
-        RenderSystem.enableDepthTest();
+        //RenderSystem.depthMask(true);
+        //RenderSystem.enableDepthTest();
         matrixStack.pop();
     }
 

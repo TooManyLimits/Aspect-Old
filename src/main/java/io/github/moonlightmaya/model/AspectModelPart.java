@@ -3,6 +3,7 @@ package io.github.moonlightmaya.model;
 import com.google.common.collect.ImmutableList;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.data.BaseStructures;
+import io.github.moonlightmaya.script.AspectScriptHandler;
 import io.github.moonlightmaya.texture.AspectTexture;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.vanilla.VanillaPart;
@@ -10,6 +11,8 @@ import net.minecraft.client.render.*;
 import net.minecraft.util.Identifier;
 import org.joml.*;
 import petpet.external.PetPetWhitelist;
+import petpet.lang.run.PetPetCallable;
+import petpet.lang.run.PetPetException;
 import petpet.types.PetPetList;
 
 import java.lang.Math;
@@ -40,7 +43,9 @@ public class AspectModelPart {
     public final Vector3f partPos = new Vector3f();
     public final Quaternionf partRot = new Quaternionf();
     public final Vector3f partScale = new Vector3f(1, 1, 1);
-    public Boolean visible = null;
+    public boolean visible = true;
+
+    private PetPetCallable preRender, postRender;
 
     public VanillaPart vanillaParent; //The vanilla part that this will take transforms from
 
@@ -64,15 +69,7 @@ public class AspectModelPart {
         setPos(baseStructure.pos());
         setRot(baseStructure.rot());
         this.parent = parent;
-        if (parent == null) {
-            visible = null; //only possible for mod-generated parts, not blockbench ones
-        } else {
-            boolean parentVis = parent.recursiveParentVisibility();
-            if (parentVis == baseStructure.visible())
-                visible = null;
-            else
-                visible = baseStructure.visible();
-        }
+        visible = baseStructure.visible();
 
         setPivot(baseStructure.pivot());
         if (baseStructure.children() != null) {
@@ -89,18 +86,6 @@ public class AspectModelPart {
         if (baseStructure.cubeData() != null)
             genCubeRenderData(baseStructure.cubeData());
 
-        //Perhaps not necessary, and can be done through a petpet script run at startup!
-//        if (type == ModelPartType.GROUP) {
-//            for (Map.Entry<Object, VanillaPart> entry : owningAspect.vanillaRenderer.vanillaParts.entrySet()) {
-//                if (entry.getKey() instanceof String str) {
-//                    if (name.substring(0, Math.min(str.length(), name.length())).equalsIgnoreCase(str)) {
-//                        vanillaParent = entry.getValue();
-//                        break;
-//                    }
-//                }
-//            }
-//        }
-
     }
 
     private AspectModelPart(AspectModelPart base, String newPartName, boolean deepCopyChildList, boolean deepCopyVertices) {
@@ -109,6 +94,10 @@ public class AspectModelPart {
         type = base.type;
         tempCubeData = base.tempCubeData;
         parent = base.parent;
+        if (base.renderLayers != null) {
+            renderLayers = new PetPetList<>();
+            renderLayers.addAll(base.renderLayers);
+        }
 
         if (deepCopyChildList) {
             children = new PetPetList<>(base.children.size());
@@ -137,19 +126,6 @@ public class AspectModelPart {
         needsMatrixRecalculation = base.needsMatrixRecalculation;
 
         visible = base.visible;
-
-    }
-
-    /**
-     * This is a bit strange but bear with me
-     * The default value for parent in the *Base Structure* is true.
-     * Even though the constructor sets it to null, we should compare against true.
-     * This method is only used in the constructor.
-     */
-    private Boolean recursiveParentVisibility() {
-        if (parent == null) return true;
-        if (visible != null) return visible;
-        return parent.recursiveParentVisibility();
     }
 
     public void setPos(Vector3f vec) {
@@ -290,7 +266,7 @@ public class AspectModelPart {
         System.arraycopy(tempCubeData, 0, vertexData, 0, idx);
 
         //Set up render layer:
-        renderLayers = new ArrayList<>();
+        renderLayers = new PetPetList<>();
         AspectTexture tex = owningAspect.textures.get(faces.tex()); //grab the texture
         renderLayers.add(RenderLayer.getEntityCutoutNoCull(tex.getIdentifier())); //make or get render layer for that texture
     }
@@ -377,7 +353,7 @@ public class AspectModelPart {
      */
     public void render(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, int light) {
         List<RenderLayer> defaultLayers = DEFAULT_LAYERS;
-        renderInternal(vcp, defaultLayers, matrixStack, true, light);
+        renderInternal(vcp, defaultLayers, matrixStack, light);
     }
 
     /**
@@ -392,27 +368,51 @@ public class AspectModelPart {
             VertexConsumerProvider vcp, //The VCP used for this rendering call, where we will fetch buffers from using the render layers.
             List<RenderLayer> currentRenderLayers, //The current set of render layers for the part. Inherited from the parent if this.renderLayers is null.
             AspectMatrixStack matrixStack, //The current matrix stack.
-            boolean visible, //Current visibility of the part. Just like render layers, inherited from parent if this.visible is null.
             int light //The light level of the entity wearing the aspect. Inherited from the parent always (for the time being)
     ) {
+        //Push the matrix stack
+        matrixStack.push();
+
+        //Run the callback
+        if (preRender != null) {
+            try {
+                if (owningAspect.scriptHandler != null && !owningAspect.scriptHandler.isErrored())
+                    preRender.call(this, matrixStack.peekPosition(), matrixStack.peekNormal());
+            } catch (Exception e) {
+                owningAspect.scriptHandler.error(e);
+            }
+        }
+
         //If this model part's layers are not null, then set the current ones to our overrides. Otherwise, keep the parent's render layers.
         if (this.renderLayers != null)
             currentRenderLayers = this.renderLayers;
-        //Likewise for visibility.
-        if (this.visible != null)
-            visible = this.visible;
+
+        //If we're not visible, then return.
+        if (!this.visible) {
+            //Call the post render if it exists
+            if (postRender != null) {
+                try {
+                    if (owningAspect.scriptHandler != null && !owningAspect.scriptHandler.isErrored())
+                        postRender.call(this, matrixStack.peekPosition(), matrixStack.peekNormal());
+                } catch (Exception e) {
+                    owningAspect.scriptHandler.error(e);
+                }
+            }
+            matrixStack.pop();
+            return;
+        }
 
         //Push and transform the stack, if necessary
         if (hasVertexData() || hasChildren()) {
             //Recalculate the matrices for this part if necessary, then apply them to the stack.
             if (needsMatrixRecalculation || vanillaParent != null)
                 recalculateMatrix();
-            matrixStack.push();
+
             matrixStack.multiply(positionMatrix, normalMatrix);
         }
 
         //Render the part only if it's visible and has vertex data
-        if (hasVertexData() && visible) {
+        if (hasVertexData()) {
             for (RenderLayer layer : currentRenderLayers) {
                 //Obtain a vertex buffer from the VCP, then put all our vertices into it.
                 VertexConsumer buffer = vcp.getBuffer(layer);
@@ -436,9 +436,19 @@ public class AspectModelPart {
         //If there are children, render them all too
         if (hasChildren()) {
             for (AspectModelPart child : children) {
-                child.renderInternal(vcp, currentRenderLayers, matrixStack, visible, light);
+                child.renderInternal(vcp, currentRenderLayers, matrixStack, light);
             }
         }
+
+        if (postRender != null) {
+            try {
+                if (owningAspect.scriptHandler != null && !owningAspect.scriptHandler.isErrored())
+                    postRender.call(this, matrixStack.peekPosition(), matrixStack.peekNormal());
+            } catch (Exception e) {
+                owningAspect.scriptHandler.error(e);
+            }
+        }
+
 
         //Remove the matrix we pushed earlier
         if (hasVertexData() || hasChildren()) {
@@ -597,6 +607,13 @@ public class AspectModelPart {
     }
 
     @PetPetWhitelist
+    public AspectModelPart clearChildCache() {
+        if (cachedPartMap != null)
+            cachedPartMap.clear();
+        return this;
+    }
+
+    @PetPetWhitelist
     public AspectModelPart vanillaParent_1(VanillaPart vanillaPart) {
         vanillaParent = vanillaPart;
         return this;
@@ -605,6 +622,32 @@ public class AspectModelPart {
     @PetPetWhitelist
     public VanillaPart vanillaParent_0() {
         return vanillaParent;
+    }
+
+    @PetPetWhitelist
+    public PetPetCallable preRender_0() {
+        return preRender;
+    }
+
+    @PetPetWhitelist
+    public AspectModelPart preRender_1(PetPetCallable callable) {
+        if (callable.paramCount() != 3)
+            throw new PetPetException("preRender callback expects 3 args: part, posMatrix, normalMatrix");
+        preRender = callable;
+        return this;
+    }
+
+    @PetPetWhitelist
+    public PetPetCallable postRender_0() {
+        return postRender;
+    }
+
+    @PetPetWhitelist
+    public AspectModelPart postRender_1(PetPetCallable callable) {
+        if (callable.paramCount() != 3)
+            throw new PetPetException("postRender callback expects 3 args: part, posMatrix, normalMatrix");
+        postRender = callable;
+        return this;
     }
 
     private HashMap<String, AspectModelPart> cachedPartMap;

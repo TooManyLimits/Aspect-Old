@@ -33,7 +33,7 @@ dependencies {
 
 	// modImplementation "net.fabricmc.fabric-api:fabric-api-deprecated:${project.fabric_version}"
 
-	include(implementation('com.github.Moonlight-Maya:PetPet:v0.4.2')) //PetPet
+	include(implementation('com.github.Moonlight-Maya:PetPet:v0.4.4')) //PetPet
 }
 
 processResources {

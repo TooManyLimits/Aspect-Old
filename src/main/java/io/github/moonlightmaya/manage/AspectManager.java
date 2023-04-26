@@ -249,6 +249,7 @@ public class AspectManager {
                 .doImport()
                 .thenApply(mats -> new Aspect(null, mats))
                 .whenComplete((aspect, error) -> {
+                    //see finishLoadingTask for explanation
                     if (error == null) {
                         if (GUI_ASPECT_TIMESTAMP.get() == myId) {
                             setGuiAspect(aspect);

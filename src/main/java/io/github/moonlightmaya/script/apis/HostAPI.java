@@ -1,5 +1,6 @@
 package io.github.moonlightmaya.script.apis;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.brigadier.StringReader;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.util.DisplayUtils;
@@ -146,6 +147,28 @@ public class HostAPI {
         return this;
     }
 
+    //Funny renderings
+    //host api because yeah
+
+    @PetPetWhitelist
+    public HostAPI enableScissors(double x, double y, double width, double height) {
+        RenderSystem.enableScissor((int) x, (int) y, (int) width, (int) height);
+        return this;
+    }
+
+    @PetPetWhitelist
+    public HostAPI disableScissors() {
+        RenderSystem.disableScissor();
+        return this;
+    }
+
+    @PetPetWhitelist
+    public HostAPI drawBuffers() {
+        MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers().draw();
+        return this;
+    }
+
+    //stringgg
     @Override
     public String toString() {
         return "HostAPI";
