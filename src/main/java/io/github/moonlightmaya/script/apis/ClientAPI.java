@@ -143,7 +143,9 @@ public class ClientAPI {
 
     @PetPetWhitelist
     public double getGuiScale() {
-        return MinecraftClient.getInstance().options.getGuiScale().getValue();
+        return MinecraftClient.getInstance().getWindow().calculateScaleFactor(
+                MinecraftClient.getInstance().options.getGuiScale().getValue(),
+                MinecraftClient.getInstance().forcesUnicodeFont());
     }
 
     @PetPetWhitelist

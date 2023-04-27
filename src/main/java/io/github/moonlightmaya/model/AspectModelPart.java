@@ -631,6 +631,10 @@ public class AspectModelPart {
 
     @PetPetWhitelist
     public AspectModelPart preRender_1(PetPetCallable callable) {
+        if (callable == null) {
+            this.preRender = null;
+            return this;
+        }
         if (callable.paramCount() != 3)
             throw new PetPetException("preRender callback expects 3 args: part, posMatrix, normalMatrix");
         preRender = callable;
@@ -644,6 +648,10 @@ public class AspectModelPart {
 
     @PetPetWhitelist
     public AspectModelPart postRender_1(PetPetCallable callable) {
+        if (callable == null) {
+            this.postRender = null;
+            return this;
+        }
         if (callable.paramCount() != 3)
             throw new PetPetException("postRender callback expects 3 args: part, posMatrix, normalMatrix");
         postRender = callable;

@@ -87,7 +87,9 @@ public class EventHandler {
             MOUSE_DOWN = "mouse_down",
             MOUSE_UP = "mouse_up",
             MOUSE_MOVE = "mouse_move",
-            MOUSE_SCROLL = "mouse_scroll";
+            MOUSE_SCROLL = "mouse_scroll",
+            GUI_OPEN = "gui_open",
+            GUI_CLOSE = "gui_close";
 
 
     static {
@@ -111,6 +113,9 @@ public class EventHandler {
         defineEvent(MOUSE_UP, 4);
         defineEvent(MOUSE_MOVE, 2);
         defineEvent(MOUSE_SCROLL, 1);
+
+        defineEvent(GUI_OPEN, 0);
+        defineEvent(GUI_CLOSE, 0);
     }
 
 
