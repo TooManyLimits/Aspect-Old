@@ -5,6 +5,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.util.DisplayUtils;
+import io.github.moonlightmaya.util.EntityUtils;
 import io.github.moonlightmaya.util.IOUtils;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -39,9 +40,8 @@ public class AspectCommand {
         LiteralArgumentBuilder<FabricClientCommandSource> equip = literal("equip");
         RequiredArgumentBuilder<FabricClientCommandSource, String> arg = RequiredArgumentBuilder.argument("aspect_name", StringArgumentType.greedyString());
         arg.executes(context -> {
-            Entity player = MinecraftClient.getInstance().player;
             String name = StringArgumentType.getString(context, "aspect_name");
-            AspectManager.loadAspectFromFolder(player.getUuid(), IOUtils.getOrCreateModFolder().resolve(name),
+            AspectManager.loadAspectFromFolder(EntityUtils.getLocalUUID(), IOUtils.getOrCreateModFolder().resolve("aspects").resolve(name),
                     t -> DisplayUtils.displayError("Failed to load aspect", t, true));
             return 1;
         });
@@ -57,7 +57,7 @@ public class AspectCommand {
             if (target != null) {
                 String name = StringArgumentType.getString(context, "aspect_name");
                 context.getSource().sendFeedback(Text.literal("Applying to " + target.getName()));
-                AspectManager.loadAspectFromFolder(target.getUuid(), IOUtils.getOrCreateModFolder().resolve(name),
+                AspectManager.loadAspectFromFolder(target.getUuid(), IOUtils.getOrCreateModFolder().resolve("aspects").resolve(name),
                         t -> DisplayUtils.displayError("Failed to load aspect", t, true));
                 return 1;
             } else {
@@ -75,7 +75,7 @@ public class AspectCommand {
         arg.executes(context -> {
             context.getSource().sendFeedback(Text.literal("Applying to all entities"));
             String name = StringArgumentType.getString(context, "aspect_name");
-            Path folder = IOUtils.getOrCreateModFolder().resolve(name);
+            Path folder = IOUtils.getOrCreateModFolder().resolve("aspects").resolve(name);
             for (Entity target : MinecraftClient.getInstance().world.getEntities()) {
                 AspectManager.loadAspectFromFolder(target.getUuid(), folder,
                         t -> DisplayUtils.displayError("Failed to load aspect", t, true));
@@ -127,7 +127,7 @@ public class AspectCommand {
         arg4.executes(context -> {
             context.getSource().sendFeedback(Text.literal("Setting GUI aspect"));
             String name = StringArgumentType.getString(context, "aspect_name");
-            Path folder = IOUtils.getOrCreateModFolder().resolve(name);
+            Path folder = IOUtils.getOrCreateModFolder().resolve("guis").resolve(name);
             AspectManager.loadGuiAspect(folder, t -> DisplayUtils.displayError("Failed to load GUI aspect", t, true));
             return 1;
         });

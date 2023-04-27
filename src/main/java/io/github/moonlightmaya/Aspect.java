@@ -71,8 +71,11 @@ public class Aspect {
      * perform. There is no backend currently, but once there is, Aspects will be downloaded off the internet.
      * It's the purpose of this variable to determine if said aspects will be allowed to do certain actions,
      * which may not be desirable.
+     *
+     * isGui performs a similar role, except GUI aspects have even greater permissions than host ones.
      */
     public final boolean isHost;
+    public final boolean isGui;
 
     /**
      * The metadata of the Aspect. Contains various useful logistical info. See class for details.
@@ -84,10 +87,11 @@ public class Aspect {
      */
     public final PetPetTable<Object, Object> aspectVars = new PetPetTable<>();
 
-    public Aspect(UUID userUUID, BaseStructures.AspectStructure materials) {
+    public Aspect(@Nullable UUID userUUID, BaseStructures.AspectStructure materials, boolean isHost, boolean isGui) {
         this.userUUID = userUUID;
         this.aspectUUID = UUID.randomUUID();
-        this.isHost = userUUID == null || userUUID.equals(EntityUtils.getLocalUUID());
+        this.isHost = isHost;
+        this.isGui = isGui;
 
         metadata = new AspectMetadata(materials.metadata());
 

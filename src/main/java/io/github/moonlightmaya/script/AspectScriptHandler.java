@@ -1,13 +1,11 @@
 package io.github.moonlightmaya.script;
 
 import io.github.moonlightmaya.Aspect;
+import io.github.moonlightmaya.AspectMetadata;
 import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.model.WorldRootModelPart;
-import io.github.moonlightmaya.script.apis.AspectAPI;
-import io.github.moonlightmaya.script.apis.ClientAPI;
-import io.github.moonlightmaya.script.apis.HostAPI;
-import io.github.moonlightmaya.script.apis.ItemStackAPI;
+import io.github.moonlightmaya.script.apis.*;
 import io.github.moonlightmaya.script.apis.entity.EntityAPI;
 import io.github.moonlightmaya.script.apis.entity.LivingEntityAPI;
 import io.github.moonlightmaya.script.apis.entity.PlayerAPI;
@@ -146,6 +144,12 @@ public class AspectScriptHandler {
         instance.registerClass(AspectAPI.class, PetPetReflector.reflect(AspectAPI.class, "Aspect").copy().makeEditable());
         instance.registerClass(ClientAPI.class, PetPetReflector.reflect(ClientAPI.class, "Client").copy().makeEditable());
 
+        //Gui-only whitelists
+        if (aspect.isGui) {
+            instance.registerClass(ManagerAPI.class, PetPetReflector.reflect(ManagerAPI.class, "Manager").copy().makeEditable());
+            instance.registerClass(AspectMetadata.class, PetPetReflector.reflect(AspectMetadata.class, "Metadata").copy().makeEditable());
+        }
+
         //Model Parts
         PetPetClass modelPartClass = PetPetReflector.reflect(AspectModelPart.class, "ModelPart").copy().makeEditable();
         instance.registerClass(AspectModelPart.class, modelPartClass);
@@ -221,6 +225,10 @@ public class AspectScriptHandler {
             hostAPI = null;
         }
 
+        //Manager api (gui aspects only)
+        if (aspect.isGui) {
+            setGlobal("manager", new ManagerAPI());
+        }
 
         //Client
         setGlobal("client", new ClientAPI());

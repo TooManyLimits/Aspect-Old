@@ -225,7 +225,7 @@ public class AspectManager {
         final int myId = cancelAspectLoading(userUUID);
         new AspectImporter(folder)
                 .doImport() //doImport is asynchronous, so the following steps will be as well
-                .thenApply(mats -> new Aspect(userUUID, mats))
+                .thenApply(mats -> new Aspect(userUUID, mats, true, false))
                 .whenComplete((aspect, error) -> finishLoadingTask(userUUID, myId, aspect, error, errorCallback));
     }
 
@@ -238,7 +238,7 @@ public class AspectManager {
                 .thenApply(ByteArrayInputStream::new)
                 .thenApply(DataInputStream::new)
                 .thenApply(BaseStructures.AspectStructure::read)
-                .thenApply(mats -> new Aspect(userUUID, mats))
+                .thenApply(mats -> new Aspect(userUUID, mats, false, false))
                 .whenComplete((aspect, error) -> finishLoadingTask(userUUID, myId, aspect, error, errorCallback));
     }
 
@@ -247,7 +247,7 @@ public class AspectManager {
         final int myId = GUI_ASPECT_TIMESTAMP.incrementAndGet();
         new AspectImporter(folder)
                 .doImport()
-                .thenApply(mats -> new Aspect(null, mats))
+                .thenApply(mats -> new Aspect(null, mats, true, true))
                 .whenComplete((aspect, error) -> {
                     //see finishLoadingTask for explanation
                     if (error == null) {

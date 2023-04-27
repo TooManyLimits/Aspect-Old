@@ -27,14 +27,40 @@ public class IOUtils {
             try {
                 AspectMod.LOGGER.info("Did not find mod folder at " + path + ". Creating...");
                 Files.createDirectory(path);
+                Files.createDirectory(path.resolve("aspects"));
+                Files.createDirectory(path.resolve("guis"));
                 AspectMod.LOGGER.info("Successfully created mod folder at " + path);
             } catch (IOException e) {
                 AspectMod.LOGGER.error("Failed to create mod folder at " + path + ". Reason: ", e);
                 return null;
             }
         } else {
-            AspectMod.LOGGER.info("Located mod folder at " + path);
+
+            Path aspectsPath = path.resolve("aspects");
+            if (Files.notExists(aspectsPath)) {
+                try {
+                    AspectMod.LOGGER.info("Did not find aspects folder at " + aspectsPath + ". Creating...");
+                    Files.createDirectory(aspectsPath);
+                    AspectMod.LOGGER.info("Successfully created aspects folder at " + aspectsPath);
+                } catch (IOException e) {
+                    AspectMod.LOGGER.error("Failed to create aspects folder at " + aspectsPath + ". Reason: ", e);
+                    return null;
+                }
+            }
+
+            Path guisPath = path.resolve("guis");
+            if (Files.notExists(guisPath)) {
+                try {
+                    AspectMod.LOGGER.info("Did not find guis folder at " + guisPath + ". Creating...");
+                    Files.createDirectory(guisPath);
+                    AspectMod.LOGGER.info("Successfully created guis folder at " + guisPath);
+                } catch (IOException e) {
+                    AspectMod.LOGGER.error("Failed to create guis folder at " + guisPath + ". Reason: ", e);
+                    return null;
+                }
+            }
         }
+        AspectMod.LOGGER.info("Located mod folder at " + path);
         return path;
     }
 

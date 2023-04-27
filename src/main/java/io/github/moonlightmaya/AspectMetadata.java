@@ -2,8 +2,10 @@ package io.github.moonlightmaya;
 
 import io.github.moonlightmaya.data.BaseStructures;
 import org.joml.Vector3d;
+import petpet.external.PetPetWhitelist;
 import petpet.types.PetPetList;
 
+@PetPetWhitelist
 public class AspectMetadata {
 
     public String name;
@@ -30,6 +32,30 @@ public class AspectMetadata {
 
     public AspectMetadata() {
         this("", "", new Vector3d(1), new PetPetList<>());
+    }
+
+    //PETPET
+
+    @PetPetWhitelist
+    public String name() {
+        return name;
+    }
+
+    @PetPetWhitelist
+    public String version() {
+        return version;
+    }
+
+    @PetPetWhitelist
+    public Vector3d color() {
+        return new Vector3d(color);
+    }
+
+    @PetPetWhitelist
+    public PetPetList<String> authors() {
+        PetPetList<String> res = new PetPetList<>(authors.size());
+        res.addAll(authors);
+        return res;
     }
 
 }
