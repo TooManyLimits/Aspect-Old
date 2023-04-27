@@ -59,12 +59,11 @@ public class AspectImporter {
                 //Read scripts
                 scripts = getScripts();
                 //Get entity model parts:
-                BaseStructures.ModelPartStructure entityRoot = getEntityRoot();
+                BaseStructures.ModelPartStructure entityRoot = getRootForType("entity");
                 //Get world model parts:
                 List<BaseStructures.ModelPartStructure> worldRoots = getWorldRoots();
                 //Get hud model parts:
-                BaseStructures.ModelPartStructure hudRoot = getHudRoot();
-
+                BaseStructures.ModelPartStructure hudRoot = getRootForType("hud");
 
                 result.complete(new BaseStructures.AspectStructure(
                         metadata,
@@ -94,8 +93,9 @@ public class AspectImporter {
         }
     }
 
-    private List<BaseStructures.Script> getScripts() throws IOException {
-        Path p = rootPath.resolve("scripts");
+
+    private List<BaseStructures.Script> getScriptsIn(Path p, String prefix) throws IOException {
+        //Get petpet files
         List<File> files = IOUtils.getByExtension(p, "petpet");
         List<BaseStructures.Script> result = new ArrayList<>(files.size());
         for (File f : files) {
@@ -103,7 +103,24 @@ public class AspectImporter {
             String code = Files.readString(f.toPath());
             result.add(new BaseStructures.Script(name, code));
         }
+
+        //Get subfolders
+        List<File> subfolders = IOUtils.getSubFolders(p);
+        for (File subfolder : subfolders) {
+            String subfolderPrefix = prefix + "/" + subfolder.getName();
+            List<BaseStructures.Script> subfolderScripts = getScriptsIn(subfolder.toPath(), subfolderPrefix);
+            result.addAll(subfolderScripts);
+        }
+
         return result;
+    }
+
+    private List<BaseStructures.Script> getScripts() throws IOException {
+        Path p = rootPath.resolve("scripts");
+        if (Files.exists(p) && p.toFile().isDirectory()) {
+            return getScriptsIn(p, "");
+        }
+        return new ArrayList<>(0);
     }
 
     private LinkedHashMap<String, BaseStructures.Texture> getTextures() throws IOException {
@@ -119,41 +136,74 @@ public class AspectImporter {
         return texes;
     }
 
-    private List<BaseStructures.ModelPartStructure> compileModels(Path p) throws IOException, AspectImporterException {
-        List<File> files = IOUtils.getByExtension(p, "bbmodel");
-        List<BaseStructures.ModelPartStructure> bbmodels = new ArrayList<>(files.size());
-        for (File f : files) {
-            //Read to a bbmodel object, and handle it
-            String str = Files.readString(f.toPath());
-            JsonStructures.BBModel bbmodel = gson.fromJson(str, JsonStructures.BBModel.class);
-            bbmodel.fixedOutliner = bbmodel.getGson().fromJson(bbmodel.outliner, JsonStructures.Part[].class);
-            String fileName = f.getName().substring(0, f.getName().length() - ".bbmodel".length()); //remove .bbmodel
-            bbmodels.add(handleBBModel(bbmodel, fileName));
-        }
-        return bbmodels;
+    /**
+     * Gets a model part structure from a .bbmodel file
+     * Assumes the given file is a .bbmodel
+     */
+    private BaseStructures.ModelPartStructure parseBBModel(File f) throws IOException, AspectImporterException {
+        String str = Files.readString(f.toPath());
+        JsonStructures.BBModel bbmodel = gson.fromJson(str, JsonStructures.BBModel.class);
+        bbmodel.fixedOutliner = bbmodel.getGson().fromJson(bbmodel.outliner, JsonStructures.Part[].class);
+        String fileName = f.getName().substring(0, f.getName().length() - ".bbmodel".length()); //remove .bbmodel
+        return handleBBModel(bbmodel, fileName);
     }
 
-    private BaseStructures.ModelPartStructure getEntityRoot() throws IOException, AspectImporterException {
-        Path p = rootPath.resolve("entity");
-        List<BaseStructures.ModelPartStructure> bbmodels = compileModels(p);
+    private BaseStructures.ModelPartStructure compileModels(Path p, String name) throws IOException, AspectImporterException {
+
+        List<File> bbmodelFiles = IOUtils.getByExtension(p, "bbmodel");
+        List<BaseStructures.ModelPartStructure> bbmodels = new ArrayList<>(bbmodelFiles.size());
+        for (File f : bbmodelFiles)
+            bbmodels.add(parseBBModel(f));
+
+        List<File> subfolders = IOUtils.getSubFolders(p);
+        for (File subfolder : subfolders) {
+            BaseStructures.ModelPartStructure subFolderResult = compileModels(subfolder.toPath(), subfolder.getName());
+            Optional<BaseStructures.ModelPartStructure> alreadyFound = bbmodels.stream().filter(s -> s.name().equals(subfolder.getName())).findFirst();
+
+            if (alreadyFound.isPresent()) {
+                //If there's already a model with this name, then merge the children of this part into that one
+                alreadyFound.get().children().addAll(subFolderResult.children());
+            } else {
+                //Otherwise, just append this to the bbmodels list
+                bbmodels.add(subFolderResult);
+            }
+        }
+
         return new BaseStructures.ModelPartStructure(
-                "entity", new Vector3f(), new Vector3f(), new Vector3f(), true,
+                name, new Vector3f(), new Vector3f(), new Vector3f(), true,
                 bbmodels, AspectModelPart.ModelPartType.GROUP, null
         );
     }
 
-    private BaseStructures.ModelPartStructure getHudRoot() throws IOException, AspectImporterException {
-        Path p = rootPath.resolve("hud");
-        List<BaseStructures.ModelPartStructure> bbmodels = compileModels(p);
+    private BaseStructures.ModelPartStructure getRootForType(String name) throws IOException, AspectImporterException {
+        //Look for normal .bbmodel file
+        Path p = rootPath.resolve(name + ".bbmodel");
+        if (Files.exists(p) && !p.toFile().isDirectory()) {
+            return parseBBModel(rootPath.resolve(name + ".bbmodel").toFile());
+        }
+        //That didn't exist, so expect folder format
+        p = rootPath.resolve(name);
+        if (Files.exists(p) && p.toFile().isDirectory()) {
+            return compileModels(p, name);
+        }
+        //Neither exists, so return an empty part
         return new BaseStructures.ModelPartStructure(
-                "hud", new Vector3f(), new Vector3f(), new Vector3f(), true,
-                bbmodels, AspectModelPart.ModelPartType.GROUP, null
+                name, new Vector3f(), new Vector3f(), new Vector3f(), true,
+                new ArrayList<>(0), AspectModelPart.ModelPartType.GROUP, null
         );
     }
 
     private List<BaseStructures.ModelPartStructure> getWorldRoots() throws IOException, AspectImporterException {
-        Path p = rootPath.resolve("world");
-        return compileModels(p);
+        //If world.bbmodel exists, return a list containing only that bbmodel
+        Path p = rootPath.resolve("world.bbmodel");
+        if (Files.exists(p) && !p.toFile().isDirectory()) {
+            ArrayList<BaseStructures.ModelPartStructure> result = new ArrayList<>(1);
+            result.add(parseBBModel(p.toFile()));
+            return result;
+        }
+        //Otherwise, if it doesn't exist, get root and return children
+        BaseStructures.ModelPartStructure worldStructure = getRootForType("world");
+        return worldStructure.children();
     }
 
     /**

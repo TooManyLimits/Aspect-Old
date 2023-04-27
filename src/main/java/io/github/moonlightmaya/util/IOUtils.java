@@ -53,7 +53,18 @@ public class IOUtils {
         File file = root.toFile();
         ArrayList<File> list = new ArrayList<>();
         if (file.exists() && file.isDirectory()) {
-            File[] arr = root.toFile().listFiles((f,s) -> s.endsWith("."+extension));
+            File[] arr = file.listFiles((f,s) -> s.endsWith("."+extension));
+            if (arr != null)
+                Collections.addAll(list, arr);
+        }
+        return list;
+    }
+
+    public static ArrayList<File> getSubFolders(Path root) {
+        File file = root.toFile();
+        ArrayList<File> list = new ArrayList<>();
+        if (file.exists() && file.isDirectory()) {
+            File[] arr = file.listFiles((f,s) -> f.isDirectory());
             if (arr != null)
                 Collections.addAll(list, arr);
         }
