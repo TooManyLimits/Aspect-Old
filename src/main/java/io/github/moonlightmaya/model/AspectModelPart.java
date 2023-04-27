@@ -183,7 +183,9 @@ public class AspectModelPart {
     }
 
     public void setUV(float x, float y) {
-        uvMatrix.scaling(x, y, 1);
+        uvMatrix.identity();
+        uvMatrix.set(2, 0, x);
+        uvMatrix.set(2, 1, y);
     }
 
     public void setUVMatrix(Matrix3d matrix) {
@@ -409,6 +411,7 @@ public class AspectModelPart {
                 recalculateMatrix();
 
             matrixStack.multiply(positionMatrix, normalMatrix);
+            matrixStack.multiplyUV(uvMatrix);
         }
 
         //Render the part only if it's visible and has vertex data
@@ -416,15 +419,22 @@ public class AspectModelPart {
             for (RenderLayer layer : currentRenderLayers) {
                 //Obtain a vertex buffer from the VCP, then put all our vertices into it.
                 VertexConsumer buffer = vcp.getBuffer(layer);
+                Vector4d pos = new Vector4d();
+                Vector3f normal = new Vector3f();
+                Vector3f uv = new Vector3f();
+
                 for (int i = 0; i < vertexData.length; i += 8) {
-                    Vector4d pos = new Vector4d(vertexData[i], vertexData[i+1], vertexData[i+2], 1f);
+                    pos.set(vertexData[i], vertexData[i+1], vertexData[i+2], 1f);
                     matrixStack.peekPosition().transform(pos);
-                    Vector3f normal = new Vector3f(vertexData[i+5], vertexData[i+6], vertexData[i+7]);
+                    normal.set(vertexData[i+5], vertexData[i+6], vertexData[i+7]);
                     matrixStack.peekNormal().transform(normal);
+                    uv.set(vertexData[i+3], vertexData[i+4], 1f);
+                    matrixStack.peekUV().transform(uv);
+
                     buffer.vertex(
                             (float) pos.x, (float) pos.y, (float) pos.z, //Position
                             1f, 1f, 1f, 1f, //Color
-                            vertexData[i+3], vertexData[i+4], //Texture
+                            uv.x, uv.y, //Texture
                             OverlayTexture.DEFAULT_UV, //"Overlay"
                             light, //Light
                             normal.x, normal.y, normal.z //Normal

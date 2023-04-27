@@ -19,6 +19,7 @@ public class AspectMatrixStack {
 
     private final ArrayList<Matrix4d> positionMatrices = new ArrayList<>();
     private final ArrayList<Matrix3d> normalMatrices = new ArrayList<>();
+    private final ArrayList<Matrix3d> uvMatrices = new ArrayList<>();
     int curIndex; //index of the top item
     int maxSize; //the number of matrices that have been on the stack at its peak
 
@@ -27,6 +28,7 @@ public class AspectMatrixStack {
         maxSize = 1;
         positionMatrices.add(new Matrix4d());
         normalMatrices.add(new Matrix3d());
+        uvMatrices.add(new Matrix3d());
     }
 
     public AspectMatrixStack(MatrixStack vanillaStack) {
@@ -34,6 +36,7 @@ public class AspectMatrixStack {
         MatrixStack.Entry peeked = vanillaStack.peek();
         positionMatrices.get(curIndex).set(peeked.getPositionMatrix());
         normalMatrices.get(curIndex).set(peeked.getNormalMatrix());
+        uvMatrices.get(curIndex).identity();
     }
 
     public void translate(Vector3dc vec) {
@@ -98,17 +101,27 @@ public class AspectMatrixStack {
         normalMatrices.get(curIndex).mul(normalD);
     }
 
+    public void multiplyUV(Matrix3d uvMatrix) {
+        uvMatrices.get(curIndex).mul(uvMatrix);
+    }
+
+    public void multiplyUV(Matrix3f uvMatrix) {
+        uvMatrices.get(curIndex).mul(uvMatrix);
+    }
+
     public void push() {
         curIndex++;
         if (curIndex == maxSize) {
             positionMatrices.add(new Matrix4d(positionMatrices.get(curIndex-1)));
             normalMatrices.add(new Matrix3d(normalMatrices.get(curIndex-1)));
+            uvMatrices.add(new Matrix3d(uvMatrices.get(curIndex-1)));
             maxSize++;
         } else if (curIndex > maxSize) {
             throw new IllegalStateException("Current index should never be above max size - this is a bug in AspectMatrixStack!");
         } else {
             positionMatrices.get(curIndex).set(positionMatrices.get(curIndex-1));
             normalMatrices.get(curIndex).set(normalMatrices.get(curIndex-1));
+            uvMatrices.get(curIndex).set(uvMatrices.get(curIndex-1));
         }
     }
 
@@ -124,6 +137,10 @@ public class AspectMatrixStack {
         return normalMatrices.get(curIndex);
     }
 
+    public Matrix3d peekUV()  {
+        return uvMatrices.get(curIndex);
+    }
+
     public boolean isEmpty() {
         return curIndex == 0;
     }
@@ -131,6 +148,7 @@ public class AspectMatrixStack {
     public void loadIdentity() {
         positionMatrices.get(curIndex).identity();
         normalMatrices.get(curIndex).identity();
+        uvMatrices.get(curIndex).identity();
     }
 
     /**
