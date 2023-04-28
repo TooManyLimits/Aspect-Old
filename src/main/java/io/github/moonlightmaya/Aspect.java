@@ -104,7 +104,7 @@ public class Aspect {
                 textures.add(tex);
             } catch (IOException e) {
                 RuntimeException re = new RuntimeException("Error importing texture " + base.name() + "!", e);
-                error(re, ErrorLocation.LOAD);
+                //error(re, ErrorLocation.LOAD);
                 throw re;
             }
         }

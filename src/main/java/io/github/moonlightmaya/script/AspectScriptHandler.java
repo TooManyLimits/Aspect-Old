@@ -361,7 +361,6 @@ public class AspectScriptHandler {
 
     public void error(Throwable t) {
         aspect.error(t, Aspect.ErrorLocation.SCRIPT);
-        DisplayUtils.displayError(t.getMessage(), shouldPrintToChat);
     }
 
     public boolean isErrored() {

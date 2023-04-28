@@ -79,10 +79,17 @@ public class ManagerAPI {
      */
     @PetPetWhitelist
     public void equipAspect(PetPetList<String> path) {
-        Path p = IOUtils.getOrCreateModFolder().resolve("aspects");
-        for (String s : path)
-            p = p.resolve(s);
-        AspectManager.loadAspectFromFolder(EntityUtils.getLocalUUID(), p, err -> {
+        Path orig = IOUtils.getOrCreateModFolder().resolve("aspects");
+        Path cur = orig;
+        for (String s : path) {
+            cur = cur.resolve(s);
+            if (!cur.normalize().startsWith(orig.normalize()))
+                throw new PetPetException("Attempt to access aspect file outside of aspects/ folder?");
+        }
+        if (cur.equals(orig))
+            throw new PetPetException("Cannot use mod_folder/aspects as an aspect folder");
+
+        AspectManager.loadAspectFromFolder(EntityUtils.getLocalUUID(), cur, err -> {
             DisplayUtils.displayError("Failed to load aspect", err, true);
         });
     }
