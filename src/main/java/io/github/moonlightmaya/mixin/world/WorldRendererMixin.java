@@ -42,7 +42,7 @@ public class WorldRendererMixin {
         Vec3d cameraPos = camera.getPos();
         aspectMatrices.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
         VertexConsumerProvider.Immediate vertexConsumers = this.bufferBuilders.getEntityVertexConsumers();
-        AspectManager.renderWorld(vertexConsumers, aspectMatrices);
+        AspectManager.renderWorld(vertexConsumers, tickDelta, aspectMatrices);
     }
 
 }

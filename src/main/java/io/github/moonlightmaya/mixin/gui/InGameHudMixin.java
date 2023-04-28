@@ -29,19 +29,19 @@ public class InGameHudMixin {
         if (cameraEntity != null) {
             Aspect cameraEntityAspect = AspectManager.getAspect(cameraEntity.getUuid());
             if (cameraEntityAspect != null)
-                drawAspect(cameraEntityAspect, matrixStack);
+                drawAspect(cameraEntityAspect, tickDelta, matrixStack);
         }
 
         //Draw gui aspect's hud parts if it exists
         if (AspectManager.getGuiAspect() != null) {
-            drawAspect(AspectManager.getGuiAspect(), matrixStack);
+            drawAspect(AspectManager.getGuiAspect(), tickDelta, matrixStack);
         }
     }
 
     /**
      * Draw an aspect using hud rendering techniques
      */
-    private static void drawAspect(Aspect aspect, AspectMatrixStack matrixStack) {
+    private static void drawAspect(Aspect aspect, float tickDelta, AspectMatrixStack matrixStack) {
         VertexConsumerProvider.Immediate vcp = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
         matrixStack.push();
         matrixStack.translate(0, 0, 500);
@@ -49,7 +49,7 @@ public class InGameHudMixin {
         //RenderSystem.disableDepthTest();
         //RenderSystem.depthMask(false);t
         DiffuseLighting.disableGuiDepthLighting();
-        aspect.renderHud(vcp, matrixStack);
+        aspect.renderHud(vcp, tickDelta, matrixStack);
         vcp.draw();
         DiffuseLighting.enableGuiDepthLighting();
         //RenderSystem.depthMask(true);

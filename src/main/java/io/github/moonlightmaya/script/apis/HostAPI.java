@@ -7,6 +7,7 @@ import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.EntityUtils;
 import io.github.moonlightmaya.util.ItemUtils;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Mouse;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.command.argument.ItemSlotArgumentType;
 import net.minecraft.entity.Entity;
@@ -102,12 +103,14 @@ public class HostAPI {
     @PetPetWhitelist
     public HostAPI unlockCursor() {
         cursorUnlocked = true;
+        MinecraftClient.getInstance().mouse.unlockCursor();
         return this;
     }
 
     @PetPetWhitelist
     public HostAPI lockCursor() {
         cursorUnlocked = false;
+        MinecraftClient.getInstance().mouse.lockCursor();
         return this;
     }
 

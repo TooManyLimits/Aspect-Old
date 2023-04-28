@@ -69,6 +69,8 @@ public class AspectManager {
         //Tick each Aspect
         for (Aspect aspect : ASPECTS.values())
             aspect.tick(world);
+        if (currentGuiAspect != null)
+            currentGuiAspect.tick(world);
     }
 
     /**
@@ -77,14 +79,14 @@ public class AspectManager {
      * @param matrices Matrices translated to be centered at 0,0,0. This is then added to by the
      *                 world part's worldPos() vector.
      */
-    public static void renderWorld(VertexConsumerProvider vcp, AspectMatrixStack matrices) {
+    public static void renderWorld(VertexConsumerProvider vcp, float tickDelta, AspectMatrixStack matrices) {
         for (Aspect aspect : ASPECTS.values()) {
             //For each loaded aspect, render its world parts
-            aspect.renderWorld(vcp, matrices);
+            aspect.renderWorld(vcp, tickDelta, matrices);
         }
         //Also render the GUI aspect's world parts if it exists
         if (getGuiAspect() != null)
-            getGuiAspect().renderWorld(vcp, matrices);
+            getGuiAspect().renderWorld(vcp, tickDelta, matrices);
     }
 
     /**

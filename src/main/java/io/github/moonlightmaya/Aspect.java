@@ -152,9 +152,9 @@ public class Aspect {
         scriptHandler.onEntityFirstLoad();
     }
 
-    public void renderEntity(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, int light) {
+    public void renderEntity(VertexConsumerProvider vcp, float tickDelta, AspectMatrixStack matrixStack, int light) {
         if (isErrored()) return;
-        scriptHandler.callEvent(EventHandler.RENDER, MinecraftClient.getInstance().getTickDelta());
+        scriptHandler.callEvent(EventHandler.RENDER, tickDelta);
         matrixStack.multiply(vanillaRenderer.aspectModelTransform);
         try {
             entityRoot.render(vcp, matrixStack, light);
@@ -163,9 +163,9 @@ public class Aspect {
         }
     }
 
-    public void renderHud(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {
+    public void renderHud(VertexConsumerProvider vcp, float tickDelta, AspectMatrixStack matrixStack) {
         if (isErrored()) return;
-        scriptHandler.callEvent(EventHandler.HUD_RENDER, MinecraftClient.getInstance().getTickDelta());
+        scriptHandler.callEvent(EventHandler.HUD_RENDER, tickDelta);
         try {
             hudRoot.render(vcp, matrixStack, LightmapTextureManager.MAX_LIGHT_COORDINATE);
         } catch (Throwable t) {
@@ -207,8 +207,12 @@ public class Aspect {
                     }
                 }
                 if (user == null) {
+                    //Gui aspects' "user" is the local player
+                    Entity found = isGui ?
+                            MinecraftClient.getInstance().player :
+                            EntityUtils.getEntityByUUID(world, userUUID);
+
                     //Currently user does not exist :( check if they do now:
-                    Entity found = EntityUtils.getEntityByUUID(world, userUUID);
                     if (found != null) {
                         //Ok, we found them! Add them to the script environment
                         //And set the user to be this entity we found with the proper uuid
@@ -241,9 +245,9 @@ public class Aspect {
     /**
      * Render the world-parented parts
      */
-    public void renderWorld(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {
+    public void renderWorld(VertexConsumerProvider vcp, float tickDelta, AspectMatrixStack matrixStack) {
         if (isErrored()) return;
-        scriptHandler.callEvent(EventHandler.WORLD_RENDER, MinecraftClient.getInstance().getTickDelta());
+        scriptHandler.callEvent(EventHandler.WORLD_RENDER, tickDelta);
         try {
             for (WorldRootModelPart worldRoot : worldRoots) {
                 worldRoot.render(vcp, matrixStack);
