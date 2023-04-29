@@ -60,7 +60,7 @@ public class IOUtils {
                 }
             }
         }
-        AspectMod.LOGGER.info("Located mod folder at " + path);
+//        AspectMod.LOGGER.info("Located mod folder at " + path); //no need to spam this lol
         return path;
     }
 
@@ -90,7 +90,7 @@ public class IOUtils {
         File file = root.toFile();
         ArrayList<File> list = new ArrayList<>();
         if (file.exists() && file.isDirectory()) {
-            File[] arr = file.listFiles((f,s) -> f.isDirectory());
+            File[] arr = file.listFiles(File::isDirectory);
             if (arr != null)
                 Collections.addAll(list, arr);
         }

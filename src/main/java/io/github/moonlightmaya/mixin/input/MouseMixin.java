@@ -90,9 +90,9 @@ public class MouseMixin {
                 ci.cancel();
             }
 
-            HostAPI host = aspect.scriptHandler.getHostAPI();
-            if (host != null && host.cursorUnlocked && !inScreen)
-                ci.cancel();
+//            HostAPI host = aspect.scriptHandler.getHostAPI();
+//            if (host != null && host.cursorUnlocked && !inScreen)
+//                ci.cancel();
         }
     }
 
