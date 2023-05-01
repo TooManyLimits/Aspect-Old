@@ -2,9 +2,15 @@ package io.github.moonlightmaya.script;
 
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.AspectMetadata;
+import io.github.moonlightmaya.AspectMod;
 import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.model.AspectModelPart;
+import io.github.moonlightmaya.model.Transformable;
 import io.github.moonlightmaya.model.WorldRootModelPart;
+import io.github.moonlightmaya.model.rendertasks.BlockTask;
+import io.github.moonlightmaya.model.rendertasks.ItemTask;
+import io.github.moonlightmaya.model.rendertasks.RenderTask;
+import io.github.moonlightmaya.model.rendertasks.TextTask;
 import io.github.moonlightmaya.script.apis.*;
 import io.github.moonlightmaya.script.apis.entity.EntityAPI;
 import io.github.moonlightmaya.script.apis.entity.LivingEntityAPI;
@@ -42,6 +48,7 @@ import petpet.lang.run.PetPetException;
 import petpet.types.PetPetList;
 import petpet.types.PetPetTable;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -150,10 +157,14 @@ public class AspectScriptHandler {
             instance.registerClass(AspectMetadata.class, PetPetReflector.reflect(AspectMetadata.class, "Metadata").copy().makeEditable());
         }
 
-        //Model Parts
-        PetPetClass modelPartClass = PetPetReflector.reflect(AspectModelPart.class, "ModelPart").copy().makeEditable();
+        //Model Parts and render tasks
+        PetPetClass transformableClass = PetPetReflector.reflect(Transformable.class, "Transformable").copy().makeEditable();
+        PetPetClass modelPartClass = PetPetReflector.reflect(AspectModelPart.class, "ModelPart").copy().makeEditable().setParent(transformableClass);
         instance.registerClass(AspectModelPart.class, modelPartClass);
         instance.registerClass(WorldRootModelPart.class, PetPetReflector.reflect(WorldRootModelPart.class, "WorldRootModelPart").copy().makeEditable().setParent(modelPartClass));
+        instance.registerClass(BlockTask.class, PetPetReflector.reflect(BlockTask.class, "BlockTask").copy().makeEditable().setParent(transformableClass));
+        instance.registerClass(ItemTask.class, PetPetReflector.reflect(ItemTask.class, "ItemTask").copy().makeEditable().setParent(transformableClass));
+        instance.registerClass(TextTask.class, PetPetReflector.reflect(TextTask.class, "TextTask").copy().makeEditable().setParent(transformableClass));
 
         //Vanilla renderer
         instance.registerClass(VanillaRenderer.class, PetPetReflector.reflect(VanillaRenderer.class, "VanillaRenderer").copy().makeEditable());
@@ -181,6 +192,10 @@ public class AspectScriptHandler {
      * Set all the global variables that are needed
      */
     private void setupGlobals() {
+        //Remove some petpet functions we don't want to give
+        instance.interpreter.globals.remove("printStack");
+
+
         //Print functions, if should print
         JavaFunction printFunc = getPrintFunction();
         setGlobal("print", printFunc);
@@ -193,6 +208,12 @@ public class AspectScriptHandler {
         setGlobal("mat2", Matrices.MAT_2_CREATE);
         setGlobal("mat3", Matrices.MAT_3_CREATE);
         setGlobal("mat4", Matrices.MAT_4_CREATE);
+
+        //Classes (stored in table for convenience)
+        PetPetTable<String, PetPetClass> classes = new PetPetTable<>();
+        for (var clazz : instance.interpreter.classMap.values())
+            classes.put(clazz.name, clazz);
+        setGlobal("classes", classes);
 
         //Require
         requireFunction = setupRequire();
@@ -232,6 +253,15 @@ public class AspectScriptHandler {
 
         //Client
         setGlobal("client", new ClientAPI());
+
+        //Run aspect's utils script
+        try(InputStream in = AspectMod.class.getResourceAsStream("/assets/" + AspectMod.MODID + "/scripts/AspectInternalUtils.petpet")) {
+            if (in == null) throw new RuntimeException("Failed to locate internal util script - bug");
+            String code = new String(in.readAllBytes());
+            runCode("AspectInternalUtils", code);
+        } catch (Exception e) {
+            error(e);
+        }
 
         //Other APIs not shown here:
 

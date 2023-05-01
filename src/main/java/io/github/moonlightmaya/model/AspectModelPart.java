@@ -3,11 +3,16 @@ package io.github.moonlightmaya.model;
 import com.google.common.collect.ImmutableList;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.data.BaseStructures;
-import io.github.moonlightmaya.script.AspectScriptHandler;
+import io.github.moonlightmaya.model.rendertasks.BlockTask;
+import io.github.moonlightmaya.model.rendertasks.ItemTask;
+import io.github.moonlightmaya.model.rendertasks.RenderTask;
+import io.github.moonlightmaya.model.rendertasks.TextTask;
 import io.github.moonlightmaya.texture.AspectTexture;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.vanilla.VanillaPart;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.render.*;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import org.joml.*;
 import petpet.external.PetPetWhitelist;
@@ -15,8 +20,6 @@ import petpet.lang.run.PetPetCallable;
 import petpet.lang.run.PetPetException;
 import petpet.types.PetPetList;
 
-import java.lang.Math;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -24,7 +27,7 @@ import java.util.List;
  * An element of a hierarchical tree structure, analogous to the structure in Blockbench as well as the file system.
  */
 @PetPetWhitelist
-public class AspectModelPart {
+public class AspectModelPart extends Transformable {
 
     public final String name;
     public AspectModelPart parent;
@@ -36,18 +39,10 @@ public class AspectModelPart {
     //Also, this data will need to be uploaded to the GPU.
     //The only case where double precision is necessary is for world model parts.
     public PetPetList<AspectModelPart> children; //null if no children
-    public final Matrix4f positionMatrix = new Matrix4f();
-    public final Matrix3f normalMatrix = new Matrix3f();
     public final Matrix3f uvMatrix = new Matrix3f();
-    public final Vector3f partPivot = new Vector3f();
-    public final Vector3f partPos = new Vector3f();
-    public final Quaternionf partRot = new Quaternionf();
-    public final Vector3f partScale = new Vector3f(1, 1, 1);
-    public boolean visible = true;
-
     private PetPetCallable preRender, postRender;
+    private final PetPetList<RenderTask> renderTasks = new PetPetList<>();
 
-    public VanillaPart vanillaParent; //The vanilla part that this will take transforms from
 
     //Whether this part needs its matrix recalculated. After calling rot(), pos(), etc. this will be set to true.
     //If it's true at rendering time, then the this.partMatrix field will be updated, and this will be set to false.
@@ -85,7 +80,6 @@ public class AspectModelPart {
         tempCubeData = sharedTempCubeData.get();
         if (baseStructure.cubeData() != null)
             genCubeRenderData(baseStructure.cubeData());
-
     }
 
     private AspectModelPart(AspectModelPart base, String newPartName, boolean deepCopyChildList, boolean deepCopyVertices) {
@@ -126,60 +120,6 @@ public class AspectModelPart {
         needsMatrixRecalculation = base.needsMatrixRecalculation;
 
         visible = base.visible;
-    }
-
-    public void setPos(Vector3f vec) {
-        setPos(vec.x, vec.y, vec.z);
-    }
-    public void setPos(Vector3d vec) {
-        setPos((float) vec.x, (float) vec.y, (float) vec.z);
-    }
-
-    public void setPos(float x, float y, float z) {
-        partPos.set(x / 16f, y / 16f, z / 16f);
-        needsMatrixRecalculation = true;
-    }
-
-    public void setPivot(Vector3f vec) {
-        setPivot(vec.x, vec.y, vec.z);
-    }
-
-    public void setPivot(float x, float y, float z) {
-        partPivot.set(x, y, z);
-        needsMatrixRecalculation = true;
-    }
-
-    public void setScale(Vector3f vec) {
-        setScale(vec.x, vec.y, vec.z);
-    }
-
-    public void setScale(float s) {
-        setScale(s, s, s);
-    }
-
-    public void setScale(float x, float y, float z) {
-        partScale.set(x, y, z);
-        needsMatrixRecalculation = true;
-    }
-
-    public void setRot(Vector3f vec) {
-        setRot(vec.x, vec.y, vec.z);
-    }
-
-    public void setRot(float x, float y, float z) {
-        float s = (float) (Math.PI / 180);
-        partRot.identity().rotationXYZ(x * s, y * s, z * s);
-        needsMatrixRecalculation = true;
-    }
-
-    public void setRot(Quaternionf rot) {
-        partRot.set(rot);
-        needsMatrixRecalculation = true;
-    }
-
-    public void setRot(Quaterniond rot) {
-        partRot.set(rot);
-        needsMatrixRecalculation = true;
     }
 
     public void setUV(float x, float y) {
@@ -309,31 +249,6 @@ public class AspectModelPart {
         return children != null;
     }
 
-    private static final Matrix4f tempMatrixSavedTransform = new Matrix4f();
-    private void recalculateMatrix() {
-        //Scale down the pivot value, it's in "block" units
-        positionMatrix.translation(partPivot.mul(1f/16));
-
-        if (vanillaParent != null) {
-            positionMatrix.mul(vanillaParent.inverseDefaultTransform);
-            tempMatrixSavedTransform.set(vanillaParent.savedTransform);
-            positionMatrix.mul(tempMatrixSavedTransform);
-        }
-
-        positionMatrix
-                .rotate(partRot)
-                .scale(partScale)
-                .translate(partPos)
-                .translate(-partPivot.x, -partPivot.y, -partPivot.z);
-
-        //Scale the pivot value back up again
-        partPivot.mul(16f);
-        //Compute the normal matrix as well and store it
-        positionMatrix.normal(normalMatrix);
-        //Matrices are now calculated, don't need to be recalculated anymore for this part
-        needsMatrixRecalculation = false;
-    }
-
     private static final List<RenderLayer> DEFAULT_LAYERS = ImmutableList.of(RenderLayer.getEntityCutoutNoCull(new Identifier("textures/entity/creeper/creeper.png"))); //aww man
 
     /**
@@ -353,9 +268,9 @@ public class AspectModelPart {
      * The light level is the default light level to render the model part "root" at.
      * In the future, this may be overridden by specific model part customizations.
      */
-    public void render(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, int light) {
+    public void render(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, int light, int overlay) {
         List<RenderLayer> defaultLayers = DEFAULT_LAYERS;
-        renderInternal(vcp, defaultLayers, matrixStack, light);
+        renderInternal(vcp, defaultLayers, matrixStack, light, overlay);
     }
 
     /**
@@ -370,7 +285,8 @@ public class AspectModelPart {
             VertexConsumerProvider vcp, //The VCP used for this rendering call, where we will fetch buffers from using the render layers.
             List<RenderLayer> currentRenderLayers, //The current set of render layers for the part. Inherited from the parent if this.renderLayers is null.
             AspectMatrixStack matrixStack, //The current matrix stack.
-            int light //The light level of the entity wearing the aspect. Inherited from the parent always (for the time being)
+            int light, //The light level of the entity wearing the aspect. Inherited from the parent always (for the time being)
+            int overlay
     ) {
         //Push the matrix stack
         matrixStack.push();
@@ -405,24 +321,24 @@ public class AspectModelPart {
         }
 
         //Push and transform the stack, if necessary
-        if (hasVertexData() || hasChildren()) {
+        if (hasVertexData() || hasChildren() || renderTasks.size() > 0) {
             //Recalculate the matrices for this part if necessary, then apply them to the stack.
-            if (needsMatrixRecalculation || vanillaParent != null)
-                recalculateMatrix();
-
+            recalculateMatrixIfNeeded();
             matrixStack.multiply(positionMatrix, normalMatrix);
             matrixStack.multiplyUV(uvMatrix);
         }
 
+        for (RenderTask task : renderTasks)
+            task.render(matrixStack, vcp, light, overlay);
+
         //Render the part only if it's visible and has vertex data
         if (hasVertexData()) {
+            Vector4d pos = new Vector4d();
+            Vector3f normal = new Vector3f();
+            Vector3f uv = new Vector3f();
             for (RenderLayer layer : currentRenderLayers) {
                 //Obtain a vertex buffer from the VCP, then put all our vertices into it.
                 VertexConsumer buffer = vcp.getBuffer(layer);
-                Vector4d pos = new Vector4d();
-                Vector3f normal = new Vector3f();
-                Vector3f uv = new Vector3f();
-
                 for (int i = 0; i < vertexData.length; i += 8) {
                     pos.set(vertexData[i], vertexData[i+1], vertexData[i+2], 1f);
                     matrixStack.peekPosition().transform(pos);
@@ -435,7 +351,7 @@ public class AspectModelPart {
                             (float) pos.x, (float) pos.y, (float) pos.z, //Position
                             1f, 1f, 1f, 1f, //Color
                             uv.x, uv.y, //Texture
-                            OverlayTexture.DEFAULT_UV, //"Overlay"
+                            overlay, //"Overlay"
                             light, //Light
                             normal.x, normal.y, normal.z //Normal
                     );
@@ -446,7 +362,7 @@ public class AspectModelPart {
         //If there are children, render them all too
         if (hasChildren()) {
             for (AspectModelPart child : children) {
-                child.renderInternal(vcp, currentRenderLayers, matrixStack, light);
+                child.renderInternal(vcp, currentRenderLayers, matrixStack, light, overlay);
             }
         }
 
@@ -466,7 +382,6 @@ public class AspectModelPart {
         }
     }
 
-
     public enum ModelPartType {
         GROUP,
         CUBE,
@@ -481,72 +396,15 @@ public class AspectModelPart {
     //----------PETPET FUNCTIONS----------//
     //----------PETPET FUNCTIONS----------//
 
-    //Setters
-    @PetPetWhitelist
-    public AspectModelPart pos_3(double x, double y, double z) {
-        setPos((float) x, (float) y, (float) z);
-        return this;
-    }
-    @PetPetWhitelist
-    public AspectModelPart pos_1(Vector3d v) {
-        return pos_3(v.x, v.y, v.z);
-    }
-    @PetPetWhitelist
-    public Vector3d pos_0() {
-        return new Vector3d(partPos).mul(16d);
-    }
 
-    @PetPetWhitelist
-    public AspectModelPart rot_3(double x, double y, double z) {
-        setRot((float) x, (float) y, (float) z);
-        return this;
-    }
-    @PetPetWhitelist
-    public AspectModelPart rot_1(Vector3d v) {
-        return rot_3(v.x, v.y, v.z);
-    }
-
-    @PetPetWhitelist
-    public Vector3d rot_0() {
-        return new Vector3d(partRot.getEulerAnglesXYZ(new Vector3f()));
-    }
-
-    //@PetPetWhitelist
-    public AspectModelPart quat_1(Quaterniond quat) {
-        setRot(quat);
-        return this;
-    }
-    //@PetPetWhitelist
-    public Quaterniond quat_0() {
-        return new Quaterniond(partRot);
-    }
-
-    @PetPetWhitelist
-    public AspectModelPart scale_3(double x, double y, double z) {
-        setScale((float) x, (float) y, (float) z);
-        return this;
-    }
-    @PetPetWhitelist
-    public AspectModelPart scale_1(Vector3d v) {
-        return scale_3(v.x, v.y, v.z);
-    }
-    @PetPetWhitelist
-    public Vector3d scale_0() {
-        return new Vector3d(partScale);
-    }
-    @PetPetWhitelist
-    public AspectModelPart piv_3(double x, double y, double z) {
-        setPivot((float) x, (float) y, (float) z);
-        return this;
-    }
-    @PetPetWhitelist
-    public AspectModelPart piv_1(Vector3d v) {
-        return piv_3(v.x, v.y, v.z);
-    }
-    @PetPetWhitelist
-    public Vector3d piv_0(Vector3d v) {
-        return new Vector3d(partPivot);
-    }
+    /**
+     * Other properties:
+     * - uv
+     * - visibility
+     * - todo: color
+     * - vanilla parent
+     * - pre/post render functions
+     */
 
     @PetPetWhitelist
     public AspectModelPart uv_2(double x, double y) {
@@ -563,45 +421,6 @@ public class AspectModelPart {
     }
 
     @PetPetWhitelist
-    public String bbType() {
-        return type.name();
-    }
-
-    @PetPetWhitelist
-    public AspectModelPart visible_1(Boolean b) {
-        this.visible = b;
-        return this;
-    }
-
-    @PetPetWhitelist
-    public Boolean visible_0() {
-        return visible;
-    }
-
-    @PetPetWhitelist
-    public AspectModelPart matrix_1(Matrix4d mat) {
-        this.positionMatrix.set(mat);
-        this.positionMatrix.normal(normalMatrix);
-        partPos.zero();
-        partRot.identity();
-        partPivot.zero();
-        partScale.set(1);
-        this.needsMatrixRecalculation = false;
-        return this;
-    }
-
-    @PetPetWhitelist
-    public Matrix4d matrix_0() {
-        recalculateMatrix(); //recalculate before
-        return rawMatrix();
-    }
-
-    @PetPetWhitelist
-    public Matrix4d rawMatrix() {
-        return new Matrix4d(positionMatrix);
-    }
-
-    @PetPetWhitelist
     public AspectModelPart uvMatrix_1(Matrix3d mat) {
         this.setUVMatrix(mat);
         return this;
@@ -609,29 +428,6 @@ public class AspectModelPart {
     @PetPetWhitelist
     public Matrix3d uvMatrix_0() {
         return new Matrix3d(uvMatrix);
-    }
-
-    @PetPetWhitelist
-    public PetPetList<AspectModelPart> getChildren() {
-        return children;
-    }
-
-    @PetPetWhitelist
-    public AspectModelPart clearChildCache() {
-        if (cachedPartMap != null)
-            cachedPartMap.clear();
-        return this;
-    }
-
-    @PetPetWhitelist
-    public AspectModelPart vanillaParent_1(VanillaPart vanillaPart) {
-        vanillaParent = vanillaPart;
-        return this;
-    }
-
-    @PetPetWhitelist
-    public VanillaPart vanillaParent_0() {
-        return vanillaParent;
     }
 
     @PetPetWhitelist
@@ -668,6 +464,88 @@ public class AspectModelPart {
         return this;
     }
 
+    /**
+     * Render tasks
+     */
+    @PetPetWhitelist
+    public PetPetList<RenderTask> renderTasks() {
+        return renderTasks;
+    }
+    @PetPetWhitelist
+    public AspectModelPart removeTask(RenderTask task) {
+        renderTasks.remove(task);
+        return this;
+    }
+    @PetPetWhitelist
+    public BlockTask newBlock(BlockState state) {
+        BlockTask task = new BlockTask(state);
+        renderTasks.add(task);
+        return task;
+    }
+    @PetPetWhitelist
+    public ItemTask newItem(ItemStack stack) {
+        ItemTask task = new ItemTask(stack);
+        renderTasks.add(task);
+        return task;
+    }
+    @PetPetWhitelist
+    public TextTask newText(String text) {
+        TextTask task = new TextTask(text);
+        renderTasks.add(task);
+        return task;
+    }
+
+
+    /**
+     * Informational getters
+     */
+
+    @PetPetWhitelist
+    public String bbType() {
+        return type.name();
+    }
+
+    @PetPetWhitelist
+    public PetPetList<AspectModelPart> getChildren() {
+        return children;
+    }
+
+    @PetPetWhitelist
+    public String name() {
+        return name;
+    }
+
+    @PetPetWhitelist
+    public AspectModelPart parent() {
+        return parent;
+    }
+
+    /**
+     * Other manipulation operations
+     */
+
+    @PetPetWhitelist
+    public AspectModelPart clearChildCache() {
+        if (cachedPartMap != null)
+            cachedPartMap.clear();
+        return this;
+    }
+
+    @PetPetWhitelist
+    public AspectModelPart copy_1(String name) {
+        return new AspectModelPart(this, name, false, false);
+    }
+
+    @PetPetWhitelist
+    public AspectModelPart copy_3(String name, boolean deepCopyChildList, boolean deepCopyVertices) {
+        return new AspectModelPart(this, name, deepCopyChildList, deepCopyVertices);
+    }
+
+
+    /**
+     * Metamethods/overloads
+     */
+
     private HashMap<String, AspectModelPart> cachedPartMap;
     @PetPetWhitelist
     public AspectModelPart __get_str(String arg) {
@@ -687,26 +565,6 @@ public class AspectModelPart {
         if (children == null) return null;
         if (arg < 0 || arg >= children.size()) return null;
         return children.get(arg);
-    }
-
-    @PetPetWhitelist
-    public AspectModelPart copy_1(String name) {
-        return new AspectModelPart(this, name, false, false);
-    }
-
-    @PetPetWhitelist
-    public AspectModelPart copy_3(String name, boolean deepCopyChildList, boolean deepCopyVertices) {
-        return new AspectModelPart(this, name, deepCopyChildList, deepCopyVertices);
-    }
-
-    @PetPetWhitelist
-    public String name() {
-        return name;
-    }
-
-    @PetPetWhitelist
-    public AspectModelPart parent() {
-        return parent;
     }
 
     @Override

@@ -166,6 +166,16 @@ public class AspectMatrixStack {
         return result;
     }
 
+    /**
+     * Fills a vanilla matrix stack with the top element of this matrix stack.
+     * Does not perform an allocation, unlike getVanillaCopy.
+     */
+    public MatrixStack fillVanilla(MatrixStack target) {
+        target.peek().getPositionMatrix().set(positionMatrices.get(curIndex));
+        set(target.peek().getNormalMatrix(), normalMatrices.get(curIndex));
+        return target;
+    }
+
     //I can't do "entry.getNormalMatrix().set(normalMatrices.get(curIndex));" since JOML never added that method,
     //so I made this instead
     private final float[] buffer = new float[9];

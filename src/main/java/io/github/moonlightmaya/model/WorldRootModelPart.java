@@ -7,6 +7,7 @@ import io.github.moonlightmaya.util.MathUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.render.LightmapTextureManager;
+import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.registry.Registries;
@@ -76,12 +77,12 @@ public class WorldRootModelPart extends AspectModelPart {
                 world.getLightLevel(LightType.SKY, lightChoosePos)
         );
 
-        super.render(vcp, matrixStack, light);
+        super.render(vcp, matrixStack, light, OverlayTexture.DEFAULT_UV);
         matrixStack.pop();
     }
 
     @Override
-    public void render(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, int light) {
+    public void render(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, int light, int overlay) {
         //Shouldn't render this with a light level, as the light level is calculated by the world part's
         //world pos instead of the entity's light level!
         throw new UnsupportedOperationException("This render method should not work on world root types, if this happens it's a mistake by the mod devs!");

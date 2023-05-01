@@ -1,0 +1,7 @@
+global fn for(start, end, increment, func) {
+    i = start
+    while i < end {
+        func(i)
+        i = i + increment
+    }
+}

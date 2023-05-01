@@ -15,6 +15,7 @@ import io.github.moonlightmaya.vanilla.VanillaModelPartSorter;
 import io.github.moonlightmaya.vanilla.VanillaRenderer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.LightmapTextureManager;
+import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.client.world.ClientWorld;
@@ -152,12 +153,12 @@ public class Aspect {
         scriptHandler.onEntityFirstLoad();
     }
 
-    public void renderEntity(VertexConsumerProvider vcp, float tickDelta, AspectMatrixStack matrixStack, int light) {
+    public void renderEntity(VertexConsumerProvider vcp, float tickDelta, AspectMatrixStack matrixStack, int light, int overlay) {
         if (isErrored()) return;
         scriptHandler.callEvent(EventHandler.RENDER, tickDelta);
         matrixStack.multiply(vanillaRenderer.aspectModelTransform);
         try {
-            entityRoot.render(vcp, matrixStack, light);
+            entityRoot.render(vcp, matrixStack, light, overlay);
         } catch (Throwable t) {
             error(t, ErrorLocation.RENDER_ENTITY);
         }
@@ -167,7 +168,7 @@ public class Aspect {
         if (isErrored()) return;
         scriptHandler.callEvent(EventHandler.HUD_RENDER, tickDelta);
         try {
-            hudRoot.render(vcp, matrixStack, LightmapTextureManager.MAX_LIGHT_COORDINATE);
+            hudRoot.render(vcp, matrixStack, LightmapTextureManager.MAX_LIGHT_COORDINATE, OverlayTexture.DEFAULT_UV);
         } catch (Throwable t) {
             error(t, ErrorLocation.RENDER_HUD);
         }

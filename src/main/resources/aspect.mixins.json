@@ -10,6 +10,7 @@
     "ModelPartAccessor",
     "ModelPartMixin",
     "entity_renderers.EntityRendererMixin",
+    "entity_renderers.LivingEntityRendererAccessor",
     "entity_renderers.LivingEntityRendererMixin",
     "entity_renderers.specific.PlayerEntityRendererMixin",
     "gui.ChatScreenMixin",

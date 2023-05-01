@@ -3,10 +3,13 @@ package io.github.moonlightmaya.mixin.entity_renderers;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.util.AspectMatrixStack;
+import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRenderer;
+import net.minecraft.client.render.entity.LivingEntityRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -23,7 +26,14 @@ public class EntityRendererMixin {
 
         Aspect aspect = AspectManager.getAspect(entity.getUuid());
         if (aspect != null) {
-            aspect.renderEntity(vertexConsumers, tickDelta, new AspectMatrixStack(matrices), light);
+            //Calculate overlay
+            int overlay = OverlayTexture.DEFAULT_UV;
+            if (entity instanceof LivingEntity livingEntity) {
+                if ((Object) this instanceof LivingEntityRenderer<?,?> livingEntityRenderer)
+                    overlay = LivingEntityRenderer.getOverlay(livingEntity, ((LivingEntityRendererAccessor) livingEntityRenderer).animationCounter(livingEntity, tickDelta));
+            }
+            //Render
+            aspect.renderEntity(vertexConsumers, tickDelta, new AspectMatrixStack(matrices), light, overlay);
         }
     }
 

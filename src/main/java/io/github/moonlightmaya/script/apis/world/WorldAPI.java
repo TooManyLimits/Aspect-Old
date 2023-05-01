@@ -1,11 +1,20 @@
 package io.github.moonlightmaya.script.apis.world;
 
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.context.CommandContextBuilder;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.github.moonlightmaya.util.EntityUtils;
 import io.github.moonlightmaya.util.MathUtils;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.command.CommandRegistryAccess;
+import net.minecraft.command.argument.BlockArgumentParser;
+import net.minecraft.command.argument.ItemStackArgumentType;
 import net.minecraft.entity.Entity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.LightType;
 import net.minecraft.world.biome.Biome;
@@ -197,5 +206,26 @@ public class WorldAPI {
     @PetPetWhitelist
     public static Boolean isOpenSky_3(ClientWorld world, double x, double y, double z) {
         return acceptPosOrElse(world, x, y, z, world::isSkyVisible, null);
+    }
+
+    @PetPetWhitelist
+    public static BlockState newBlock(ClientWorld world, String str) {
+        try {
+            return BlockArgumentParser.block(world.createCommandRegistryWrapper(Registries.BLOCK.getKey()), str, true).blockState();
+        } catch (CommandSyntaxException ex) {
+            throw new PetPetException("Failed to parse BlockState from string: " + str);
+        }
+    }
+
+    @PetPetWhitelist
+    public static ItemStack newItem(ClientWorld world, String str) {
+        try {
+            return ItemStackArgumentType
+                    .itemStack(CommandRegistryAccess.of(world.getRegistryManager(), world.getEnabledFeatures()))
+                    .parse(new StringReader(str))
+                    .createStack(1, false);
+        } catch (CommandSyntaxException ex) {
+            throw new PetPetException("Failed to parse ItemStack from string: " + str);
+        }
     }
 }
