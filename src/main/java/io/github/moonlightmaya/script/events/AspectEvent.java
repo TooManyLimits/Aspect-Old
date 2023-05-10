@@ -6,6 +6,7 @@ import petpet.lang.run.PetPetException;
 
 import java.util.LinkedHashSet;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Consumer;
 
 @PetPetWhitelist
 public class AspectEvent {
@@ -14,7 +15,7 @@ public class AspectEvent {
      * Maintains the list of all registered functions to the event
      */
     private final LinkedHashSet<PetPetCallable> registered = new LinkedHashSet<>();
-
+    private final ConcurrentLinkedQueue<Consumer<LinkedHashSet<PetPetCallable>>> queuedChanges = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<PetPetCallable> toRegister = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<PetPetCallable> toRemove = new ConcurrentLinkedQueue<>();
     private boolean shouldClear = false;
@@ -28,16 +29,15 @@ public class AspectEvent {
 
     private void flushQueues() {
         if (shouldClear) {
+            queuedChanges.clear();
             registered.clear();
             toRegister.clear();
             toRemove.clear();
             shouldClear = false;
             return;
         }
-        while (!toRegister.isEmpty())
-            registered.add(toRegister.poll());
-        while (!toRemove.isEmpty())
-            registered.remove(toRemove.poll());
+        while (!queuedChanges.isEmpty())
+            queuedChanges.poll().accept(registered);
     }
 
     @PetPetWhitelist
@@ -47,23 +47,22 @@ public class AspectEvent {
 
     /**
      * Registers the given function to the event
-     * Adding the same function twice will error
+     * Registering the same function multiple times is the same
+     * as only registering it once
      */
     @PetPetWhitelist
     public void add(PetPetCallable function) {
         if (expectedArgCount != function.paramCount())
             throw new PetPetException("Event " + name + " expects a " + expectedArgCount + "-arg function, but received a " + function.paramCount() + "-arg function");
-        toRegister.add(function);
+        queuedChanges.add(c -> c.add(function));
     }
 
     /**
      * Removes the function from the event if it exists
-     * Returns true if the given function was in the event,
-     * false if it wasn't inside the event
      */
     @PetPetWhitelist
     public void remove(PetPetCallable function) {
-        toRemove.add(function);
+        queuedChanges.add(c -> c.remove(function));
     }
 
     /**
