@@ -66,11 +66,16 @@ public class MathUtils {
         );
     }
 
-    public static int RGBtoInt(Vector3d rgb) {
+    public static int RGBAToInt(double r, double g, double b, double a) {
         return
-                MathHelper.clamp((int) ((rgb.x) * 255), 0, 255) << 16 |
-                MathHelper.clamp((int) ((rgb.y) * 255), 0, 255) << 8 |
-                MathHelper.clamp((int) ((rgb.z) * 255), 0, 255) << 0;
+                MathHelper.clamp((int) (r * 255), 0, 255) << 16 |
+                MathHelper.clamp((int) (g * 255), 0, 255) << 8 |
+                MathHelper.clamp((int) (b * 255), 0, 255) << 0 |
+                MathHelper.clamp((int) (a * 255), 0, 255) << 24;
+    }
+
+    public static int RGBtoInt(Vector3d rgb) {
+        return RGBAToInt(rgb.x, rgb.y, rgb.z, 0);
     }
 
     public static Vector3d fromVec3d(Vec3d mcVec) {

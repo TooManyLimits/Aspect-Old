@@ -1,6 +1,7 @@
 package io.github.moonlightmaya.script.apis;
 
 import io.github.moonlightmaya.mixin.world.WorldRendererAccessor;
+import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.MathUtils;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
@@ -166,18 +167,19 @@ public class ClientAPI {
     }
 
     //Text utils
+    //TODO: Line wrapping *dies*
 
-    //@PetPetWhitelist
+    @PetPetWhitelist
     public double getTextWidth(String text) {
-        return 0;
+        return MinecraftClient.getInstance().textRenderer.getWidth(DisplayUtils.tryParseJsonText(text));
     }
 
-    //@PetPetWhitelist
+    @PetPetWhitelist
     public double getTextHeight(String text) {
-        return 0;
+        return MinecraftClient.getInstance().textRenderer.fontHeight;
     }
 
-    //@PetPetWhitelist
+//    @PetPetWhitelist
     public Vector2d getTextDimensions(String text) {
         return null;
     }
