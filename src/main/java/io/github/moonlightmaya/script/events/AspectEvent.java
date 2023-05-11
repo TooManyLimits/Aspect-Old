@@ -3,6 +3,7 @@ package io.github.moonlightmaya.script.events;
 import petpet.external.PetPetWhitelist;
 import petpet.lang.run.PetPetCallable;
 import petpet.lang.run.PetPetException;
+import petpet.types.PetPetList;
 
 import java.util.LinkedHashSet;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -65,6 +66,8 @@ public class AspectEvent {
         queuedChanges.add(c -> c.remove(function));
     }
 
+
+
     /**
      * Executes the event.
      * The set of registered functions cannot be modified while
@@ -109,6 +112,42 @@ public class AspectEvent {
                 cancelled = true;
         }
         return cancelled;
+    }
+
+    /**
+     * PETPET EXECUTORS BELOW
+     */
+
+    /**
+     * Executes the event with the given list as args
+     */
+    @PetPetWhitelist
+    public void execute_1(PetPetList<?> args) {
+        execute(args.toArray());
+    }
+
+    /**
+     * Executes the event with no args
+     */
+    @PetPetWhitelist
+    public void execute_0() {
+        execute();
+    }
+
+    /**
+     * Executes the event, piped, with the given arg
+     */
+    @PetPetWhitelist
+    public Object executePiped_1(Object arg) {
+        return executePiped(arg);
+    }
+
+    /**
+     * Executes, cancellable, the event with the given list as args
+     */
+    @PetPetWhitelist
+    public boolean executeCancellable_1(PetPetList<?> args) {
+        return executeCancellable(args.toArray());
     }
 
     @Override
