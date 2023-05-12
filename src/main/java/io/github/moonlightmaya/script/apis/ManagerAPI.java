@@ -8,12 +8,14 @@ import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.EntityUtils;
 import io.github.moonlightmaya.util.IOUtils;
+import net.minecraft.util.Util;
 import org.jetbrains.annotations.Nullable;
 import petpet.external.PetPetWhitelist;
 import petpet.lang.run.PetPetException;
 import petpet.types.PetPetList;
 import petpet.types.PetPetTable;
 
+import java.awt.*;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -76,9 +78,16 @@ public class ManagerAPI {
      * Example for loading the aspect at
      * .minecraft/aspect/aspects/my_funny/aspect2/aspect.json
      * !["my_funny", "aspect2"]. Done
+     *
+     * If argument is null, then it will clear your aspect.
      */
     @PetPetWhitelist
     public void equipAspect(PetPetList<String> path) {
+        if (path == null || path.isEmpty()) {
+            AspectManager.clearAspect(EntityUtils.getLocalUUID());
+            return;
+        }
+
         Path orig = IOUtils.getOrCreateModFolder().resolve("aspects");
         Path cur = orig;
         for (String s : path) {
@@ -92,6 +101,25 @@ public class ManagerAPI {
         AspectManager.loadAspectFromFolder(EntityUtils.getLocalUUID(), cur, err -> {
             DisplayUtils.displayError("Failed to load aspect", err, true);
         });
+    }
+
+    @PetPetWhitelist
+    public boolean openAspectsFolder(PetPetList<String> path) {
+        try {
+            Path orig = IOUtils.getOrCreateModFolder().resolve("aspects");
+            Path cur = orig;
+            if (path != null)
+                for (String s : path) {
+                    cur = cur.resolve(s);
+                    if (!cur.normalize().startsWith(orig.normalize()))
+                        throw new PetPetException("Attempt to access aspect file outside of aspects/ folder?");
+                }
+            File f = cur.toFile();
+            Util.getOperatingSystem().open(f);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
 }
