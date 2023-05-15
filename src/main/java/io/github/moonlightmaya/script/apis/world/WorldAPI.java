@@ -148,20 +148,22 @@ public class WorldAPI {
         return acceptPosOrElse(world, x, y, z, world::getBlockState, Blocks.AIR.getDefaultState());
     }
     @PetPetWhitelist
-    public static void eachBlock_3(ClientWorld world, Vector3d min, Vector3d max, PetPetCallable func) {
-        eachBlock_7(world, min.x, min.y, min.z, max.x, max.y, max.z, func);
+    public static boolean eachBlock_3(ClientWorld world, Vector3d min, Vector3d max, PetPetCallable func) {
+        return eachBlock_7(world, min.x, min.y, min.z, max.x, max.y, max.z, func);
     }
     @PetPetWhitelist
-    public static void eachBlock_7(ClientWorld world, double minX, double minY, double minZ, double maxX, double maxY, double maxZ, PetPetCallable func) {
+    public static boolean eachBlock_7(ClientWorld world, double minX, double minY, double minZ, double maxX, double maxY, double maxZ, PetPetCallable func) {
         if (func.paramCount() != 4)
             throw new PetPetException("world.eachBlock() expects a function with 4 params, but you passed in one with " + func.paramCount() + " params");
         BlockPos a = MathUtils.getBlockPos(minX, minY, minZ);
         BlockPos b = MathUtils.getBlockPos(maxX, maxY, maxZ);
-        //If any part of the region is unloaded, then do nothing
+        //If any part of the region is unloaded, then do nothing and return false
         if (!world.isRegionLoaded(a, b))
-            return;
+            return false;
         //Otherwise, call the function on each block in range
         BlockPos.stream(a, b).forEachOrdered(blockPos -> func.call(world.getBlockState(blockPos), blockPos.getX(), blockPos.getY(), blockPos.getZ()));
+        //Indicate success by returning true
+        return true;
     }
     @PetPetWhitelist
     public static Integer getLight_1(ClientWorld world, Vector3d pos) {

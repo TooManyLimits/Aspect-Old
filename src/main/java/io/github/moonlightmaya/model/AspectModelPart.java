@@ -22,6 +22,7 @@ import petpet.types.PetPetList;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * An element of a hierarchical tree structure, analogous to the structure in Blockbench as well as the file system.
@@ -72,6 +73,22 @@ public class AspectModelPart extends Transformable {
             for (BaseStructures.ModelPartStructure child : baseStructure.children()) {
                 //all children are owned by the same aspect
                 children.add(new AspectModelPart(child, owningAspect, this));
+            }
+            //If all children have the same render layers, then merge them and set this to have it instead
+            if (children.size() > 0) {
+                boolean allSame = true;
+                PetPetList<?> child0Layers = children.get(0).renderLayers;
+                for (int i = 1; i < children.size(); i++)
+                    if (!arePetPetListsEqual(child0Layers, children.get(i).renderLayers)) {
+                        allSame = false;
+                        break;
+                    }
+                //If all of the children have the same layers, then
+                if (allSame && child0Layers != null) {
+                    this.renderLayers = (PetPetList<RenderLayer>) child0Layers.clone();
+                    for (AspectModelPart child : this.children)
+                        child.renderLayers = null;
+                }
             }
         }
 
@@ -207,9 +224,10 @@ public class AspectModelPart extends Transformable {
         vertexData = new float[idx];
         System.arraycopy(tempCubeData, 0, vertexData, 0, idx);
 
-        //Set up render layer:
+        //Set up default render layer:
         renderLayers = new PetPetList<>();
         AspectTexture tex = owningAspect.textures.get(faces.tex()); //grab the texture
+        //Default layer is cutout-no-cull with the texture
         renderLayers.add(RenderLayer.getEntityCutoutNoCull(tex.getIdentifier())); //make or get render layer for that texture
     }
     //Returns the new ptr
@@ -233,7 +251,7 @@ public class AspectModelPart extends Transformable {
      *
      * If this is null, then copy the render layers of the parent.
      */
-    private List<RenderLayer> renderLayers;
+    private PetPetList<RenderLayer> renderLayers;
 
     /**
      * Returns whether this part has vertex data attached or not.
@@ -380,6 +398,17 @@ public class AspectModelPart extends Transformable {
         if (hasVertexData() || hasChildren()) {
             matrixStack.pop();
         }
+    }
+
+    //Small helper
+    private static boolean arePetPetListsEqual(PetPetList<?> a, PetPetList<?> b) {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+        if (a.size() != b.size()) return false;
+        for (int i = 0; i < a.size(); i++)
+            if (!Objects.equals(a.get(i), b.get(i)))
+                return false;
+        return true;
     }
 
     public enum ModelPartType {
@@ -539,6 +568,20 @@ public class AspectModelPart extends Transformable {
     @PetPetWhitelist
     public AspectModelPart copy_3(String name, boolean deepCopyChildList, boolean deepCopyVertices) {
         return new AspectModelPart(this, name, deepCopyChildList, deepCopyVertices);
+    }
+
+    /**
+     * Render layers
+     */
+    @PetPetWhitelist
+    public AspectModelPart renderLayers_1(PetPetList<RenderLayer> layers) {
+        this.renderLayers = layers;
+        return this;
+    }
+
+    @PetPetWhitelist
+    public PetPetList<RenderLayer> renderLayers_0() {
+        return this.renderLayers;
     }
 
 

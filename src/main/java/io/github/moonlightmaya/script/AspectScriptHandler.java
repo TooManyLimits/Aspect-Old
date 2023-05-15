@@ -7,6 +7,7 @@ import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.model.Transformable;
 import io.github.moonlightmaya.model.WorldRootModelPart;
+import io.github.moonlightmaya.model.renderlayers.RenderLayerFunction;
 import io.github.moonlightmaya.model.rendertasks.BlockTask;
 import io.github.moonlightmaya.model.rendertasks.ItemTask;
 import io.github.moonlightmaya.model.rendertasks.RenderTask;
@@ -27,6 +28,7 @@ import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.vanilla.VanillaPart;
 import io.github.moonlightmaya.vanilla.VanillaRenderer;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -151,6 +153,8 @@ public class AspectScriptHandler {
         instance.registerClass(AspectAPI.class, PetPetReflector.reflect(AspectAPI.class, "Aspect").copy().makeEditable());
         instance.registerClass(ClientAPI.class, PetPetReflector.reflect(ClientAPI.class, "Client").copy().makeEditable());
 
+        instance.registerClass(RenderLayer.class, new PetPetClass("RenderLayer").makeEditable()); //no methods or anything
+
         //Gui-only whitelists
         if (aspect.isGui) {
             instance.registerClass(ManagerAPI.class, PetPetReflector.reflect(ManagerAPI.class, "Manager").copy().makeEditable());
@@ -262,6 +266,9 @@ public class AspectScriptHandler {
         } catch (Exception e) {
             error(e);
         }
+
+        //Render layer creation function
+        setGlobal("RenderLayer", RenderLayerFunction.JAVA_FUNCTION);
 
         //Other APIs not shown here:
 

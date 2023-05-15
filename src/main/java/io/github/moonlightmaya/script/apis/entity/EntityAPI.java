@@ -233,17 +233,18 @@ public class EntityAPI {
     public static DimensionType getDimension(Entity entity) {
         return WorldAPI.getDimension((ClientWorld) entity.getWorld());
     }
-    @PetPetWhitelist
+
+    //@PetPetWhitelist
     public static PetPetListView<Entity> getPassengers(Entity entity) {
         //Wait for fix on allowing any list in a view
         throw new UnsupportedOperationException("Cannot call getPassengers, unimplemented");
 //        return new PetPetListView<>(entity.getPassengerList());
     }
-    @PetPetWhitelist
+    //@PetPetWhitelist
     public static BlockState getTargetedBlock(Entity entity) {
         throw new UnsupportedOperationException("Cannot call getTargetedBlock, unimplemented"); //advanced
     }
-    @PetPetWhitelist
+    //@PetPetWhitelist
     public static Entity getTargetedEntity(Entity entity) {
         throw new UnsupportedOperationException("Cannot call getTargetedEntity, unimplemented"); //advanced
     }
