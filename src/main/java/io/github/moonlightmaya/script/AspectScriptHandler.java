@@ -3,14 +3,12 @@ package io.github.moonlightmaya.script;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.AspectMetadata;
 import io.github.moonlightmaya.AspectMod;
-import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.model.Transformable;
 import io.github.moonlightmaya.model.WorldRootModelPart;
-import io.github.moonlightmaya.model.renderlayers.RenderLayerFunction;
+import io.github.moonlightmaya.model.renderlayers.NewRenderLayerFunction;
 import io.github.moonlightmaya.model.rendertasks.BlockTask;
 import io.github.moonlightmaya.model.rendertasks.ItemTask;
-import io.github.moonlightmaya.model.rendertasks.RenderTask;
 import io.github.moonlightmaya.model.rendertasks.TextTask;
 import io.github.moonlightmaya.script.apis.*;
 import io.github.moonlightmaya.script.apis.entity.EntityAPI;
@@ -47,7 +45,6 @@ import petpet.lang.run.JavaFunction;
 import petpet.lang.run.PetPetClass;
 import petpet.lang.run.PetPetClosure;
 import petpet.lang.run.PetPetException;
-import petpet.types.PetPetList;
 import petpet.types.PetPetTable;
 
 import java.io.InputStream;
@@ -152,8 +149,10 @@ public class AspectScriptHandler {
         instance.registerClass(HostAPI.class, PetPetReflector.reflect(HostAPI.class, "Host").copy().makeEditable());
         instance.registerClass(AspectAPI.class, PetPetReflector.reflect(AspectAPI.class, "Aspect").copy().makeEditable());
         instance.registerClass(ClientAPI.class, PetPetReflector.reflect(ClientAPI.class, "Client").copy().makeEditable());
+        instance.registerClass(RendererAPI.class, PetPetReflector.reflect(RendererAPI.class, "Renderer").copy().makeEditable());
 
-        instance.registerClass(RenderLayer.class, new PetPetClass("RenderLayer").makeEditable()); //no methods or anything
+        //no methods or anything, just registering it so it's a legal object to have as a variable
+        instance.registerClass(RenderLayer.class, new PetPetClass("RenderLayer").makeEditable());
 
         //Gui-only whitelists
         if (aspect.isGui) {
@@ -199,7 +198,6 @@ public class AspectScriptHandler {
         //Remove some petpet functions we don't want to give
         instance.interpreter.globals.remove("printStack");
 
-
         //Print functions, if should print
         JavaFunction printFunc = getPrintFunction();
         setGlobal("print", printFunc);
@@ -235,12 +233,15 @@ public class AspectScriptHandler {
 
         //Events
         //Code for events is all inside EventHandler, which
-        //deals with creating the events and also adding it
-        //as a global variable
+        //deals with creating the events
+        //
+        //This constructor also adds the handler table as a global variable!
         eventHandler = new EventHandler(instance);
 
-        //Aspect api
+        //Misc apis
         setGlobal("aspect", new AspectAPI(aspect, true));
+        setGlobal("client", new ClientAPI());
+        setGlobal("renderer", new RendererAPI());
 
         //Host api
         if (aspect.isHost) {
@@ -255,9 +256,6 @@ public class AspectScriptHandler {
             setGlobal("manager", new ManagerAPI());
         }
 
-        //Client
-        setGlobal("client", new ClientAPI());
-
         //Run aspect's utils script
         try(InputStream in = AspectMod.class.getResourceAsStream("/assets/" + AspectMod.MODID + "/scripts/AspectInternalUtils.petpet")) {
             if (in == null) throw new RuntimeException("Failed to locate internal util script - bug");
@@ -266,9 +264,6 @@ public class AspectScriptHandler {
         } catch (Exception e) {
             error(e);
         }
-
-        //Render layer creation function
-        setGlobal("RenderLayer", RenderLayerFunction.JAVA_FUNCTION);
 
         //Other APIs not shown here:
 

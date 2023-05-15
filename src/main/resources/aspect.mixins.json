@@ -9,6 +9,7 @@
     "EntityRenderDispatcherMixin",
     "ModelPartAccessor",
     "ModelPartMixin",
+    "TextureManagerAccessor",
     "entity_renderers.EntityRendererMixin",
     "entity_renderers.LivingEntityRendererAccessor",
     "entity_renderers.LivingEntityRendererMixin",

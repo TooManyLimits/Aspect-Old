@@ -260,9 +260,11 @@ public class Aspect {
 
     /**
      * Destroy this object and free any native resources.
+     * - Close all the textures
      */
     public void destroy() {
-        //TODO
+        for (AspectTexture texture : textures)
+            texture.close();
     }
 
     public boolean isErrored() {

@@ -1,12 +1,16 @@
 package io.github.moonlightmaya.model.renderlayers;
 
-import com.google.common.collect.ImmutableList;
+import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.moonlightmaya.texture.AspectTexture;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderPhase;
 import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Util;
+import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL32;
 import petpet.lang.run.JavaFunction;
 import petpet.lang.run.PetPetException;
@@ -21,18 +25,20 @@ import java.util.UUID;
 
 /**
  * Script-accessible function which is used to create render layer objects
- * global function "RenderLayer()"
  * Arguments are passed using a petpet table $[]
  *
  * Extend RenderLayer for that sweet, sweet protected member access
+ *
+ * It's in its own entire class because this one function needs *a lot* of logic,
+ * so it's separated out
  */
-public class RenderLayerFunction extends RenderLayer {
+public class NewRenderLayerFunction extends RenderLayer {
 
-    public RenderLayerFunction(String name, VertexFormat vertexFormat, VertexFormat.DrawMode drawMode, int expectedBufferSize, boolean hasCrumbling, boolean translucent, Runnable startAction, Runnable endAction) {
+    private NewRenderLayerFunction(String name, VertexFormat vertexFormat, VertexFormat.DrawMode drawMode, int expectedBufferSize, boolean hasCrumbling, boolean translucent, Runnable startAction, Runnable endAction) {
         super(name, vertexFormat, drawMode, expectedBufferSize, hasCrumbling, translucent, startAction, endAction);
     }
 
-    public static final JavaFunction JAVA_FUNCTION = new JavaFunction(RenderLayerFunction.class, "renderLayerFunction", false);
+    public static final JavaFunction JAVA_FUNCTION = new JavaFunction(NewRenderLayerFunction.class, "renderLayerFunction", false);
 
     public static RenderLayer renderLayerFunction(PetPetTable<String, Object> params) {
         //Parse params
@@ -56,6 +62,8 @@ public class RenderLayerFunction extends RenderLayer {
         if (texturing == null)
             throw new PetPetException("Unrecognized texturing: " + params.get("texturing"));
 
+        // Default is 1.0
+        // if key is present but explicitly set to null, then it will set to optional.empty
         OptionalDouble lineWidth = OptionalDouble.of(1.0);
         if (params.containsKey("lineWidth")) {
             Object o = params.get("lineWidth");
@@ -165,7 +173,7 @@ public class RenderLayerFunction extends RenderLayer {
 
         //Depth tests
         DEPTH_TESTS.put("ALWAYS", new DepthTest("always", GL32.GL_ALWAYS));
-        DEPTH_TESTS.put("NEVER", new DepthTest("never", GL32.GL_ALWAYS));
+        DEPTH_TESTS.put("NEVER", new DepthTest("never", GL32.GL_NEVER));
         DEPTH_TESTS.put("==", new DepthTest("==", GL32.GL_EQUAL));
         DEPTH_TESTS.put("!=", new DepthTest("!=", GL32.GL_NOTEQUAL));
         DEPTH_TESTS.put("<=", new DepthTest("<=", GL32.GL_LEQUAL));
@@ -248,6 +256,7 @@ public class RenderLayerFunction extends RenderLayer {
 
     //Generates and prints to stdout the massive maps up above... so i don't have to do it manually
     //The output is slightly bad, so we do a little manual cleanup after for some things
+    //Changing "NO" to "NONE", also correcting yarn's "no null" typo
     private static void codegen() {
         //Shaders
         StringBuilder builder = new StringBuilder();
@@ -308,5 +317,7 @@ public class RenderLayerFunction extends RenderLayer {
         System.out.println(builder);
     }
 
-
+    //shh
+    private static void setupFlintTexturing(float scale) {long l = (long)((double) Util.getMeasuringTimeMs() * MinecraftClient.getInstance().options.getGlintSpeed().getValue() * 8.0);float f = (float)(l % 110000L) / 110000.0f;float g = (float)(l % 30000L) / 30000.0f;Matrix4f matrix4f = new Matrix4f().translation(-f, g, 0.0f);matrix4f.rotateZ(0.17453292f).scale(scale);RenderSystem.setTextureMatrix(matrix4f);}
+    public static final RenderLayer flint = RenderLayer.of("flint", VertexFormats.POSITION_TEXTURE, VertexFormat.DrawMode.QUADS, 256, RenderLayer.MultiPhaseParameters.builder().program(DIRECT_GLINT_PROGRAM).texture(new RenderPhase.Texture(new Identifier("textures/item/flint.png"), true, false)).writeMaskState(COLOR_MASK).cull(DISABLE_CULLING).depthTest(EQUAL_DEPTH_TEST).transparency(CRUMBLING_TRANSPARENCY).texturing(new Texturing("flint_texturing", () -> setupFlintTexturing(30.0f), RenderSystem::resetTextureMatrix)).build(false));
 }

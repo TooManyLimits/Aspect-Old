@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.TextureUtil;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.AspectMod;
 import io.github.moonlightmaya.data.BaseStructures;
+import io.github.moonlightmaya.mixin.TextureManagerAccessor;
 import io.github.moonlightmaya.util.RenderUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.NativeImage;
@@ -71,6 +72,11 @@ public class AspectTexture extends ResourceTexture {
             //Ensure this method isn't run again on the same texture, and inform
             //other method calls that this texture is not in a usable state
             isClosed = true;
+
+            //Delete ourself from the game's texture manager, if we don't do this then
+            //the texture will stay registered there forever, leaking memory
+            //Hopefully this doesn't concurrent access exception or whatever... it's on the render thread so should be ok?
+            ((TextureManagerAccessor) MinecraftClient.getInstance().getTextureManager()).getTextures().remove(this.location);
         });
     }
 

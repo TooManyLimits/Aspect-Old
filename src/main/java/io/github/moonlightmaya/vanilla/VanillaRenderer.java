@@ -77,10 +77,15 @@ public class VanillaRenderer {
      * Also generate an "inverse" map for faster lookups
      * of ModelPart -> VanillaPart for this VanillaRenderer.
      * There can't be a single global ModelPart -> VanillaPart map,
-     * because each model part may be shared by several VanillaParts
+     * because each ModelPart may be shared by several VanillaParts
      * across multiple Aspects.
+     *
+     * TODO: call this function again when F3+T happens,
+     * TODO: as the model part instances change and this becomes outdated
      */
     public void initVanillaParts(Map<Object, ModelPart> vanillaModel) {
+        vanillaParts.clear();
+        vanillaPartInverse.clear();
         //Fill vanilla part map from the vanilla model data
         for (Map.Entry<Object, ModelPart> entry : vanillaModel.entrySet()) {
             if (vanillaPartInverse.containsKey(entry.getValue())) {

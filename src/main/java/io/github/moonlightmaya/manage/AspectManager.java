@@ -233,6 +233,7 @@ public class AspectManager {
 
     /**
      * Load an aspect from binary data
+     * TODO: Make host-ness conditional on something other than "loaded from data" vs "loaded from disk"
      */
     public static void loadAspectFromData(UUID userUUID, byte[] data, Consumer<Throwable> errorCallback) {
         final int myId = cancelAspectLoading(userUUID);
