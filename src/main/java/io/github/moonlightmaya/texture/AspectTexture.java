@@ -160,6 +160,16 @@ public class AspectTexture extends ResourceTexture {
     }
 
     @PetPetWhitelist
+    public void color(int x, int y, int width, int height, Vector4d colorMultiplier) {
+        Vector4d vec = new Vector4d();
+        for (int curX = 0; curX < width; curX++)
+            for (int curY = 0; curY < height; curY++) {
+                ColorUtils.intABGRToVec(image.getColor(curX, curY), vec).mul(colorMultiplier);
+                setPixel_3(curX, curY, vec);
+            }
+    }
+
+    @PetPetWhitelist
     public void fill(int x, int y, int width, int height, Vector4d color) {
         int abgr = ColorUtils.VecToIntABGR(color);
         image.fillRect(x, y, width, height, abgr);
