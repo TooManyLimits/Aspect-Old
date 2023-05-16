@@ -1,8 +1,8 @@
-package io.github.moonlightmaya.data.importing;
+package io.github.moonlightmaya.manage.data.importing;
 
 import com.google.gson.*;
 import io.github.moonlightmaya.model.AspectModelPart;
-import io.github.moonlightmaya.data.BaseStructures;
+import io.github.moonlightmaya.manage.data.BaseStructures;
 import io.github.moonlightmaya.util.ColorUtils;
 import org.joml.Vector3f;
 import org.joml.Vector4f;

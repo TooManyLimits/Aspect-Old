@@ -1,4 +1,4 @@
-package io.github.moonlightmaya.data;
+package io.github.moonlightmaya.manage.data;
 
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.util.IOUtils;

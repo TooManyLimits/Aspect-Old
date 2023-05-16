@@ -1,10 +1,15 @@
-package io.github.moonlightmaya;
+package io.github.moonlightmaya.manage;
 
-import io.github.moonlightmaya.data.BaseStructures;
+import io.github.moonlightmaya.manage.data.BaseStructures;
 import org.joml.Vector3d;
 import petpet.external.PetPetWhitelist;
 import petpet.types.PetPetList;
 
+/**
+ * Additional metadata for an Aspect object, as it relates
+ * to the presentation and identification of said object
+ * in menus and other data interfaces.
+ */
 @PetPetWhitelist
 public class AspectMetadata {
 

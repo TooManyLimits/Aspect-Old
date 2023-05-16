@@ -1,8 +1,9 @@
-package io.github.moonlightmaya;
+package io.github.moonlightmaya.game_interfaces;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.EntityUtils;

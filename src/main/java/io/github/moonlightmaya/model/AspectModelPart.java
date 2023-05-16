@@ -2,14 +2,12 @@ package io.github.moonlightmaya.model;
 
 import com.google.common.collect.ImmutableList;
 import io.github.moonlightmaya.Aspect;
-import io.github.moonlightmaya.data.BaseStructures;
+import io.github.moonlightmaya.manage.data.BaseStructures;
 import io.github.moonlightmaya.model.rendertasks.BlockTask;
 import io.github.moonlightmaya.model.rendertasks.ItemTask;
 import io.github.moonlightmaya.model.rendertasks.RenderTask;
 import io.github.moonlightmaya.model.rendertasks.TextTask;
-import io.github.moonlightmaya.texture.AspectTexture;
 import io.github.moonlightmaya.util.AspectMatrixStack;
-import io.github.moonlightmaya.vanilla.VanillaPart;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.*;
 import net.minecraft.item.ItemStack;

@@ -1,4 +1,4 @@
-package io.github.moonlightmaya.vanilla;
+package io.github.moonlightmaya.script.vanilla;
 
 import io.github.moonlightmaya.mixin.models.AnimalModelAccessor;
 import io.github.moonlightmaya.mixin.models.PlayerEntityModelAccessor;
@@ -8,6 +8,11 @@ import net.minecraft.client.render.entity.model.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * This class is a hacky workaround at best. In the future, part names
+ * will need to be dynamically determined. This works fine for now, though,
+ * and is at least functional on players and other bipeds.
+ */
 public class VanillaModelPartSorter {
 
     //Keys to map are strings if known, or ints otherwise

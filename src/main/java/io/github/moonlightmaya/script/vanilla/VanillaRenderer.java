@@ -1,12 +1,10 @@
-package io.github.moonlightmaya.vanilla;
+package io.github.moonlightmaya.script.vanilla;
 
-import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.util.MathUtils;
 import net.minecraft.client.model.ModelPart;
 import org.joml.Matrix4d;
 import org.joml.Matrix4f;
 import org.joml.Vector3d;
-import org.joml.Vector3f;
 import petpet.external.PetPetWhitelist;
 import petpet.types.PetPetTable;
 

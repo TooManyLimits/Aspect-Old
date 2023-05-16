@@ -1,18 +1,18 @@
 package io.github.moonlightmaya;
 
-import io.github.moonlightmaya.data.BaseStructures;
+import io.github.moonlightmaya.manage.AspectMetadata;
+import io.github.moonlightmaya.manage.data.BaseStructures;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.model.WorldRootModelPart;
 import io.github.moonlightmaya.script.AspectScriptHandler;
-import io.github.moonlightmaya.script.annotations.AllowIfHost;
 import io.github.moonlightmaya.script.events.EventHandler;
-import io.github.moonlightmaya.texture.AspectTexture;
+import io.github.moonlightmaya.model.AspectTexture;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.EntityUtils;
 import io.github.moonlightmaya.util.RenderUtils;
-import io.github.moonlightmaya.vanilla.VanillaModelPartSorter;
-import io.github.moonlightmaya.vanilla.VanillaRenderer;
+import io.github.moonlightmaya.script.vanilla.VanillaModelPartSorter;
+import io.github.moonlightmaya.script.vanilla.VanillaRenderer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.OverlayTexture;
@@ -21,10 +21,7 @@ import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3d;
-import petpet.external.PetPetWhitelist;
 import petpet.types.PetPetTable;
-import petpet.types.immutable.PetPetTableView;
 
 import java.io.IOException;
 import java.util.*;

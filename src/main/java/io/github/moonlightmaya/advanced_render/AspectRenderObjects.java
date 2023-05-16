@@ -1,4 +1,4 @@
-package io.github.moonlightmaya.render;
+package io.github.moonlightmaya.advanced_render;
 
 import com.google.common.collect.ImmutableMap;
 import net.minecraft.client.render.RenderLayer;
@@ -10,7 +10,7 @@ import net.minecraft.client.render.VertexFormats;
  * Contains useful instances of Minecraft's rendering classes, adapted for
  * Aspect's needs.
  *
- * This class is for future application
+ * This class/package is for future application, not used yet!
  */
 public class AspectRenderObjects {
 

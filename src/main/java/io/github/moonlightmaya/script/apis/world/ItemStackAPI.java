@@ -1,4 +1,4 @@
-package io.github.moonlightmaya.script.apis;
+package io.github.moonlightmaya.script.apis.world;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;

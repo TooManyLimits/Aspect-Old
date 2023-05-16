@@ -1,5 +1,6 @@
-package io.github.moonlightmaya;
+package io.github.moonlightmaya.game_interfaces;
 
+import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.script.events.EventHandler;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -12,6 +13,9 @@ import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import org.lwjgl.glfw.GLFW;
 
+/**
+ * Registers keybinds for Aspect
+ */
 public class AspectKeybinds {
 
     private static final String CATEGORY = "key.category.aspect";

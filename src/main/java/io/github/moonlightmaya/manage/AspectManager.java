@@ -2,16 +2,12 @@ package io.github.moonlightmaya.manage;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.moonlightmaya.Aspect;
-import io.github.moonlightmaya.data.BaseStructures;
-import io.github.moonlightmaya.data.importing.AspectImporter;
-import io.github.moonlightmaya.texture.AspectTexture;
+import io.github.moonlightmaya.manage.data.BaseStructures;
+import io.github.moonlightmaya.manage.data.importing.AspectImporter;
+import io.github.moonlightmaya.model.AspectTexture;
 import io.github.moonlightmaya.util.AspectMatrixStack;
-import io.github.moonlightmaya.util.EntityUtils;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.Entity;
-import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;

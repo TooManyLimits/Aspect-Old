@@ -1,13 +1,12 @@
 package io.github.moonlightmaya.model.renderlayers;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import io.github.moonlightmaya.texture.AspectTexture;
+import io.github.moonlightmaya.model.AspectTexture;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderPhase;
 import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.render.VertexFormats;
-import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 import org.joml.Matrix4f;

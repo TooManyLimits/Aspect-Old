@@ -1,12 +1,11 @@
 package io.github.moonlightmaya.script;
 
 import io.github.moonlightmaya.Aspect;
-import io.github.moonlightmaya.AspectMetadata;
+import io.github.moonlightmaya.manage.AspectMetadata;
 import io.github.moonlightmaya.AspectMod;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.model.Transformable;
 import io.github.moonlightmaya.model.WorldRootModelPart;
-import io.github.moonlightmaya.model.renderlayers.NewRenderLayerFunction;
 import io.github.moonlightmaya.model.rendertasks.BlockTask;
 import io.github.moonlightmaya.model.rendertasks.ItemTask;
 import io.github.moonlightmaya.model.rendertasks.TextTask;
@@ -14,18 +13,16 @@ import io.github.moonlightmaya.script.apis.*;
 import io.github.moonlightmaya.script.apis.entity.EntityAPI;
 import io.github.moonlightmaya.script.apis.entity.LivingEntityAPI;
 import io.github.moonlightmaya.script.apis.entity.PlayerAPI;
-import io.github.moonlightmaya.script.apis.world.BiomeAPI;
-import io.github.moonlightmaya.script.apis.world.BlockStateAPI;
-import io.github.moonlightmaya.script.apis.world.DimensionAPI;
-import io.github.moonlightmaya.script.apis.world.WorldAPI;
+import io.github.moonlightmaya.script.apis.gui.ManagerAPI;
+import io.github.moonlightmaya.script.apis.world.*;
 import io.github.moonlightmaya.script.apis.math.Matrices;
 import io.github.moonlightmaya.script.apis.math.Vectors;
 import io.github.moonlightmaya.script.events.AspectEvent;
 import io.github.moonlightmaya.script.events.EventHandler;
-import io.github.moonlightmaya.texture.AspectTexture;
+import io.github.moonlightmaya.model.AspectTexture;
 import io.github.moonlightmaya.util.DisplayUtils;
-import io.github.moonlightmaya.vanilla.VanillaPart;
-import io.github.moonlightmaya.vanilla.VanillaRenderer;
+import io.github.moonlightmaya.script.vanilla.VanillaPart;
+import io.github.moonlightmaya.script.vanilla.VanillaRenderer;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.world.ClientWorld;
@@ -67,7 +64,7 @@ public class AspectScriptHandler {
 
     private final Map<String, PetPetClosure> compiledScripts;
 
-    private boolean shouldPrintToChat = true; //Whether this Aspect should print its output to chat
+    private boolean shouldPrintToChat = true; //Whether this Aspect should print its output to chat (true always atm)
 
 
     /**

@@ -1,7 +1,7 @@
 package io.github.moonlightmaya.mixin.input;
 
 import io.github.moonlightmaya.Aspect;
-import io.github.moonlightmaya.AspectKeybinds;
+import io.github.moonlightmaya.game_interfaces.AspectKeybinds;
 import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.script.events.EventHandler;
 import net.minecraft.client.Keyboard;

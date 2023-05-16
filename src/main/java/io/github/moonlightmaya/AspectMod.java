@@ -1,5 +1,7 @@
 package io.github.moonlightmaya;
 
+import io.github.moonlightmaya.game_interfaces.AspectCommand;
+import io.github.moonlightmaya.game_interfaces.AspectKeybinds;
 import io.github.moonlightmaya.manage.AspectManager;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -7,7 +9,6 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import petpet.external.PetPetInstance;
 
 /**
  * The client mod initializer for Aspect, the core of the mod.

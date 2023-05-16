@@ -1,7 +1,7 @@
 package io.github.moonlightmaya.script.apis;
 
 import io.github.moonlightmaya.model.renderlayers.NewRenderLayerFunction;
-import io.github.moonlightmaya.texture.AspectTexture;
+import io.github.moonlightmaya.model.AspectTexture;
 import io.github.moonlightmaya.util.RenderUtils;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.util.Identifier;

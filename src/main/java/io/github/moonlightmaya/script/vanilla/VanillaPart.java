@@ -1,4 +1,4 @@
-package io.github.moonlightmaya.vanilla;
+package io.github.moonlightmaya.script.vanilla;
 
 import io.github.moonlightmaya.mixin.ModelPartAccessor;
 import net.minecraft.client.model.ModelPart;

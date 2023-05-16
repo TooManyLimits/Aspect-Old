@@ -2,14 +2,12 @@ package io.github.moonlightmaya.script.apis.entity;
 
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.manage.AspectManager;
-import io.github.moonlightmaya.script.annotations.AllowIfHost;
 import io.github.moonlightmaya.script.apis.AspectAPI;
 import io.github.moonlightmaya.script.apis.world.WorldAPI;
 import io.github.moonlightmaya.util.GroupUtils;
 import io.github.moonlightmaya.util.MathUtils;
 import io.github.moonlightmaya.util.NbtUtils;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.*;
 import net.minecraft.entity.boss.dragon.EnderDragonEntity;

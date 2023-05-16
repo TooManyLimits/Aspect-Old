@@ -1,9 +1,8 @@
-package io.github.moonlightmaya.script.apis;
+package io.github.moonlightmaya.script.apis.gui;
 
 import com.google.gson.Gson;
-import io.github.moonlightmaya.AspectMetadata;
-import io.github.moonlightmaya.AspectMod;
-import io.github.moonlightmaya.data.importing.JsonStructures;
+import io.github.moonlightmaya.manage.AspectMetadata;
+import io.github.moonlightmaya.manage.data.importing.JsonStructures;
 import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.EntityUtils;
@@ -15,7 +14,6 @@ import petpet.lang.run.PetPetException;
 import petpet.types.PetPetList;
 import petpet.types.PetPetTable;
 
-import java.awt.*;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;

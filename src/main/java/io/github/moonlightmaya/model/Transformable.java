@@ -1,6 +1,6 @@
 package io.github.moonlightmaya.model;
 
-import io.github.moonlightmaya.vanilla.VanillaPart;
+import io.github.moonlightmaya.script.vanilla.VanillaPart;
 import org.joml.*;
 import petpet.external.PetPetWhitelist;
 

@@ -1,16 +1,13 @@
 package io.github.moonlightmaya.mixin.entity_renderers;
 
-import io.github.moonlightmaya.vanilla.VanillaModelPartSorter;
-import io.github.moonlightmaya.vanilla.VanillaRenderer;
+import io.github.moonlightmaya.script.vanilla.VanillaRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.LivingEntityRenderer;
 import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
-import org.joml.Matrix3d;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;

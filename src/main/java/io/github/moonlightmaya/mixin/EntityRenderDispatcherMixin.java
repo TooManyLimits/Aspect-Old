@@ -2,7 +2,7 @@ package io.github.moonlightmaya.mixin;
 
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.manage.AspectManager;
-import io.github.moonlightmaya.vanilla.VanillaRenderer;
+import io.github.moonlightmaya.script.vanilla.VanillaRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.client.render.entity.EntityRenderer;

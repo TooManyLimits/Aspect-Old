@@ -1,23 +1,16 @@
 package io.github.moonlightmaya.model;
 
 import io.github.moonlightmaya.Aspect;
-import io.github.moonlightmaya.data.BaseStructures;
+import io.github.moonlightmaya.manage.data.BaseStructures;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.util.MathUtils;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.LightType;
-import net.minecraft.world.dimension.DimensionType;
 import org.joml.Vector3d;
 import petpet.external.PetPetWhitelist;
 
