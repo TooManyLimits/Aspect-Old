@@ -22,6 +22,7 @@ import io.github.moonlightmaya.script.apis.math.Matrices;
 import io.github.moonlightmaya.script.apis.math.Vectors;
 import io.github.moonlightmaya.script.events.AspectEvent;
 import io.github.moonlightmaya.script.events.EventHandler;
+import io.github.moonlightmaya.texture.AspectTexture;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.vanilla.VanillaPart;
 import io.github.moonlightmaya.vanilla.VanillaRenderer;
@@ -150,6 +151,7 @@ public class AspectScriptHandler {
         instance.registerClass(AspectAPI.class, PetPetReflector.reflect(AspectAPI.class, "Aspect").copy().makeEditable());
         instance.registerClass(ClientAPI.class, PetPetReflector.reflect(ClientAPI.class, "Client").copy().makeEditable());
         instance.registerClass(RendererAPI.class, PetPetReflector.reflect(RendererAPI.class, "Renderer").copy().makeEditable());
+        instance.registerClass(AspectTexture.class, PetPetReflector.reflect(AspectTexture.class, "Texture").copy().makeEditable());
 
         //no methods or anything, just registering it so it's a legal object to have as a variable
         instance.registerClass(RenderLayer.class, new PetPetClass("RenderLayer").makeEditable());
@@ -223,6 +225,12 @@ public class AspectScriptHandler {
 
         //Models
         setGlobal("models", modelsTable);
+
+        //Textures
+        PetPetTable<String, AspectTexture> texturesTable = new PetPetTable<>();
+        for (AspectTexture tex : aspect.textures)
+            texturesTable.put(tex.name(), tex);
+        setGlobal("textures", texturesTable);
 
         //World roots in models
         PetPetTable<String, WorldRootModelPart> worldRoots = new PetPetTable<>(aspect.worldRoots.size());

@@ -3,12 +3,11 @@ package io.github.moonlightmaya.data.importing;
 import com.google.gson.*;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.data.BaseStructures;
-import io.github.moonlightmaya.util.MathUtils;
+import io.github.moonlightmaya.util.ColorUtils;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import petpet.types.PetPetList;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -24,7 +23,7 @@ public class JsonStructures {
             try {
                 if (name == null) name = "";
                 if (version == null) version = "";
-                Vector3f parsedColor = MathUtils.parseColor(color);
+                Vector3f parsedColor = ColorUtils.parseColor(color);
                 List<String> authorsList = new PetPetList<>();
                 if (authors != null)
                     authorsList.addAll(Arrays.asList(authors));
@@ -161,9 +160,9 @@ public class JsonStructures {
     public record Texture(
              String name, String source
     ) {
-        public BaseStructures.Texture toBaseStructure() {
+        public BaseStructures.Texture toBaseStructure(String relativePath) {
             String src = source.replace("data:image/png;base64,", "");
-            return new BaseStructures.Texture(strippedName(), Base64.getDecoder().decode(src));
+            return new BaseStructures.Texture(relativePath + "/" + strippedName(), Base64.getDecoder().decode(src));
         }
 
         public String strippedName() {

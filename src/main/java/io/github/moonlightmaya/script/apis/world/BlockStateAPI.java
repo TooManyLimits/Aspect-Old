@@ -1,5 +1,6 @@
 package io.github.moonlightmaya.script.apis.world;
 
+import io.github.moonlightmaya.util.ColorUtils;
 import io.github.moonlightmaya.util.ItemUtils;
 import io.github.moonlightmaya.util.MathUtils;
 import io.github.moonlightmaya.util.NbtUtils;
@@ -54,7 +55,7 @@ public class BlockStateAPI {
         });
 
         genWorldPosAcceptorsWithTransformer("hasCollision", BlockState::getCollisionShape, shape -> !shape.isEmpty());
-        genWorldPosAcceptorsWithTransformer("getMapColor", BlockState::getMapColor, i -> MathUtils.intToRGBA(i.color));
+        genWorldPosAcceptorsWithTransformer("getMapColor", BlockState::getMapColor, i -> ColorUtils.intARGBToVec(i.color));
     }
 
     // boolean

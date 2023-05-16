@@ -1,12 +1,11 @@
 package io.github.moonlightmaya.model.rendertasks;
 
+import io.github.moonlightmaya.util.ColorUtils;
 import io.github.moonlightmaya.util.DisplayUtils;
-import io.github.moonlightmaya.util.MathUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.text.Text;
-import org.joml.Matrix4f;
 import org.joml.Vector4d;
 import petpet.external.PetPetWhitelist;
 import petpet.lang.run.PetPetException;
@@ -53,16 +52,16 @@ public class TextTask extends RenderTask {
     }
     @PetPetWhitelist
     public Vector4d backgroundColor_0() {
-        return MathUtils.intToRGBA(backgroundColor);
+        return ColorUtils.intARGBToVec(backgroundColor);
     }
     @PetPetWhitelist
     public TextTask backgroundColor_1(Vector4d backgroundColor) {
-        this.backgroundColor = MathUtils.RGBAToInt(backgroundColor.x, backgroundColor.y, backgroundColor.z, backgroundColor.w);
+        this.backgroundColor = ColorUtils.VecToIntARGB(backgroundColor.x, backgroundColor.y, backgroundColor.z, backgroundColor.w);
         return this;
     }
     @PetPetWhitelist
     public TextTask backgroundColor_4(double r, double g, double b, double a) {
-        this.backgroundColor = MathUtils.RGBAToInt(r, g, b, a);
+        this.backgroundColor = ColorUtils.VecToIntARGB(r, g, b, a);
         return this;
     }
     @PetPetWhitelist

@@ -3,6 +3,7 @@ package io.github.moonlightmaya.data.importing;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.github.moonlightmaya.AspectMod;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.util.IOUtils;
@@ -144,8 +145,7 @@ public class AspectImporter {
         String str = Files.readString(f.toPath());
         JsonStructures.BBModel bbmodel = gson.fromJson(str, JsonStructures.BBModel.class);
         bbmodel.fixedOutliner = bbmodel.getGson().fromJson(bbmodel.outliner, JsonStructures.Part[].class);
-        String fileName = f.getName().substring(0, f.getName().length() - ".bbmodel".length()); //remove .bbmodel
-        return handleBBModel(bbmodel, fileName);
+        return handleBBModel(bbmodel, f.toPath());
     }
 
     private BaseStructures.ModelPartStructure compileModels(Path p, String name) throws IOException, AspectImporterException {
@@ -211,7 +211,7 @@ public class AspectImporter {
      * May also modify the state of this class in the process, adding
      * new textures or other data.
      */
-    private BaseStructures.ModelPartStructure handleBBModel(JsonStructures.BBModel model, String fileName) throws AspectImporterException {
+    private BaseStructures.ModelPartStructure handleBBModel(JsonStructures.BBModel model, Path filePath) throws AspectImporterException {
 
         /*
         Mapping explanation:
@@ -226,12 +226,21 @@ public class AspectImporter {
         int numNewTextures = 0;
         List<Integer> jsonToGlobalTextureMapper = new ArrayList<>();
         for (JsonStructures.Texture jsonTexture : model.textures) {
+            //Just don't name your textures in the specific format "{fileName}/ASPECT_GENERATED{index}",
+            //if you don't want this to mess with you. Really shouldn't be too hard.
             if (textures.containsKey(jsonTexture.strippedName())) {
                 //If a texture of the same name is loaded globally, create a mapping
                 jsonToGlobalTextureMapper.add(indexOfKey(textures, jsonTexture.strippedName()));
             } else {
                 //Otherwise, create mapping using the texture offset, and store texture in main list
-                textures.put(fileName + "/ASPECT_GENERATED" + numNewTextures, jsonTexture.toBaseStructure());
+                //Texture name contains the path to the bbmodel file concatenated with the name
+                String relativePath = this.rootPath.relativize(filePath).toString();
+                relativePath = relativePath.substring(0, relativePath.length() - ".bbmodel".length());
+                //replace backslashes (again, if this breaks your files, then don't name them with backslashes :skull:)
+                relativePath = relativePath.replace("\\", "/");
+                AspectMod.LOGGER.debug("Relative texture path name: {}", relativePath);
+
+                textures.put(relativePath + "/ASPECT_GENERATED" + numNewTextures, jsonTexture.toBaseStructure(relativePath));
                 jsonToGlobalTextureMapper.add(numNewTextures + textureOffset);
                 numNewTextures++;
             }
@@ -243,9 +252,13 @@ public class AspectImporter {
         for (JsonStructures.Part p : model.fixedOutliner)
             children.add(p.toBaseStructure(jsonToGlobalTextureMapper, model.resolution));
 
+        //Construct name of part
+        File partFile = filePath.toFile();
+        String partName = partFile.getName().substring(0, partFile.getName().length() - ".bbmodel".length());
+
         //Create final model part
         return new BaseStructures.ModelPartStructure(
-                fileName, new Vector3f(), new Vector3f(), new Vector3f(),
+                partName, new Vector3f(), new Vector3f(), new Vector3f(),
                 true, children, AspectModelPart.ModelPartType.GROUP,
                 null
         );

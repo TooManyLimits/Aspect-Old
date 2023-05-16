@@ -4,8 +4,8 @@ import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.script.apis.HostAPI;
 import io.github.moonlightmaya.script.events.EventHandler;
+import io.github.moonlightmaya.util.ColorUtils;
 import io.github.moonlightmaya.util.EntityUtils;
-import io.github.moonlightmaya.util.MathUtils;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.util.math.MatrixStack;
@@ -45,7 +45,7 @@ public class ChatScreenMixin {
             if (api != null) {
                 Vector3d rgb = api.chatColor;
                 if (rgb != null)
-                    this.chatField.setEditableColor(MathUtils.RGBtoInt(rgb));
+                    this.chatField.setEditableColor(ColorUtils.VecToIntARGB(rgb));
             }
         }
     }

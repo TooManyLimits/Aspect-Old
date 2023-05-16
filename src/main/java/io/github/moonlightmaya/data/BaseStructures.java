@@ -17,9 +17,9 @@ import java.util.List;
 /**
  * Contains the "base" structures in the data graph.
  * Base structures are records.
- * Bbmodels => JsonStructures
+ * Bbmodels and other files => JsonStructures
  * JsonStructures => BaseStructures.
- * BaseStructures <=> raw bytes. This step uses reflection.
+ * BaseStructures <=> raw bytes.
  * BaseStructures => Aspect instance.
  */
 public class BaseStructures {

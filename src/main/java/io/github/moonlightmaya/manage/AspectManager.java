@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.data.BaseStructures;
 import io.github.moonlightmaya.data.importing.AspectImporter;
+import io.github.moonlightmaya.texture.AspectTexture;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.util.EntityUtils;
 import net.minecraft.client.MinecraftClient;
@@ -81,7 +82,11 @@ public class AspectManager {
      */
     public static void renderWorld(VertexConsumerProvider vcp, float tickDelta, AspectMatrixStack matrices) {
         for (Aspect aspect : ASPECTS.values()) {
-            //For each loaded aspect, render its world parts
+            //For each loaded aspect, ensure its textures are uploaded
+            for (AspectTexture tex : aspect.textures)
+                tex.uploadIfNeeded();
+
+            //And render the aspect's world parts
             aspect.renderWorld(vcp, tickDelta, matrices);
         }
         //Also render the GUI aspect's world parts if it exists
