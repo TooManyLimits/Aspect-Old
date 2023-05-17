@@ -14,7 +14,7 @@ public class DisplayUtils {
 
     public static void displayError(String message, boolean reportToChat) {
         AspectMod.LOGGER.error(message);
-        if (reportToChat)
+        if (reportToChat && MinecraftClient.getInstance().inGameHud != null)
             MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(
                     Text.literal(message)
                             .formatted(Formatting.RED)
@@ -23,7 +23,7 @@ public class DisplayUtils {
 
     public static void displayError(String message, Throwable error, boolean reportToChat) {
         AspectMod.LOGGER.error(message + ": ", error);
-        if (reportToChat) {
+        if (reportToChat && MinecraftClient.getInstance().inGameHud != null) {
             String errorMessage = error.getMessage();
             while (errorMessage == null) {
                 error = error.getCause();
@@ -56,6 +56,9 @@ public class DisplayUtils {
      * indicating the message is from the PetPet script.
      */
     public static void displayPetPetMessage(String message) {
+        if (MinecraftClient.getInstance().inGameHud == null)
+            return;
+
         Text text = Text.empty()
                 .append(Text.literal("[PetPet] ").formatted(Formatting.AQUA))
                 .append(Text.literal(message));

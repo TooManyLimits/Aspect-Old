@@ -2,16 +2,23 @@ package io.github.moonlightmaya.manage;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.moonlightmaya.Aspect;
+import io.github.moonlightmaya.game_interfaces.AspectConfig;
 import io.github.moonlightmaya.manage.data.BaseStructures;
 import io.github.moonlightmaya.manage.data.importing.AspectImporter;
 import io.github.moonlightmaya.model.AspectTexture;
 import io.github.moonlightmaya.util.AspectMatrixStack;
+import io.github.moonlightmaya.util.DisplayUtils;
+import io.github.moonlightmaya.util.IOUtils;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.world.ClientWorld;
 import org.jetbrains.annotations.Nullable;
+import petpet.lang.run.PetPetException;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -105,17 +112,45 @@ public class AspectManager {
     }
 
     /**
+     * Reloads the gui aspect using the current config setting
+     */
+    public static void reloadGuiAspect() {
+        Consumer<Throwable> reporter = t -> DisplayUtils.displayError("Failed to load GUI aspect", t, true);
+        try {
+            String relPath = AspectConfig.GUI_PATH.get();
+            if (relPath.length() == 0) {
+                //Default GUI
+                try(InputStream in = IOUtils.getAsset("aspects/gui.aspect")) {
+                    if (in == null)
+                        throw new IOException("Unable to get default GUI aspect");
+                    byte[] data = in.readAllBytes();
+                    AspectManager.loadAspectFromData(null, data, reporter, true, true);
+                }
+            } else {
+                Path path = IOUtils.getOrCreateModFolder().resolve("guis").resolve(relPath);
+                AspectManager.loadAspectFromPath(null, path, reporter, true, true);
+            }
+        } catch (Throwable t) {
+            reporter.accept(t);
+        }
+    }
+
+    /**
      * Submits a task to apply the given Aspect to
      * the given entity. The entity's previous
      * Aspect will be destroyed, if it had one.
      * This will also initialize the new Aspect.
      */
-    public static void setAspect(UUID entityUUID, Aspect aspect) {
+    public static void setAspect(@Nullable UUID entityUUID, Aspect aspect) {
         clearAspect(entityUUID); //Clear the old aspect first
         TASKS.add(() -> {
             //Put the aspect in the map if it's ready
             if (aspect.isReady) {
-                ASPECTS.put(entityUUID, aspect);
+                if (entityUUID == null) { //Gui aspect
+                    currentGuiAspect = aspect;
+                } else {
+                    ASPECTS.put(entityUUID, aspect);
+                }
                 //Also run the main script if it exists
                 aspect.scriptHandler.runMain();
             } else {
@@ -126,51 +161,32 @@ public class AspectManager {
     }
 
     /**
-     * Submits a task to set the current gui aspect
-     * to the provided one. If there was a previous
-     * gui aspect, it is destroyed and set to null.
-     */
-    public static void setGuiAspect(Aspect aspect) {
-        TASKS.add(() -> {
-            if (currentGuiAspect != null) {
-                currentGuiAspect.destroy();
-                currentGuiAspect = null;
-            }
-            if (aspect.isReady) {
-                //Set if it's ready
-                currentGuiAspect = aspect;
-                //Also run the main script if it exists
-                aspect.scriptHandler.runMain();
-            } else {
-                //Otherwise, try again next tick
-                setGuiAspect(aspect);
-            }
-        });
-    }
-
-    /**
      * Submits a task to remove a given entity's
      * Aspect. If it has one, it will be destroyed.
      */
-    public static void clearAspect(UUID entityUUID) {
+    public static void clearAspect(@Nullable UUID entityUUID) {
+        //If null, clear gui aspect, otherwise clear regular one
         TASKS.add(() -> {
-            Aspect oldAspect = ASPECTS.remove(entityUUID);
-            if (oldAspect != null) oldAspect.destroy(); //destroy the old aspect
+            Aspect oldAspect;
+            if (entityUUID == null) { //Gui aspect
+                oldAspect = currentGuiAspect;
+                currentGuiAspect = null;
+            } else {
+                oldAspect = ASPECTS.remove(entityUUID);
+            }
+            if (oldAspect != null)
+                oldAspect.destroy();
         });
     }
 
     /**
-     * Submits a task to clear all aspects from storage
+     * Submits a task to clear all aspects from storage, but not the GUI aspect.
      */
     public static void clearAllAspects() {
         TASKS.add(() -> {
             for (Aspect aspect : ASPECTS.values())
                 aspect.destroy();
             ASPECTS.clear();
-            if (currentGuiAspect != null) {
-                currentGuiAspect.destroy();
-                currentGuiAspect = null;
-            }
         });
     }
 
@@ -195,17 +211,20 @@ public class AspectManager {
      * Returns the new id, for use in internal functions. Functions
      * outside this class shouldn't care about the return value.
      */
-    public static int cancelAspectLoading(UUID entityUUID) {
+    public static int cancelAspectLoading(@Nullable UUID entityUUID) {
+        if (entityUUID == null) //gui aspect special case
+            return GUI_ASPECT_TIMESTAMP.incrementAndGet();
         if (!IN_PROGRESS_TIMESTAMPS.containsKey(entityUUID))
             IN_PROGRESS_TIMESTAMPS.put(entityUUID, new AtomicInteger());
         return IN_PROGRESS_TIMESTAMPS.get(entityUUID).incrementAndGet();
     }
 
-    private static void finishLoadingTask(UUID userUUID, int requestId, Aspect aspect,
+    private static void finishLoadingTask(@Nullable UUID userUUID, int requestId, Aspect aspect,
                                           Throwable error, Consumer<Throwable> errorCallback) {
         if (error == null) {
             //Check if this was the most recent request
-            if (IN_PROGRESS_TIMESTAMPS.get(userUUID).get() == requestId) {
+            AtomicInteger i = userUUID == null ? GUI_ASPECT_TIMESTAMP : IN_PROGRESS_TIMESTAMPS.get(userUUID);
+            if (i.get() == requestId) {
                 //If so, then submit the task to set aspect:
                 setAspect(userUUID, aspect);
                 return;
@@ -221,49 +240,44 @@ public class AspectManager {
     }
 
     /**
-     * Load an aspect from a local file system folder
+     * Load an aspect from a local file system path
+     * If the path is a `.aspect` file, then load it from the data
+     * If the path is a folder, treat it as a folder
      */
-    public static void loadAspectFromFolder(UUID userUUID, Path folder, Consumer<Throwable> errorCallback) {
+    public static void loadAspectFromPath(@Nullable UUID userUUID, Path folder, Consumer<Throwable> errorCallback, boolean isHost, boolean isGui) {
         //Save my id.
-        final int myId = cancelAspectLoading(userUUID);
-        new AspectImporter(folder)
-                .doImport() //doImport is asynchronous, so the following steps will be as well
-                .thenApply(mats -> new Aspect(userUUID, mats, true, false))
-                .whenComplete((aspect, error) -> finishLoadingTask(userUUID, myId, aspect, error, errorCallback));
+        assert !isGui || isHost && userUUID == null;
+
+        if (folder.toFile().isDirectory()) {
+            final int myId = cancelAspectLoading(userUUID);
+            new AspectImporter(folder)
+                    .doImport() //doImport is asynchronous, so the following steps will be as well
+                    .thenApply(mats -> new Aspect(userUUID, mats, isHost, isGui))
+                    .whenComplete((aspect, error) -> finishLoadingTask(userUUID, myId, aspect, error, errorCallback));
+        } else if (folder.toFile().exists() && folder.toFile().getName().endsWith(".aspect")) {
+            try {
+                byte[] bytes = Files.readAllBytes(folder);
+                loadAspectFromData(userUUID, bytes, errorCallback, isHost, isGui);
+            } catch (Exception e) {
+                throw new PetPetException("Failed to read bytes at " + folder, e);
+            }
+        } else {
+            throw new PetPetException("Path " + folder + " does not exist or is not a valid aspect path");
+        }
     }
 
     /**
      * Load an aspect from binary data
-     * TODO: Make host-ness conditional on something other than "loaded from data" vs "loaded from disk"
      */
-    public static void loadAspectFromData(UUID userUUID, byte[] data, Consumer<Throwable> errorCallback) {
+    public static void loadAspectFromData(@Nullable UUID userUUID, byte[] data, Consumer<Throwable> errorCallback, boolean isHost, boolean isGui) {
+        assert !isGui || isHost && userUUID == null;
         final int myId = cancelAspectLoading(userUUID);
         CompletableFuture.supplyAsync(() -> data)
                 .thenApply(ByteArrayInputStream::new)
                 .thenApply(DataInputStream::new)
                 .thenApply(BaseStructures.AspectStructure::read)
-                .thenApply(mats -> new Aspect(userUUID, mats, false, false))
+                .thenApply(mats -> new Aspect(userUUID, mats, isHost, isGui))
                 .whenComplete((aspect, error) -> finishLoadingTask(userUUID, myId, aspect, error, errorCallback));
-    }
-
-    //Gui aspect can only be loaded from folder
-    public static void loadGuiAspect(Path folder, Consumer<Throwable> errorCallback) {
-        final int myId = GUI_ASPECT_TIMESTAMP.incrementAndGet();
-        new AspectImporter(folder)
-                .doImport()
-                .thenApply(mats -> new Aspect(null, mats, true, true))
-                .whenComplete((aspect, error) -> {
-                    //see finishLoadingTask for explanation
-                    if (error == null) {
-                        if (GUI_ASPECT_TIMESTAMP.get() == myId) {
-                            setGuiAspect(aspect);
-                            return;
-                        }
-                        aspect.destroy();
-                    } else {
-                        errorCallback.accept(error.getCause());
-                    }
-                });
     }
 
 }

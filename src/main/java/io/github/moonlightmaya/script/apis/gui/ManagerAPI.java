@@ -96,9 +96,11 @@ public class ManagerAPI {
         if (cur.equals(orig))
             throw new PetPetException("Cannot use mod_folder/aspects as an aspect folder");
 
-        AspectManager.loadAspectFromFolder(EntityUtils.getLocalUUID(), cur, err -> {
-            DisplayUtils.displayError("Failed to load aspect", err, true);
-        });
+        AspectManager.loadAspectFromPath(
+            EntityUtils.getLocalUUID(), cur,
+            err -> DisplayUtils.displayError("Failed to load aspect", err, true),
+            true, false
+        );
     }
 
     @PetPetWhitelist

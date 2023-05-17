@@ -11,7 +11,9 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 import petpet.types.PetPetList;
 
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -66,12 +68,24 @@ public class AspectImporter {
                 //Get hud model parts:
                 BaseStructures.ModelPartStructure hudRoot = getRootForType("hud");
 
-                result.complete(new BaseStructures.AspectStructure(
-                        metadata,
-                        entityRoot, worldRoots, hudRoot,
-                        Lists.newArrayList(textures.values()),
-                        scripts
-                ));
+                //Create the base aspect structure
+                BaseStructures.AspectStructure aspect = new BaseStructures.AspectStructure(
+                    metadata,
+                    entityRoot, worldRoots, hudRoot,
+                    Lists.newArrayList(textures.values()),
+                    scripts
+                );
+
+                //Save the serialized form to the file if needed
+                if (true) { //Later may add a flag in metadata to disable saving this
+                    String name = this.rootPath.toFile().getName() + ".aspect";
+                    try (FileOutputStream out = new FileOutputStream(this.rootPath.resolve(name).toFile())) {
+                        DataOutputStream dos = new DataOutputStream(out);
+                        aspect.write(dos);
+                    }
+                }
+
+                result.complete(aspect);
             } catch (Exception e) {
                 result.completeExceptionally(e);
             }

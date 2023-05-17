@@ -123,9 +123,13 @@ public class BaseStructures {
             IOUtils.writeVector3f(out, rot);
             IOUtils.writeVector3f(out, pivot);
             out.write((visible ? 1 : 0) | (cubeData != null ? 2 : 0));
-            out.writeInt(children.size());
-            for (ModelPartStructure child : children)
-                child.write(out);
+            if (children != null) {
+                out.writeInt(children.size());
+                for (ModelPartStructure child : children)
+                    child.write(out);
+            } else {
+                out.writeInt(0);
+            }
             out.write(type.ordinal());
             if (cubeData != null)
                 cubeData.write(out);

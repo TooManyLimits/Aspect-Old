@@ -23,6 +23,7 @@ import io.github.moonlightmaya.model.AspectTexture;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.script.vanilla.VanillaPart;
 import io.github.moonlightmaya.script.vanilla.VanillaRenderer;
+import io.github.moonlightmaya.util.IOUtils;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.world.ClientWorld;
@@ -262,7 +263,7 @@ public class AspectScriptHandler {
         }
 
         //Run aspect's utils script
-        try(InputStream in = AspectMod.class.getResourceAsStream("/assets/" + AspectMod.MODID + "/scripts/AspectInternalUtils.petpet")) {
+        try(InputStream in = IOUtils.getAsset("scripts/AspectInternalUtils.petpet")) {
             if (in == null) throw new RuntimeException("Failed to locate internal util script - bug");
             String code = new String(in.readAllBytes());
             runCode("AspectInternalUtils", code);

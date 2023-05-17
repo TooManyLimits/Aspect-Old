@@ -1,6 +1,7 @@
 package io.github.moonlightmaya;
 
 import io.github.moonlightmaya.game_interfaces.AspectCommand;
+import io.github.moonlightmaya.game_interfaces.AspectConfig;
 import io.github.moonlightmaya.game_interfaces.AspectKeybinds;
 import io.github.moonlightmaya.manage.AspectManager;
 import net.fabricmc.api.ClientModInitializer;
@@ -38,9 +39,13 @@ public class AspectMod implements ClientModInitializer {
         //When leaving a world, clear all aspects
         ClientPlayConnectionEvents.DISCONNECT.register((networkHandler, client) -> AspectManager.clearAllAspects());
 
+        //Setup game interfaces
+        AspectConfig.load();
         AspectCommand.registerCommand();
         AspectKeybinds.registerKeybinds();
 
+        //Reload gui aspect
+        AspectManager.reloadGuiAspect();
     }
 
     public static Identifier id(String path) {

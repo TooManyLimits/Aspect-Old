@@ -42,8 +42,8 @@ public class AspectCommand {
         RequiredArgumentBuilder<FabricClientCommandSource, String> arg = RequiredArgumentBuilder.argument("aspect_name", StringArgumentType.greedyString());
         arg.executes(context -> {
             String name = StringArgumentType.getString(context, "aspect_name");
-            AspectManager.loadAspectFromFolder(EntityUtils.getLocalUUID(), IOUtils.getOrCreateModFolder().resolve("aspects").resolve(name),
-                    t -> DisplayUtils.displayError("Failed to load aspect", t, true));
+            AspectManager.loadAspectFromPath(EntityUtils.getLocalUUID(), IOUtils.getOrCreateModFolder().resolve("aspects").resolve(name),
+                    t -> DisplayUtils.displayError("Failed to load aspect", t, true), true, false);
             return 1;
         });
         equip.then(arg);
@@ -58,8 +58,8 @@ public class AspectCommand {
             if (target != null) {
                 String name = StringArgumentType.getString(context, "aspect_name");
                 context.getSource().sendFeedback(Text.literal("Applying to " + target.getName()));
-                AspectManager.loadAspectFromFolder(target.getUuid(), IOUtils.getOrCreateModFolder().resolve("aspects").resolve(name),
-                        t -> DisplayUtils.displayError("Failed to load aspect", t, true));
+                AspectManager.loadAspectFromPath(target.getUuid(), IOUtils.getOrCreateModFolder().resolve("aspects").resolve(name),
+                        t -> DisplayUtils.displayError("Failed to load aspect", t, true), true, false);
                 return 1;
             } else {
                 context.getSource().sendError(Text.literal("No entity found"));
@@ -78,8 +78,8 @@ public class AspectCommand {
             String name = StringArgumentType.getString(context, "aspect_name");
             Path folder = IOUtils.getOrCreateModFolder().resolve("aspects").resolve(name);
             for (Entity target : MinecraftClient.getInstance().world.getEntities()) {
-                AspectManager.loadAspectFromFolder(target.getUuid(), folder,
-                        t -> DisplayUtils.displayError("Failed to load aspect", t, true));
+                AspectManager.loadAspectFromPath(target.getUuid(), folder,
+                        t -> DisplayUtils.displayError("Failed to load aspect", t, true), true, false);
             }
             return 1;
         });
@@ -124,12 +124,18 @@ public class AspectCommand {
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> guiCommand() {
         LiteralArgumentBuilder<FabricClientCommandSource> gui = literal("gui");
+        gui.executes(context -> {
+            context.getSource().sendFeedback(Text.literal("Resetting GUI aspect to default"));
+            AspectConfig.GUI_PATH.set("");
+            AspectManager.reloadGuiAspect();
+            return 1;
+        });
         RequiredArgumentBuilder<FabricClientCommandSource, String> arg4 = RequiredArgumentBuilder.argument("aspect_name", StringArgumentType.greedyString());
         arg4.executes(context -> {
             context.getSource().sendFeedback(Text.literal("Setting GUI aspect"));
             String name = StringArgumentType.getString(context, "aspect_name");
-            Path folder = IOUtils.getOrCreateModFolder().resolve("guis").resolve(name);
-            AspectManager.loadGuiAspect(folder, t -> DisplayUtils.displayError("Failed to load GUI aspect", t, true));
+            AspectConfig.GUI_PATH.set(name);
+            AspectManager.reloadGuiAspect();
             return 1;
         });
         gui.then(arg4);
