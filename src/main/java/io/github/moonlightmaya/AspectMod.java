@@ -5,6 +5,7 @@ import io.github.moonlightmaya.game_interfaces.AspectConfig;
 import io.github.moonlightmaya.game_interfaces.AspectKeybinds;
 import io.github.moonlightmaya.manage.AspectManager;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.util.Identifier;
@@ -44,8 +45,8 @@ public class AspectMod implements ClientModInitializer {
         AspectCommand.registerCommand();
         AspectKeybinds.registerKeybinds();
 
-        //Reload gui aspect
-        AspectManager.reloadGuiAspect();
+        //Once game actually begins, load gui aspect
+        ClientLifecycleEvents.CLIENT_STARTED.register(client -> AspectManager.reloadGuiAspect());
     }
 
     public static Identifier id(String path) {

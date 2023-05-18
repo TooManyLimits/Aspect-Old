@@ -90,7 +90,8 @@ public class AspectTexture extends ResourceTexture {
      * Then, re-uploads it if it's marked as dirty.
      */
     public void uploadIfNeeded() {
-        if (dirty) //dirty is true at the start, when texture is first created
+        if (dirty) {
+            //dirty is true at the start, when texture is first created
             RenderUtils.executeOnRenderThread(() -> {
                 //If closed, we don't need to do anything
                 if (!isClosed) {
@@ -111,6 +112,7 @@ public class AspectTexture extends ResourceTexture {
                     }
                 }
             });
+        }
     }
 
     /**

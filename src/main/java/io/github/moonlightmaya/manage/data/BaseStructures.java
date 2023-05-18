@@ -19,7 +19,7 @@ import java.util.List;
  * Base structures are records.
  * Bbmodels and other files => JsonStructures
  * JsonStructures => BaseStructures.
- * BaseStructures <=> raw bytes.
+ * BaseStructures <=> raw bytes. (.aspect file)
  * BaseStructures => Aspect instance.
  */
 public class BaseStructures {
@@ -32,6 +32,11 @@ public class BaseStructures {
             List<Texture> textures,
             List<Script> scripts
     ) {
+        /**
+         * Note that the metadata is written out first!!
+         * This is crucial because it allows us to only read
+         * the metadata of a file when opening it!
+         */
         public void write(DataOutputStream out) throws IOException {
             metadata.write(out);
 

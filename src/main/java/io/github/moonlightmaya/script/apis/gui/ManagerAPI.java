@@ -1,7 +1,9 @@
 package io.github.moonlightmaya.script.apis.gui;
 
 import com.google.gson.Gson;
+import io.github.moonlightmaya.AspectMod;
 import io.github.moonlightmaya.manage.AspectMetadata;
+import io.github.moonlightmaya.manage.data.BaseStructures;
 import io.github.moonlightmaya.manage.data.importing.JsonStructures;
 import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.util.DisplayUtils;
@@ -14,7 +16,10 @@ import petpet.lang.run.PetPetException;
 import petpet.types.PetPetList;
 import petpet.types.PetPetTable;
 
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -51,12 +56,25 @@ public class ManagerAPI {
         for (File f : folders) {
             Path json = f.toPath().resolve("aspect.json");
             if (Files.exists(json) && !json.toFile().isDirectory()) {
+                //This is a folder containing an aspect
                 res.put(f.getName(), getMetadata(json));
             } else {
                 //This folder is not itself an aspect, so recursively search for aspects inside
                 PetPetTable<String, Object> subAspects = getAspectPathsRecursive(f.toPath());
                 if (!subAspects.isEmpty())
                     res.put(f.getName(), subAspects);
+            }
+        }
+        List<File> binaryAspects = IOUtils.getByExtension(root, "aspect");
+        for (File f : binaryAspects) {
+            //For each binary aspect, open its file, read the metadata, and store it
+            try(InputStream in = new FileInputStream(f)) {
+                DataInputStream dis = new DataInputStream(in);
+                AspectMetadata metadata = new AspectMetadata(BaseStructures.MetadataStructure.read(dis));
+                res.put(f.getName(), metadata);
+            } catch (Exception e) {
+                AspectMod.LOGGER.error("Failed to parse metadata of binary aspect " + f.getName(), e);
+                res.put(f.getName(), null);
             }
         }
         return res;

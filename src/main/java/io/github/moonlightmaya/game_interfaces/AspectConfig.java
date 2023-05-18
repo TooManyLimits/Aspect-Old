@@ -1,8 +1,6 @@
 package io.github.moonlightmaya.game_interfaces;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import io.github.moonlightmaya.AspectMod;
 import net.fabricmc.loader.api.FabricLoader;
 
@@ -41,9 +39,18 @@ public class AspectConfig {
             //Create config file if not already exists
             if (FILE.createNewFile())
                 AspectMod.LOGGER.info("Did not find Aspect config file, creating");
+
+            //For each setting, save it in a json object
             JsonObject obj = new JsonObject();
-            for (Map.Entry<String, Setting<?>> setting : SETTINGS_LIST.entrySet())
-                obj.add(setting.getKey(), GSON.toJsonTree(setting.getValue()));
+            for (Map.Entry<String, Setting<?>> settingEntry : SETTINGS_LIST.entrySet()) {
+                String settingName = settingEntry.getKey();
+                Setting<?> setting = settingEntry.getValue();
+                JsonElement jsonnedValue = GSON.toJsonTree(setting.get());
+                obj.add(settingName, jsonnedValue);
+            }
+
+
+            //Write the json object to disk
             String jsonString = GSON.toJson(obj);
             try(FileWriter writer = new FileWriter(FILE)) {
                 writer.write(jsonString);
@@ -56,13 +63,19 @@ public class AspectConfig {
     public static void load() {
         try {
             if (Files.exists(FILE.toPath())) {
+                //Read the json file into an object
                 JsonObject json = GSON.fromJson(Files.readString(FILE.toPath()), JsonObject.class);
-                for (Map.Entry<String, Setting<?>> setting : SETTINGS_LIST.entrySet()) {
+                //For each setting, if the json file has that setting, read the value and store it
+                for (Map.Entry<String, Setting<?>> settingEntry : SETTINGS_LIST.entrySet()) {
+                    String settingName = settingEntry.getKey();
+                    Setting<?> setting = settingEntry.getValue();
                     try {
-                        if (json.has(setting.getKey()))
-                            setting.getValue().trySet(json.get(setting.getKey()));
+                        if (json.has(settingName)) {
+                            Object o = GSON.fromJson(json.get(settingName), setting.expectedClass);
+                            setting.trySet(o);
+                        }
                     } catch (ClassCastException e) {
-                        AspectMod.LOGGER.error("Failed to load config for setting \"" + setting.getKey() + "\"", e);
+                        AspectMod.LOGGER.error("Failed to load config for setting \"" + settingName + "\"", e);
                     }
                 }
             }
@@ -73,15 +86,23 @@ public class AspectConfig {
 
     public static class Setting<T> {
         private T value;
+        private final Class<?> expectedClass; //because java sucks :p
         private Setting(String key, T defaultValue) {
             this.value = defaultValue;
             SETTINGS_LIST.put(key, this);
+
+            if (defaultValue.getClass() == String.class)
+                expectedClass = String.class;
+            else
+                expectedClass = void.class;
         }
         public void set(T val) {
             this.value = val;
             save(); //Save the settings after changing one :P
         }
         private void trySet(Object val) throws ClassCastException {
+            if (val.getClass() != expectedClass)
+                throw new ClassCastException("Expected " + expectedClass + ", got " + val.getClass());
             //No need to save, this is only used when loading
             this.value = (T) val;
         }
