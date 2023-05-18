@@ -1,0 +1,9 @@
+require("AspectList").onGuiClose()
+require("ButtonManager").onGuiClose()
+
+host.lockCursor()
+models.hud.gui.visible(false)
+models.hud.gui.aspectList.preRender(null).postRender(null)
+host.disableScissors() //just in case somehow
+
+this

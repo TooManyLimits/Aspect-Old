@@ -1,0 +1,25 @@
+//String split
+"".class().methods().split = fn(delimiter) {
+	s = this
+	result = ![]
+	while ((i = s.find(delimiter)) != -1) {
+		result.push(s.sub(0, i))
+		s = s.sub(i+1, s.len())
+	}
+	result
+}
+
+//List print
+![].class().methods().print = fn() {
+	i = 0
+	s = "["
+	while i < this.len() {
+		s = s + this[i]
+		if (i != this.len() - 1)
+			s = s + ", "
+		i = i + 1
+	}
+	print(s + "]")
+}
+
+fn math:clamp(val, min, max) if val <= min min else if val >= max max else val

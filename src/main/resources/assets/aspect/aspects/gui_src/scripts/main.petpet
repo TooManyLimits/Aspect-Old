@@ -1,0 +1,32 @@
+//Require helpers
+require("roundCorners")
+
+//Globals are declared in this file for easy access
+
+//Constants
+global ASPECT_ENTRY_SIZE = vec2(128, 32) //Size of the "aspect entry" element
+global ROUNDED_TILE_SIZE = vec2(8, 8) //Rounded tile size for most elements
+global SCROLLBAR_TILE_SIZE = 8
+global SCROLLBAR_BACKDROP_TILE_SIZE = 10
+
+//Other globals which change sometimes
+global GUI_SCALE = client.getGuiScale()
+global SCREEN_SIZE = client.getScaledWindowSize()
+global ASPECT_LIST_X = 0
+global ASPECT_LIST_Y = 0
+global ASPECT_LIST_WIDTH = 0
+global ASPECT_LIST_HEIGHT = 0
+global CLEAR_BUTTON_X = 0
+global CLEAR_BUTTON_Y = 0
+global FOLDER_BUTTON_X = 0
+global FOLDER_BUTTON_Y = 0
+
+//Make things invisible by default
+models.hud.gui.visible(false)
+models.hud.gui.aspectListEntry.visible(false)
+
+//Set up events
+//This setup does run the two events right away, keep in mind
+events.gui_open.add(require("gui_open"))
+events.gui_close.add(require("gui_close"))
+

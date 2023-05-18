@@ -1,0 +1,44 @@
+//Get the model part class
+partClass = models.hud.class()
+
+//Add our 2 new methods to it, .size() and .copyRounded()
+
+partClass.methods().size = fn(tileSize, desiredSize) {
+	ts = -tileSize
+	//calculate how much to scale the inner segment
+	sf = (desiredSize - tileSize * 2) / tileSize
+	sf.x = math:max(sf.x, 0)
+	sf.y = math:max(sf.y, 0)
+
+	this.top.piv(ts.x, 0, 0).scale(sf.x, 1, 1)
+	this.bottom.piv(ts.x, 0, 0).scale(sf.x, 1, 1)
+	this.left.piv(0, ts.y, 0).scale(1, sf.y, 1)
+	this.right.piv(0, ts.y, 0).scale(1, sf.y, 1)
+	this.center.piv(ts.x, ts.y, 0).scale(sf.x, sf.y, 1)
+
+	o = tileSize * 3 - desiredSize
+	this.topright.pos(o.x, 0, 0)
+	this.right.pos(o.x, 0, 0)
+	this.bottomright.pos(o.x, o.y, 0)
+	this.bottomleft.pos(0, o.y, 0)
+	this.bottom.pos(0, o.y, 0)
+	this
+}
+
+partClass.methods().sizeVertical = fn(tileSize, desiredSize) {
+	sf = math:max((desiredSize - tileSize * 2) / tileSize, 0)
+	this.center.piv(0, -tileSize, 0).scale(1, sf, 1)
+	this.bottom.pos(0, 3*tileSize-desiredSize, 0)
+	this
+}
+
+partClass.methods().copyRounded = fn(name, childOf) {
+	newPart = this.copy(name, true, false).visible(true)
+	newPart.getChildren().clear()
+	newPart.clearChildCache()
+	this.getChildren().each(fn(child) {
+		newPart.getChildren().push(child.copy(child.name()))
+	})
+	childOf.getChildren().push(newPart)
+	newPart
+}

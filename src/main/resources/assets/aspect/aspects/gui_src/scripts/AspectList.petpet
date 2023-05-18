@@ -1,0 +1,205 @@
+//File for managing the Aspect List that's displayed
+
+require("utils")
+require("roundCorners")
+
+index = -1
+AspectListEntry = class("AspectListEntry", $[
+	__init = fn(path, metadata) {
+		this.part = models.hud.gui.aspectListEntry.copyRounded("AspectEntry" + (index = index + 1), models.hud.gui.aspectList.entries)
+		this.part.size(ROUNDED_TILE_SIZE, ASPECT_ENTRY_SIZE)
+		this.path = path
+		this.metadata = metadata
+
+		name = this.path[-1]
+		if this.metadata and this.metadata.name().len() > 0
+			name = this.metadata.name()
+
+		this.part.newText(name).pos(-9 * 16, -3 * 16, -1).scale(0.0625, 0.0625, 0.0625)
+		this
+	},
+	hover = fn() {
+		this.part.uv(0, 25 / 128)
+	},
+	unhover = fn() {
+		this.part.uv(0, 0)
+	},
+	equip = fn() {
+		// print("Equipping aspect " + this.path[this.path.len()-1])
+		manager.equipAspect(this.path)
+	}
+])
+
+AspectListManager = null //init local variable so it can be captured
+
+//Scroll bar manager
+ScrollBarManager = class("ScrollBarManager", $[
+	__init = fn(fullRequiredHeight) {
+		//1 letter var names are from my notes lol
+		this.fullRequiredHeight = this.a = fullRequiredHeight
+		this.maxHeightThatWeCanFit = this.b = ASPECT_LIST_HEIGHT - 2
+		this.handlePercentSize = this.c = this.b / this.a
+		this.amountScrolled = this.d = 0
+		this.maxScrollAmount = this.e = this.a - this.b
+		this.emptyScrollBarElementHeight = this.f = ASPECT_LIST_HEIGHT - 10
+		this.grabbed = false
+
+		this.enabled = this.c < 1
+
+		this.part = models.hud.gui.aspectList.scrollBarBackdrop.scrollBar
+		this.part.parent().visible(this.enabled)
+		this.part.sizeVertical(
+			SCROLLBAR_TILE_SIZE,
+			this.handlePercentSize * this.emptyScrollBarElementHeight
+		)
+		.pos(0, 0, 0)
+		models.hud.gui.aspectList.entries.pos(0, this.amountScrolled, 0)
+
+		this
+	},
+	grab = fn(mouseY) {
+		if this.enabled {
+			this.grabbed = true
+			this.grabbedY = mouseY
+		}
+	},
+	ungrab = fn() {
+		this.grabbed = false
+	},
+	move = fn(newMouseY) {
+		if this.grabbed {
+			pixelsMoved = newMouseY - this.grabbedY //in gui scale
+			percentMoved = pixelsMoved / this.emptyScrollBarElementHeight
+			this.amountScrolled = this.amountScrolled + percentMoved * (this.maxScrollAmount / (1 - this.c))
+			this.amountScrolled = math:clamp(this.amountScrolled, 0, this.maxScrollAmount)
+
+			this.part.pos(0, -1 * this.amountScrolled / this.maxScrollAmount * this.emptyScrollBarElementHeight * (1 - this.handlePercentSize), 0)
+			models.hud.gui.aspectList.entries.pos(0, this.amountScrolled, 0)
+			this.grabbedY = newMouseY
+		}
+	}
+])
+
+
+//Return an instance of an "AspectListManager" which will
+//have methods to do various things with its aspect list
+AspectListManager = class("AspectListManager", $[
+	__init = fn() {
+		this.aspects = ![]
+		this.hovered = -1
+		this.scrollBarManager = null
+		this
+	},
+	entriesHeight = fn() this.aspects.len() * (ASPECT_ENTRY_SIZE.y + 2) + 3,
+	refreshAspects = fn() {
+		aspects = this.aspects
+		aspects.clear()
+
+		listEntriesModelPart = models.hud.gui.aspectList.entries
+		
+		listEntriesModelPart.clearChildCache().getChildren().clear() //clear previous children
+		index = -1 //set index back to -1
+		
+		fn recurse(folderName, object, curPath) {
+			path = curPath.copy().push(folderName)
+			if (object != null and object.class().name() == "table") {
+				//Recurse on subfolders
+				object.each(fn(name, object) recurse(name, object, path))
+			} else {
+				//If not a subfolder, this must be an aspect folder
+				aspects.push(AspectListEntry(path, object))
+			}
+		}
+		manager.scanAspectsFolder().each(fn(folderName, object) recurse(folderName, object, ![]))
+
+		//this.aspects now contains all the aspects found in your folder
+		this.aspects.eachI(fn(i, entry) {
+			entry.part.pos(ROUNDED_TILE_SIZE.x * -1, -(ASPECT_ENTRY_SIZE.y + 2) * i - 3, -5)
+		})
+
+		//Get full needed height
+		neededHeight = 3 + this.aspects.len() * (ASPECT_ENTRY_SIZE.y + 2)
+		this.scrollBarManager = ScrollBarManager(neededHeight)
+		// print(ASPECT_LIST_HEIGHT)
+	},
+	handleClick = fn(mouseX, mouseY) {
+		if (this.hovered != -1) {
+			this.aspects[this.hovered].equip()
+		}
+		relX = mouseX - ASPECT_LIST_X - (ASPECT_LIST_WIDTH - SCROLLBAR_BACKDROP_TILE_SIZE - 4)
+		if this.scrollBarManager && 0 < relX && relX < SCROLLBAR_BACKDROP_TILE_SIZE {
+			this.scrollBarManager.grab(mouseY)
+		}
+	},
+	handleMouseMove = fn(mouseX, mouseY) {
+		relX = mouseX - ASPECT_LIST_X
+		relY = mouseY - ASPECT_LIST_Y
+		//print(relX + ", " + relY)
+		
+		minX = ROUNDED_TILE_SIZE.x
+		maxX = ASPECT_LIST_WIDTH - SCROLLBAR_BACKDROP_TILE_SIZE - 6
+
+		if relX > minX && relX < maxX && relY > 0 && relY < ASPECT_LIST_HEIGHT {
+			if this.scrollBarManager
+				relY = relY + this.scrollBarManager.amountScrolled
+
+			//Determine what is being hovered, without bounds
+			//The relToHovered variable detects when the cursor is between two entries vertically
+
+			relToHovered = (relY - 3) % (ASPECT_ENTRY_SIZE.y + 2)
+			if (relToHovered < ASPECT_ENTRY_SIZE.y) {
+
+				hoveredUnbound = math:floor((relY - 3) / (ASPECT_ENTRY_SIZE.y + 2))
+
+				//If the thing we're hovering is in the valid range then change it
+				if hoveredUnbound >= 0 && hoveredUnbound < this.aspects.len() {
+					//Set the hovered one
+					if (hoveredUnbound != this.hovered) {
+						if (m = this.aspects[this.hovered]) m.unhover()
+						this.hovered = hoveredUnbound
+						if (m = this.aspects[this.hovered]) m.hover()
+					}
+				}
+			} else {
+				//Otherwise, set to -1 (nothing is hovered)
+				if (this.hovered != -1) {
+					if (m = this.aspects[this.hovered]) m.unhover()
+					this.hovered = -1
+				}
+			}
+		} else {
+			if (m = this.aspects[this.hovered]) m.unhover()
+			this.hovered = -1
+		}
+	},
+	onGuiOpen = fn() {
+		//Generate functions and save them, so they can be removed later
+		//Bind the "this" variable - remember, inside the sub-functions,
+		//"this" refers to the function object
+		thisBound = this
+		this.mouseDownFunc = fn(x, y, button, mods) {
+			if (button == 0) thisBound.handleClick(x / GUI_SCALE, y / GUI_SCALE)
+		}
+		this.mouseMoveFunc = fn(x, y) {
+			thisBound.handleMouseMove(x / GUI_SCALE, y / GUI_SCALE)
+			if thisBound.scrollBarManager
+				thisBound.scrollBarManager.move(y / GUI_SCALE)
+		}
+		this.mouseUpFunc = fn(x, y, button, mods) {
+			if (button == 0 && thisBound.scrollBarManager) 
+				thisBound.scrollBarManager.ungrab()
+		}
+
+		events.mouse_down.add(this.mouseDownFunc)
+		events.mouse_move.add(this.mouseMoveFunc)
+		events.mouse_up.add(this.mouseUpFunc)
+	},
+	onGuiClose = fn() {
+		events.mouse_down.remove(this.mouseDownFunc)
+		events.mouse_move.remove(this.mouseMoveFunc)
+		events.mouse_up.remove(this.mouseUpFunc)
+		this.aspects.each(fn(a) a.unhover()) //unhover aspects
+	}
+])()
+
+AspectListManager

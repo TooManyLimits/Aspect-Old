@@ -1,0 +1,59 @@
+//This file is executed when opening the GUI.
+require("roundCorners")
+
+
+aspectListPart = models.hud.gui.aspectList
+
+//Update global vars for gui scale and screen size
+global GUI_SCALE = client.getGuiScale()
+global SCREEN_SIZE = client.getScaledWindowSize()
+
+//Make the gui visible and let us click around
+host.unlockCursor()
+models.hud.gui.visible(true)
+
+aspectListPart.visible(true)
+global ASPECT_LIST_X = math:floor(SCREEN_SIZE.x / 50)
+global ASPECT_LIST_Y = 32
+global ASPECT_LIST_WIDTH = ASPECT_ENTRY_SIZE.x + 2 * ROUNDED_TILE_SIZE.x + 8
+global ASPECT_LIST_HEIGHT = SCREEN_SIZE.y - ASPECT_LIST_Y - 30
+
+global CLEAR_BUTTON_X = ASPECT_LIST_X + ASPECT_LIST_WIDTH + 4
+global CLEAR_BUTTON_Y = ASPECT_LIST_Y
+global FOLDER_BUTTON_X = CLEAR_BUTTON_X
+global FOLDER_BUTTON_Y = CLEAR_BUTTON_Y + 20
+
+//Now that these global vars are set, we can require other things:
+
+// Require the aspect list manager, run its event
+AspectListManager = require("AspectList")
+AspectListManager.onGuiOpen()
+AspectListManager.refreshAspects()
+
+//Require the button manager, run its gui open event
+require("ButtonManager").onGuiOpen()
+
+// Set up the aspect list model part
+aspectListPart
+	.pos(-ASPECT_LIST_X, -ASPECT_LIST_Y, 0)
+	.size(ROUNDED_TILE_SIZE, vec2(ASPECT_LIST_WIDTH, ASPECT_LIST_HEIGHT))
+	.preRender(fn(_,_,_) {
+		scissorX = ASPECT_LIST_X * GUI_SCALE
+		scissorY = client.getWindowSize().y - (ASPECT_LIST_Y + ASPECT_LIST_HEIGHT) * GUI_SCALE
+		scissorWidth = ASPECT_LIST_WIDTH * GUI_SCALE
+		scissorHeight = ASPECT_LIST_HEIGHT * GUI_SCALE
+		host.drawBuffers()
+		host.enableScissors(scissorX, scissorY, scissorWidth, scissorHeight)
+	})
+	.postRender(fn(_,_,_) {
+		host.drawBuffers()
+		host.disableScissors()
+	})
+
+aspectListPart.border.size(ROUNDED_TILE_SIZE, vec2(ASPECT_LIST_WIDTH, ASPECT_LIST_HEIGHT))
+aspectListPart.scrollBarBackdrop
+	.pos(-ASPECT_LIST_WIDTH + SCROLLBAR_BACKDROP_TILE_SIZE + 4, -5, 0)
+	.sizeVertical(SCROLLBAR_BACKDROP_TILE_SIZE, ASPECT_LIST_HEIGHT - 10)
+
+
+this //Return "this", which refers to this entire file, as a function
