@@ -8,19 +8,23 @@ import io.github.moonlightmaya.model.rendertasks.ItemTask;
 import io.github.moonlightmaya.model.rendertasks.RenderTask;
 import io.github.moonlightmaya.model.rendertasks.TextTask;
 import io.github.moonlightmaya.util.AspectMatrixStack;
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.*;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.ZipCompressor;
 import org.joml.*;
 import petpet.external.PetPetWhitelist;
 import petpet.lang.run.PetPetCallable;
 import petpet.lang.run.PetPetException;
 import petpet.types.PetPetList;
 
+import java.lang.Math;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * An element of a hierarchical tree structure, analogous to the structure in Blockbench as well as the file system.
@@ -62,10 +66,11 @@ public class AspectModelPart extends Transformable {
         type = baseStructure.type();
         setPos(baseStructure.pos());
         setRot(baseStructure.rot());
+        setPivot(baseStructure.pivot());
+
         this.parent = parent;
         visible = baseStructure.visible();
 
-        setPivot(baseStructure.pivot());
         if (baseStructure.children() != null) {
             children = new PetPetList<>(baseStructure.children().size());
             for (BaseStructures.ModelPartStructure child : baseStructure.children()) {
@@ -95,6 +100,10 @@ public class AspectModelPart extends Transformable {
         tempCubeData = sharedTempCubeData.get();
         if (baseStructure.cubeData() != null)
             genCubeRenderData(baseStructure.cubeData());
+
+        //If no cube data, generate mesh data if it exists
+        else if (baseStructure.meshData() != null)
+            genMeshRenderData(baseStructure.meshData());
     }
 
     private AspectModelPart(AspectModelPart base, String newPartName, boolean deepCopyChildList, boolean deepCopyVertices) {
@@ -239,6 +248,60 @@ public class AspectModelPart extends Transformable {
         tempCubeData[ptr+6] = ny;
         tempCubeData[ptr+7] = nz;
         return ptr+8;
+    }
+
+    private void genMeshRenderData(BaseStructures.MeshData meshData) {
+        Vector3f temp1 = new Vector3f();
+        Vector3f temp2 = new Vector3f();
+        int curUV = 0;
+        FloatArrayList floats = new FloatArrayList();
+        for (Vector4i face : meshData.faces()) {
+            boolean isQuad = face.w != -1;
+
+            Vector3f a = meshData.vertexPositions().get(face.x);
+            Vector2f aUV = meshData.uvs().get(curUV++);
+            Vector3f b = meshData.vertexPositions().get(face.y);
+            Vector2f bUV = meshData.uvs().get(curUV++);
+            Vector3f c = meshData.vertexPositions().get(face.z);
+            Vector2f cUV = meshData.uvs().get(curUV++);
+
+            temp2.set(c).sub(a);
+            Vector3f normal = temp1.set(b).sub(a).cross(temp2).normalize();
+
+            if (isQuad) { //If quad, add the 4 vertices
+                Vector3f d = meshData.vertexPositions().get(face.w);
+                Vector2f dUV = meshData.uvs().get(curUV++);
+                addVertex(floats, a, aUV, normal);
+                addVertex(floats, b, bUV, normal);
+                addVertex(floats, c, cUV, normal);
+                addVertex(floats, d, dUV, normal);
+            } else { //Triangle:
+                //Duplicate the 4th vertex, to make it a "quad" for minecraft rendering
+                addVertex(floats, a, aUV, normal);
+                addVertex(floats, b, bUV, normal);
+                addVertex(floats, c, cUV, normal);
+                addVertex(floats, c, cUV, normal);
+            }
+        }
+
+        //Make vertices float[]
+        this.vertexData = floats.toFloatArray();
+
+        //Set up default render layer:
+        renderLayers = new PetPetList<>();
+        AspectTexture tex = owningAspect.textures.get(meshData.tex()); //grab the texture
+        renderLayers.add(RenderLayer.getEntityCutoutNoCull(tex.getIdentifier())); //make or get render layer for that texture
+    }
+
+    private void addVertex(FloatArrayList floats, Vector3f pos, Vector2f uv, Vector3f normal) {
+        floats.add((pos.x + this.partPivot.x) / 16);
+        floats.add((pos.y + this.partPivot.y) / 16);
+        floats.add((pos.z + this.partPivot.z) / 16);
+        floats.add(uv.x);
+        floats.add(uv.y);
+        floats.add(normal.x);
+        floats.add(normal.y);
+        floats.add(normal.z);
     }
 
     /**
@@ -414,6 +477,29 @@ public class AspectModelPart extends Transformable {
         CUBE,
         MESH,
         NULL
+    }
+
+    //Meshes have different rotation order from
+    //other model parts for no reason, these
+    //overrides account for that
+    @Override
+    public void setRot(float x, float y, float z) {
+        if (type != ModelPartType.MESH)
+            super.setRot(x, y, z);
+        else {
+            float s = (float) (Math.PI / 180);
+            partRot.identity().rotationZYX(z * s, y * s, x * s);
+            needsMatrixRecalculation = true;
+        }
+    }
+    @PetPetWhitelist
+    @Override
+    public Vector3d rot_0() {
+        if (type != ModelPartType.MESH)
+            return super.rot_0();
+        else {
+            return new Vector3d(this.partRot.getEulerAnglesZYX(new Vector3f()));
+        }
     }
 
 

@@ -1,9 +1,11 @@
 package io.github.moonlightmaya.manage.data.importing;
 
+import com.google.common.reflect.TypeToken;
 import com.google.gson.*;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.manage.data.BaseStructures;
 import io.github.moonlightmaya.util.ColorUtils;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import petpet.types.PetPetList;
@@ -12,6 +14,12 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 public class JsonStructures {
+
+    private static final Gson VECTOR_GSON = new GsonBuilder()
+            .registerTypeAdapter(Vector2f.class, Vector2fDeserializer.INSTANCE)
+            .registerTypeAdapter(Vector3f.class, Vector3fDeserializer.INSTANCE)
+            .registerTypeAdapter(Vector4f.class, Vector4fDeserializer.INSTANCE)
+            .create();
 
     public static class Metadata {
         public String name;
@@ -43,6 +51,7 @@ public class JsonStructures {
 
         public Gson getGson() {
             return new GsonBuilder()
+                    .registerTypeAdapter(Vector2f.class, Vector2fDeserializer.INSTANCE)
                     .registerTypeAdapter(Vector3f.class, Vector3fDeserializer.INSTANCE)
                     .registerTypeAdapter(Vector4f.class, Vector4fDeserializer.INSTANCE)
                     .registerTypeAdapter(Part.class, new OutlinerPartDeserializer(this))
@@ -53,8 +62,66 @@ public class JsonStructures {
     public record Resolution(int width, int height) {}
 
     public record Part(String name, float color, Vector3f origin, Vector3f rotation, Boolean visibility, String type,
-                       String uuid, Vector3f from, Vector3f to, Double inflate, CubeFaces faces, JsonStructures.Part[] children) {
+                       String uuid, Vector3f from, Vector3f to, Double inflate, JsonObject vertices, JsonObject faces, JsonStructures.Part[] children) {
             public BaseStructures.ModelPartStructure toBaseStructure(List<Integer> texMapper, Resolution resolution) throws AspectImporter.AspectImporterException {
+
+                //Mesh! parse it and return it
+                if (this.vertices != null) {
+                    //Get the vertices and faces as nicer data structures
+                    Type vType = new TypeToken<Map<String, Vector3f>>(){}.getType();
+                    Map<String, Vector3f> verticesMap = VECTOR_GSON.fromJson(this.vertices, vType);
+                    Type fType = new TypeToken<Map<String, MeshFace>>(){}.getType();
+                    Map<String, MeshFace> faces = VECTOR_GSON.fromJson(this.faces, fType);
+                    //Store the index of each vertex
+                    Map<String, Integer> indicesMap = new HashMap<>();
+
+                    //Perform any processing on mesh data TODO: Smooth shading :pain:
+
+                    //Begin collecting and formatting mesh data
+
+                    //The reason for the map is because we may want to split this mesh into
+                    //several objects, if different faces of the mesh use different
+                    //textures. This keeps things simpler and ensures that a specific model
+                    //part does not have multiple sets of vertices for different textures.
+                    Map<Integer, BaseStructures.MeshData> meshes = new HashMap<>();
+
+                    //For each face, get the appropriate mesh, and add a face to it
+                    int curIndex = 0;
+                    for (MeshFace face : faces.values()) {
+                        int tex = texMapper.get(face.texture);
+                        BaseStructures.MeshData mesh = meshes.computeIfAbsent(tex,
+                                texIndex -> new BaseStructures.MeshData(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), texIndex)
+                        );
+                        curIndex = mesh.addFace(face, resolution, verticesMap, indicesMap, curIndex);
+                    }
+
+                    if (meshes.size() > 1) {
+                        if (children != null)
+                            throw new AspectImporter.AspectImporterException("Attempted to split a mesh part with children? Invalid BBModel, notify devs");
+                        List<BaseStructures.ModelPartStructure> splitMeshes = new ArrayList<>(meshes.size());
+                        int split = 0;
+                        for (BaseStructures.MeshData meshData : meshes.values()) {
+                            splitMeshes.add(new BaseStructures.ModelPartStructure(
+                                    "split" + (split++), new Vector3f(), new Vector3f(), new Vector3f(), visibility == null ? true : visibility, List.of(),
+                                    AspectModelPart.ModelPartType.MESH, null, meshData
+                            ));
+                        }
+                        return new BaseStructures.ModelPartStructure(
+                                name, new Vector3f(), rotation == null ? new Vector3f() : rotation, origin, visibility == null ? true : visibility,
+                                splitMeshes, AspectModelPart.ModelPartType.GROUP, null, null
+                        );
+                    } else if (meshes.size() == 1) {
+                        BaseStructures.MeshData meshData = meshes.values().iterator().next();
+                        return new BaseStructures.ModelPartStructure(
+                                name, new Vector3f(), rotation == null ? new Vector3f() : rotation, origin, visibility == null ? true : visibility,
+                                List.of(), AspectModelPart.ModelPartType.MESH, null, meshData
+                        );
+                    } else {
+                        throw new AspectImporter.AspectImporterException("Failed to import mesh, bug, contact devs");
+                    }
+                }
+
+                //Not a mesh below this point
 
                 List<BaseStructures.CubeFaces> faces = null;
 
@@ -65,28 +132,30 @@ public class JsonStructures {
                     from.sub(f,f,f);
                 }
 
+                //If the part is a cube with multiple textures, split it into multiple cubes
                 if (this.faces != null) {
-                    faces = this.faces.toBaseStructure(texMapper, resolution);
+                    CubeFaces jsonFaces = VECTOR_GSON.fromJson(this.faces, CubeFaces.class);
+                    faces = jsonFaces.toBaseStructure(texMapper, resolution);
                     int n = faces.size();
                     if (n > 1) {
                         if (children != null) {
-                            throw new AspectImporter.AspectImporterException("Attempted to split a part with children? Invalid BBModel, notify devs");
+                            throw new AspectImporter.AspectImporterException("Attempted to split a cube part with children? Invalid BBModel, notify devs");
                         }
                         List<BaseStructures.ModelPartStructure> splitCubes = new ArrayList<>(n);
                         for (int i = 0; i < n; i++) {
                             splitCubes.add(new BaseStructures.ModelPartStructure(
-                                "split" + i, new Vector3f(), new Vector3f(), new Vector3f(), visibility == null ? true : visibility, null,
-                                type != null ? AspectModelPart.ModelPartType.valueOf(type.toUpperCase()) : AspectModelPart.ModelPartType.GROUP,
-                                new BaseStructures.CubeData(from, to, faces.get(i))
+                                "split" + i, new Vector3f(), new Vector3f(), new Vector3f(), visibility == null ? true : visibility, List.of(),
+                                AspectModelPart.ModelPartType.CUBE, new BaseStructures.CubeData(from, to, faces.get(i)), null
                             ));
                         }
                         return new BaseStructures.ModelPartStructure(
                                 name, new Vector3f(), rotation == null ? new Vector3f() : rotation, origin, visibility == null ? true : visibility,
-                                splitCubes, AspectModelPart.ModelPartType.GROUP, null
+                                splitCubes, AspectModelPart.ModelPartType.GROUP, null, null
                         );
                     }
                 }
 
+                //Otherwise, gather children
                 ArrayList<BaseStructures.ModelPartStructure> baseChildren = new ArrayList<>(children == null ? 0 : children.length);
                 if (children != null)
                     for (Part p : children)
@@ -96,7 +165,8 @@ public class JsonStructures {
                         name, new Vector3f(), rotation == null ? new Vector3f() : rotation, origin, visibility == null ? true : visibility,
                         baseChildren,
                         type != null ? AspectModelPart.ModelPartType.valueOf(type.toUpperCase()) : AspectModelPart.ModelPartType.GROUP,
-                        (faces != null && faces.size() == 1) ? new BaseStructures.CubeData(from, to, faces.get(0)) : null
+                        (faces != null && faces.size() == 1) ? new BaseStructures.CubeData(from, to, faces.get(0)) : null,
+                        null
                 );
             }
         }
@@ -157,6 +227,14 @@ public class JsonStructures {
         }
     }
 
+    public record MeshFace(
+            Map<String, Vector2f> uv,
+            String[] vertices,
+            int texture
+    ) {
+
+    }
+
     public record Texture(
              String name, String source
     ) {
@@ -197,10 +275,23 @@ public class JsonStructures {
                         ctx.deserialize(json.get("from"), Vector3f.class),
                         ctx.deserialize(json.get("to"), Vector3f.class),
                         ctx.deserialize(json.get("inflate"), Double.class),
-                        ctx.deserialize(json.get("faces"), CubeFaces.class),
+                        ctx.deserialize(json.get("vertices"), JsonObject.class),
+                        ctx.deserialize(json.get("faces"), JsonObject.class),
                         ctx.deserialize(json.get("children"), Part[].class)
                 );
             }
+        }
+    }
+
+    public static class Vector2fDeserializer implements JsonDeserializer<Vector2f> {
+        public static final Vector2fDeserializer INSTANCE = new Vector2fDeserializer();
+        @Override
+        public Vector2f deserialize(JsonElement element, Type type, JsonDeserializationContext ctx) throws JsonParseException {
+            JsonArray arr = element.getAsJsonArray();
+            return new Vector2f(
+                    arr.get(0).getAsFloat(),
+                    arr.get(1).getAsFloat()
+            );
         }
     }
 

@@ -3,6 +3,7 @@ package io.github.moonlightmaya.util;
 import com.google.common.collect.ImmutableMap;
 import io.github.moonlightmaya.AspectMod;
 import net.fabricmc.loader.api.FabricLoader;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -122,8 +123,8 @@ public class IOUtils {
     private static void writeVectorElem(DataOutputStream dos, float v, int vCase) throws IOException {
         switch (vCase) {
             case 0 -> {}
-            case 1 -> dos.write((byte) v);
-            case 2 -> dos.write((int) (v*256));
+            case 1 -> dos.writeByte((byte) v);
+            case 2 -> dos.writeByte((int) (v*256));
             case 3 -> dos.writeFloat(v);
             default -> throw new IllegalArgumentException("Invalid case arg to Vector write: " + vCase);
         }
@@ -143,7 +144,7 @@ public class IOUtils {
         int xCase = getCase(vec.x);
         int yCase = getCase(vec.y);
         int zCase = getCase(vec.z);
-        dos.write(xCase | (yCase << 2) | (zCase << 4));
+        dos.writeByte(xCase | (yCase << 2) | (zCase << 4));
         writeVectorElem(dos, vec.x, xCase);
         writeVectorElem(dos, vec.y, yCase);
         writeVectorElem(dos, vec.z, zCase);
@@ -165,7 +166,7 @@ public class IOUtils {
         int yCase = getCase(vec.y);
         int zCase = getCase(vec.z);
         int wCase = getCase(vec.w);
-        dos.write(xCase | (yCase << 2) | (zCase << 4) | (wCase << 6));
+        dos.writeByte(xCase | (yCase << 2) | (zCase << 4) | (wCase << 6));
         writeVectorElem(dos, vec.x, xCase);
         writeVectorElem(dos, vec.y, yCase);
         writeVectorElem(dos, vec.z, zCase);

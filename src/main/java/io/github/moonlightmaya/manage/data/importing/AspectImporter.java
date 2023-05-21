@@ -185,7 +185,7 @@ public class AspectImporter {
 
         return new BaseStructures.ModelPartStructure(
                 name, new Vector3f(), new Vector3f(), new Vector3f(), true,
-                bbmodels, AspectModelPart.ModelPartType.GROUP, null
+                bbmodels, AspectModelPart.ModelPartType.GROUP, null, null
         );
     }
 
@@ -203,7 +203,7 @@ public class AspectImporter {
         //Neither exists, so return an empty part
         return new BaseStructures.ModelPartStructure(
                 name, new Vector3f(), new Vector3f(), new Vector3f(), true,
-                new ArrayList<>(0), AspectModelPart.ModelPartType.GROUP, null
+                new ArrayList<>(0), AspectModelPart.ModelPartType.GROUP, null, null
         );
     }
 
@@ -274,7 +274,7 @@ public class AspectImporter {
         return new BaseStructures.ModelPartStructure(
                 partName, new Vector3f(), new Vector3f(), new Vector3f(),
                 true, children, AspectModelPart.ModelPartType.GROUP,
-                null
+                null, null
         );
     }
 
