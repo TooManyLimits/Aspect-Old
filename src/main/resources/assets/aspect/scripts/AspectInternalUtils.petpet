@@ -1,3 +1,8 @@
+// Convert an object to a string
+global fn str(obj) "" + obj
+
+// Iterates a variable from start (inclusive) to
+// end (exclusive) by the increment.
 global fn for(start, end, increment, func) {
     i = start
     while i < end {

@@ -1,0 +1,64 @@
+global JsonText = class("JsonText", $[
+	__init = fn(str) {
+		this.text = "" + str //convert to string
+		this.bold = this.italic = this.underlined = this.strikethrough = this.obfuscated = false
+		this.color = null
+		this
+	},
+	bold_0 = fn() {
+		this.bold = true
+		this
+	},
+	bold_1 = fn(b) {
+		this.bold = b
+		this
+	},
+	italic_0 = fn() {
+		this.italic = true
+		this
+	},
+	italic_1 = fn(b) {
+		this.underline = b
+		this
+	},
+	underlined_0 = fn() {
+		this.underline = true
+		this
+	},
+	underlined_1 = fn(b) {
+		this.underline = b
+		this
+	},
+	strikethrough_0 = fn() {
+		this.strikethrough = true
+		this
+	},
+	strikethrough_1 = fn(b) {
+		this.strikethrough = b
+		this
+	},
+	obfuscated_0 = fn() {
+		this.obfuscated = true
+		this
+	},
+	obfuscated_1 = fn(b) {
+		this.obfuscated = b
+		this
+	},
+	color = fn(colorString) {
+		this.color = colorString
+		this
+	},
+	__tostring = fn() {
+        "{\"text\":\"%s\",\"bold\":%b,\"italic\":%b,\"underlined\":%b,\"strikethrough\":%b,\"obfuscated\":%b,\"color\":\"%s\"}".format(![
+            this.text,
+            this.bold,
+            this.italic,
+            this.underlined,
+            this.strikethrough,
+            this.obfuscated,
+
+            this.color
+        ])
+    }
+])

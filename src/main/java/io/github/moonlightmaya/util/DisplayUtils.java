@@ -65,5 +65,20 @@ public class DisplayUtils {
         MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(text);
     }
 
+    /**
+     * Displays the message with the petpet header, except
+     * with a Text object instead of a string, allowing
+     * for formatting.
+     */
+    public static void displayPetPetMessage(Text message) {
+        if (MinecraftClient.getInstance().inGameHud == null)
+            return;
+
+        Text text = Text.empty()
+                .append(Text.literal("[PetPet] ").formatted(Formatting.AQUA))
+                .append(message);
+        MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(text);
+    }
+
 
 }

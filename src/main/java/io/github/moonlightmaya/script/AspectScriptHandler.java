@@ -31,6 +31,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.text.Text;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.dimension.DimensionType;
 import org.jetbrains.annotations.Nullable;
@@ -262,20 +263,26 @@ public class AspectScriptHandler {
             setGlobal("manager", new ManagerAPI());
         }
 
-        //Run aspect's utils script
-        try(InputStream in = IOUtils.getAsset("scripts/AspectInternalUtils.petpet")) {
-            if (in == null) throw new RuntimeException("Failed to locate internal util script - bug");
-            String code = new String(in.readAllBytes());
-            runCode("AspectInternalUtils", code);
-        } catch (Exception e) {
-            error(e);
-        }
+        //Run aspect's util scripts for helpful
+        //code defined in PetPet rather than Java
+        runUtil("AspectInternalUtils");
+        runUtil("JsonText");
 
         //Other APIs not shown here:
 
         //world api: set during aspect.tick()
         //user api: set during aspect.tick()
         //vanilla api: set when the user's entity first loads in
+    }
+
+    private void runUtil(String name) {
+        try(InputStream in = IOUtils.getAsset("scripts/" + name + ".petpet")) {
+            if (in == null) throw new RuntimeException("Failed to locate internal util script \"" + name + "\" - bug!");
+            String code = new String(in.readAllBytes());
+            runCode(name, code);
+        } catch (Exception e) {
+            error(e);
+        }
     }
 
     /**
@@ -346,8 +353,12 @@ public class AspectScriptHandler {
         return new JavaFunction(true, 1) {
             @Override
             public Object invoke(Object o) {
-                if (shouldPrintToChat)
-                    DisplayUtils.displayPetPetMessage(getStringFor(o));
+                if (shouldPrintToChat) {
+                    String s = getStringFor(o);
+                    //If the text is json, displays it formatted, otherwise just displays the literal text
+                    Text possibleJsonText = DisplayUtils.tryParseJsonText(s);
+                    DisplayUtils.displayPetPetMessage(possibleJsonText);
+                }
                 return null;
             }
         };

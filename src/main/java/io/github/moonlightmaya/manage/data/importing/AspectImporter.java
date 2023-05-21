@@ -131,11 +131,23 @@ public class AspectImporter {
     }
 
     private List<BaseStructures.Script> getScripts() throws IOException {
-        Path p = rootPath.resolve("scripts");
-        if (Files.exists(p) && p.toFile().isDirectory()) {
-            return getScriptsIn(p, "");
+        //If main.petpet exists in the root, then add it directly,
+        //and don't check for a scripts directory
+        Path mainPath = rootPath.resolve("main.petpet");
+        if (Files.exists(mainPath) && !mainPath.toFile().isDirectory()) {
+            ArrayList<BaseStructures.Script> scripts = new ArrayList<>();
+            scripts.add(new BaseStructures.Script("main", Files.readString(mainPath)));
+            return scripts;
         }
-        return new ArrayList<>(0);
+
+        //If you want multiple scripts, include main.petpet in the scripts folder
+        //Get all scripts that exist in the scripts folder
+        Path folderPath = rootPath.resolve("scripts");
+        if (Files.exists(folderPath) && folderPath.toFile().isDirectory()) {
+            return getScriptsIn(folderPath, "");
+        }
+
+        return List.of();
     }
 
     private LinkedHashMap<String, BaseStructures.Texture> getTextures() throws IOException {
