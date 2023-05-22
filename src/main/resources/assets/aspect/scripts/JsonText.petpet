@@ -1,64 +1,87 @@
-global JsonText = class("JsonText", $[
-	__init = fn(str) {
-		this.text = "" + str //convert to string
+Component = class("Component", $[
+	__init = fn(string) {
+		this.text = str(string) //convert to string
 		this.bold = this.italic = this.underlined = this.strikethrough = this.obfuscated = false
 		this.color = null
-		this
-	},
-	bold_0 = fn() {
-		this.bold = true
-		this
-	},
-	bold_1 = fn(b) {
-		this.bold = b
-		this
-	},
-	italic_0 = fn() {
-		this.italic = true
-		this
-	},
-	italic_1 = fn(b) {
-		this.underline = b
-		this
-	},
-	underlined_0 = fn() {
-		this.underline = true
-		this
-	},
-	underlined_1 = fn(b) {
-		this.underline = b
-		this
-	},
-	strikethrough_0 = fn() {
-		this.strikethrough = true
-		this
-	},
-	strikethrough_1 = fn(b) {
-		this.strikethrough = b
-		this
-	},
-	obfuscated_0 = fn() {
-		this.obfuscated = true
-		this
-	},
-	obfuscated_1 = fn(b) {
-		this.obfuscated = b
-		this
-	},
-	color = fn(colorString) {
-		this.color = colorString
+		this.extras = ![]
+		this.current = this
 		this
 	},
 	__tostring = fn() {
-        "{\"text\":\"%s\",\"bold\":%b,\"italic\":%b,\"underlined\":%b,\"strikethrough\":%b,\"obfuscated\":%b,\"color\":\"%s\"}".format(![
-            this.text,
-            this.bold,
-            this.italic,
-            this.underlined,
-            this.strikethrough,
-            this.obfuscated,
+		//If we have color, then set color, otherwise nothing
+		colorString = if this.color == null "" else ",\"color\":\"" + this.color + "\""
+		"{\"text\":\"%s\",\"bold\":%b,\"italic\":%b,\"underlined\":%b,\"strikethrough\":%b,\"obfuscated\":%b%s}".format(![
+			this.text,
+			this.bold,
+			this.italic,
+			this.underlined,
+			this.strikethrough,
+			this.obfuscated,
+			colorString
+		])
+	}
+])
 
-            this.color
-        ])
+global JsonText = class("JsonText", $[
+	__init = fn(string) {
+		this.components = ![Component(string)]
+		this.current = this.components[-1]
+		this
+	},
+	bold_0 = fn() {
+		this.current.bold = true
+		this
+	},
+	bold_1 = fn(b) {
+		this.current.bold = b
+		this
+	},
+	italic_0 = fn() {
+		this.current.italic = true
+		this
+	},
+	italic_1 = fn(b) {
+		this.current.underline = b
+		this
+	},
+	underlined_0 = fn() {
+		this.current.underline = true
+		this
+	},
+	underlined_1 = fn(b) {
+		this.current.underline = b
+		this
+	},
+	strikethrough_0 = fn() {
+		this.current.strikethrough = true
+		this
+	},
+	strikethrough_1 = fn(b) {
+		this.current.strikethrough = b
+		this
+	},
+	obfuscated_0 = fn() {
+		this.current.obfuscated = true
+		this
+	},
+	obfuscated_1 = fn(b) {
+		this.current.obfuscated = b
+		this
+	},
+	color = fn(colorString) {
+		this.current.color = colorString
+		this
+	},
+	next = fn(string) {
+		this.components.push(Component(string))
+		this.current = this.components[-1]
+		this
+	},
+	__tostring = fn() {
+        //put them all together with commas
+        res = "["
+        this.components.each(fn(c) res = res + c + ",")
+        //remove ending comma, finish the array
+        res.sub(0, -1) + "]"
     }
 ])

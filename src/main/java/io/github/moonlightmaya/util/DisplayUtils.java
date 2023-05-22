@@ -43,7 +43,7 @@ public class DisplayUtils {
         if (s == null) return Text.empty();
         try {
             JsonParser.parseString(s);
-            Text result = Text.Serializer.fromLenientJson(s);
+            Text result = Text.Serializer.fromJson(s);
             if (result == null) return Text.literal(s);
             return result;
         } catch (Exception e) {
