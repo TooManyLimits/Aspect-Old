@@ -45,11 +45,11 @@ global JsonText = class("JsonText", $[
 		this
 	},
 	underlined_0 = fn() {
-		this.current.underline = true
+		this.current.underlined = true
 		this
 	},
 	underlined_1 = fn(b) {
-		this.current.underline = b
+		this.current.underlined = b
 		this
 	},
 	strikethrough_0 = fn() {
