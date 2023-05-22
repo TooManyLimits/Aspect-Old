@@ -267,6 +267,7 @@ public class AspectScriptHandler {
         //code defined in PetPet rather than Java
         runUtil("AspectInternalUtils");
         runUtil("JsonText");
+        runUtil("PrettyPrint");
 
         //Other APIs not shown here:
 

@@ -2,7 +2,7 @@ Component = class("Component", $[
 	__init = fn(string) {
 		this.text = str(string) //convert to string
 		this.bold = this.italic = this.underlined = this.strikethrough = this.obfuscated = false
-		this.color = null
+		this.color = this.hover = null
 		this.extras = ![]
 		this.current = this
 		this
@@ -10,14 +10,17 @@ Component = class("Component", $[
 	__tostring = fn() {
 		//If we have color, then set color, otherwise nothing
 		colorString = if this.color == null "" else ",\"color\":\"" + this.color + "\""
-		"{\"text\":\"%s\",\"bold\":%b,\"italic\":%b,\"underlined\":%b,\"strikethrough\":%b,\"obfuscated\":%b%s}".format(![
+		//If we have a hover, then set hover, otherwise nothing
+		hoverString = if this.hover == null "" else ",\"hoverEvent\":{\"action\":\"show_text\",\"contents\":" + this.hover + "}"
+		"{\"text\":\"%s\",\"bold\":%b,\"italic\":%b,\"underlined\":%b,\"strikethrough\":%b,\"obfuscated\":%b%s%s}".format(![
 			this.text,
 			this.bold,
 			this.italic,
 			this.underlined,
 			this.strikethrough,
 			this.obfuscated,
-			colorString
+			colorString,
+			hoverString
 		])
 	}
 ])
@@ -77,11 +80,21 @@ global JsonText = class("JsonText", $[
 		this.current = this.components[-1]
 		this
 	},
+	hover = fn(jsonText) {
+		this.current.hover = jsonText
+		this
+	},
+	concat = fn(otherJsonText) {
+		thisBound = this
+		otherJsonText.components.each(fn(c) thisBound.components.push(c))
+		this.current = this.components[-1]
+		this
+	},
 	__tostring = fn() {
-        //put them all together with commas
-        res = "["
-        this.components.each(fn(c) res = res + c + ",")
-        //remove ending comma, finish the array
-        res.sub(0, -1) + "]"
-    }
+		//put them all together with commas
+		res = "["
+		this.components.each(fn(c) res = res + c + ",")
+		//remove ending comma, finish the array
+		res.sub(0, -1) + "]"
+	}
 ])
