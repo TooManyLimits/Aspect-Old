@@ -56,6 +56,14 @@ public class Aspect {
     private ErrorLocation errorLocation;
 
     /**
+     * The context in which this aspect is being rendered.
+     * If vanilla minecraft is drawing the entity, then it's
+     * specified, but if another mod (like iris's shadow pass)
+     * is drawing the entity, we don't know and just say OTHER.
+     */
+    public String renderContext = RenderContexts.OTHER;
+
+    /**
      * The uuid of the entity using this aspect. Even if the entity itself is unloaded,
      * or has never been loaded in the first place, the aspect itself lives anyway.
      * The Aspect is attached to the UUID rather than the actual entity object.
@@ -152,13 +160,16 @@ public class Aspect {
 
     public void renderEntity(VertexConsumerProvider vcp, float tickDelta, AspectMatrixStack matrixStack, int light, int overlay) {
         if (isErrored()) return;
-        scriptHandler.callEvent(EventHandler.RENDER, tickDelta);
+        scriptHandler.callEvent(EventHandler.RENDER, tickDelta, renderContext);
         matrixStack.multiply(vanillaRenderer.aspectModelTransform);
         try {
             entityRoot.render(vcp, matrixStack, light, overlay);
         } catch (Throwable t) {
             error(t, ErrorLocation.RENDER_ENTITY);
         }
+        scriptHandler.callEvent(EventHandler.POST_RENDER, tickDelta, renderContext);
+        //After rendering, reset the render context to "other"
+        renderContext = RenderContexts.OTHER;
     }
 
     public void renderHud(VertexConsumerProvider vcp, float tickDelta, AspectMatrixStack matrixStack) {
@@ -169,6 +180,7 @@ public class Aspect {
         } catch (Throwable t) {
             error(t, ErrorLocation.RENDER_HUD);
         }
+        scriptHandler.callEvent(EventHandler.POST_HUD_RENDER, tickDelta);
     }
 
     public UUID getAspectUUID() {
@@ -245,7 +257,7 @@ public class Aspect {
      */
     public void renderWorld(VertexConsumerProvider vcp, float tickDelta, AspectMatrixStack matrixStack) {
         if (isErrored()) return;
-        scriptHandler.callEvent(EventHandler.WORLD_RENDER, tickDelta);
+        scriptHandler.callEvent(EventHandler.WORLD_RENDER, tickDelta, renderContext);
         try {
             for (WorldRootModelPart worldRoot : worldRoots) {
                 worldRoot.render(vcp, matrixStack);
@@ -253,6 +265,9 @@ public class Aspect {
         } catch (Throwable t) {
             error(t, ErrorLocation.RENDER_WORLD);
         }
+        scriptHandler.callEvent(EventHandler.POST_WORLD_RENDER, tickDelta, renderContext);
+        //After rendering the world, reset my context to other
+        this.renderContext = RenderContexts.OTHER;
     }
 
     /**
@@ -286,6 +301,17 @@ public class Aspect {
         RENDER_HUD,
         TICK,
         LOAD
+    }
+
+    /**
+     * These are strings instead of enums in the event
+     * of custom render contexts being created.
+     */
+    public static class RenderContexts {
+        public static final String
+                WORLD = "WORLD", //Aspect is rendered normally in the minecraft world
+                MINECRAFT_GUI = "MINECRAFT_GUI", //Aspect is rendered in the minecraft inventory screen or other screens
+                OTHER = "OTHER"; //Aspect is rendered in some other circumstance, perhaps added by another mod
     }
 
 }

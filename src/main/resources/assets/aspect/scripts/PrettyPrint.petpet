@@ -32,7 +32,8 @@ fn colorOf(object) {
 //Append to the json, print the object without recursing
 fn printEndpoint(json, object, isKey, allowHover) {
 	//If it's not a key and is a string, surround with quotes
-	q = if not isKey and object.class() == stringClass "\\\"" else ""
+	//If it's false, null, or 0, no quotes needed
+	q = if not isKey and object and object.class() == stringClass "\\\"" else ""
 	json.next(q + str(object) + q)
 	if (not isKey and (c = colorOf(object)))
 		json.color(c)
@@ -49,7 +50,8 @@ fn printEndpoint(json, object, isKey, allowHover) {
 fn printRecursive(json, object, depthLeft, indent, allowHover, alreadyPrinted) {
 
 	//No depth left, just print the endpoint and quit
-	if depthLeft == 0 {
+	//Also, if object is false, null, or 0, then it's an endpoint and just print it
+	if depthLeft == 0 or not object {
 		printEndpoint(json, object, false, allowHover)
 		return null
 	}

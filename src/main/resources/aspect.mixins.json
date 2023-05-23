@@ -15,6 +15,7 @@
     "entity_renderers.LivingEntityRendererMixin",
     "gui.ChatScreenMixin",
     "gui.InGameHudMixin",
+    "gui.InventoryScreenMixin",
     "input.KeyboardMixin",
     "input.MouseMixin",
     "models.AnimalModelAccessor",

@@ -68,37 +68,43 @@ public class EventHandler {
     }
 
     public static final String
-            WORLD_TICK = "world_tick",
-            TICK = "tick",
+            WORLD_TICK = "WORLD_TICK",
+            TICK = "TICK",
 
-            WORLD_RENDER = "world_render",
-            RENDER = "render",
-            HUD_RENDER = "hud_render",
+            WORLD_RENDER = "WORLD_RENDER",
+            POST_WORLD_RENDER = "POST_WORLD_RENDER",
+            RENDER = "RENDER",
+            POST_RENDER = "POST_RENDER",
+            HUD_RENDER = "HUD_RENDER",
+            POST_HUD_RENDER = "POST_HUD_RENDER",
 
-            USER_INIT = "user_init",
-            USER_LOAD = "user_load",
-            USER_UNLOAD = "user_unload",
+            USER_INIT = "USER_INIT",
+            USER_LOAD = "USER_LOAD",
+            USER_UNLOAD = "USER_UNLOAD",
 
-            WORLD_CHANGE = "world_change",
+            WORLD_CHANGE = "WORLD_CHANGE",
 
-            SEND_CHAT_MESSAGE = "send_chat_message",
-            RECEIVE_CHAT_MESSAGE = "receive_chat_message",
+            SEND_CHAT_MESSAGE = "SEND_CHAT_MESSAGE",
+            RECEIVE_CHAT_MESSAGE = "RECEIVE_CHAT_MESSAGE",
 
-            MOUSE_DOWN = "mouse_down",
-            MOUSE_UP = "mouse_up",
-            MOUSE_MOVE = "mouse_move",
-            MOUSE_SCROLL = "mouse_scroll",
-            GUI_OPEN = "gui_open",
-            GUI_CLOSE = "gui_close";
+            MOUSE_DOWN = "MOUSE_DOWN",
+            MOUSE_UP = "MOUSE_UP",
+            MOUSE_MOVE = "MOUSE_MOVE",
+            MOUSE_SCROLL = "MOUSE_SCROLL",
+            GUI_OPEN = "GUI_OPEN",
+            GUI_CLOSE = "GUI_CLOSE";
 
 
     static {
         defineEvent(WORLD_TICK, 0);
         defineEvent(TICK, 0);
 
-        defineEvent(WORLD_RENDER, 1);
-        defineEvent(RENDER, 1);
-        defineEvent(HUD_RENDER, 1);
+        defineEvent(WORLD_RENDER, 2);
+        defineEvent(POST_WORLD_RENDER, 2);
+        defineEvent(RENDER, 2);
+        defineEvent(POST_RENDER, 2);
+        defineEvent(HUD_RENDER, 1); //Hud rendering doesn't have context
+        defineEvent(POST_HUD_RENDER, 1);
 
         defineEvent(USER_INIT, 0);
         defineEvent(USER_LOAD, 0);

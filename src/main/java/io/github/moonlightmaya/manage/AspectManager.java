@@ -84,17 +84,26 @@ public class AspectManager {
      *                 world part's worldPos() vector.
      */
     public static void renderWorld(VertexConsumerProvider vcp, float tickDelta, AspectMatrixStack matrices) {
+        //The render context for all parts is currently "WORLD".
+        //In the future, it may be necessary to pass in a context to this method
+        //in the event that we want world parts to render with Iris shaders (which we do)
+
         for (Aspect aspect : ASPECTS.values()) {
             //For each loaded aspect, ensure its textures are uploaded
             for (AspectTexture tex : aspect.textures)
                 tex.uploadIfNeeded();
 
             //And render the aspect's world parts
+            aspect.renderContext = Aspect.RenderContexts.WORLD;
             aspect.renderWorld(vcp, tickDelta, matrices);
         }
+
         //Also render the GUI aspect's world parts if it exists
-        if (getGuiAspect() != null)
-            getGuiAspect().renderWorld(vcp, tickDelta, matrices);
+        Aspect guiAspect = getGuiAspect();
+        if (guiAspect != null) {
+            guiAspect.renderContext = Aspect.RenderContexts.WORLD;
+            guiAspect.renderWorld(vcp, tickDelta, matrices);
+        }
     }
 
     /**
