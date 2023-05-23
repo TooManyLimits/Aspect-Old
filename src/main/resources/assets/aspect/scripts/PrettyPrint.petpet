@@ -17,7 +17,9 @@ global PPRINT_COLOR_TABLE = $[
 	[listClass] = "#AA55FF",
 	[stringClass] = "#FFFF55",
 	[true.class()] = "#55FFFF",
-	[0.class()] = "#55FF55"
+	[0.class()] = "#55FF55",
+	[(fn(){}).class()] = "#5555FF",
+	[print.class()] = "#5555FF"
 ]
 
 fn colorOf(object) {

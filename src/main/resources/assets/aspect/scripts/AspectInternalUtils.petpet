@@ -1,22 +1,23 @@
 // Convert an object to a string
 global fn str(obj) "" + obj
 
+//Multiplying strings by numbers
 strMethods = "".class().methods()
 strMethods.__mul_num = strMethods.__mulR_num = fn(count) {
-    s = ""
-    while count > 0 {
-        s = s + this
-        count = count - 1
-    }
-    s
+	s = ""
+	while count > 0 {
+		s = s + this
+		count = count - 1
+	}
+	s
 }
 
 // Iterates a variable from start (inclusive) to
 // end (exclusive) by the increment.
 global fn for(start, end, increment, func) {
-    i = start
-    while i < end {
-        func(i)
-        i = i + increment
-    }
+	i = start
+	while i < end {
+		func(i)
+		i = i + increment
+	}
 }

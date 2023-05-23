@@ -1,22 +1,32 @@
 package io.github.moonlightmaya.script.apis;
 
+import com.mojang.brigadier.StringReader;
 import io.github.moonlightmaya.mixin.world.WorldRendererAccessor;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.MathUtils;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.Mouse;
+import net.minecraft.client.particle.Particle;
+import net.minecraft.client.particle.ParticleManager;
 import net.minecraft.client.util.Window;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.command.argument.ParticleEffectArgumentType;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.particle.DefaultParticleType;
+import net.minecraft.particle.ParticleEffect;
+import net.minecraft.registry.Registries;
 import net.minecraft.resource.ResourcePackProfile;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import org.joml.*;
 import petpet.external.PetPetWhitelist;
+import petpet.lang.run.PetPetException;
 import petpet.types.PetPetList;
 import petpet.types.PetPetTable;
 
 import java.lang.Runtime;
+import java.util.HashMap;
 
 @PetPetWhitelist
 public class ClientAPI {
@@ -256,4 +266,88 @@ public class ClientAPI {
         return res;
     }
 
+    /**
+     * Particle spawning!
+     */
+
+    private boolean useParticleCache = true;
+    private final HashMap<String, ParticleEffect> PARTICLE_EFFECTS_CACHE = new HashMap<>();
+
+    /**
+     * If you want to disable particle type caching for some reason, go for it
+     * Setting to false clears the cache
+     */
+    @PetPetWhitelist
+    public void cacheParticles(boolean bool) {
+        this.useParticleCache = bool;
+        if (!bool)
+            PARTICLE_EFFECTS_CACHE.clear();
+    }
+
+    @PetPetWhitelist
+    public Particle particle_2(Object str, Vector3d pos) {
+        return particle_7(str, pos.x, pos.y, pos.z, 0, 0, 0);
+    }
+
+    @PetPetWhitelist
+    public Particle particle_3(Object str, Vector3d pos, Vector3d vel) {
+        return particle_7(str, pos.x, pos.y, pos.z, vel.x, vel.y, vel.z);
+    }
+
+    @PetPetWhitelist
+    public Particle particle_4(Object str, double x, double y, double z) {
+        return particle_7(str, x, y, z, 0, 0, 0);
+    }
+
+    /**
+     * Creates a new particle of the given type, and returns it
+     * If there is no world to spawn a particle in, returns null
+     */
+    @PetPetWhitelist
+    public Particle particle_7(Object particleType, double x, double y, double z, double xVel, double yVel, double zVel) {
+        if (MinecraftClient.getInstance().world == null)
+            return null;
+        try {
+            ParticleEffect effect;
+            if (particleType instanceof String str) {
+                if (useParticleCache) {
+                    effect = PARTICLE_EFFECTS_CACHE.get(str);
+                    if (effect == null) {
+                        effect = ParticleEffectArgumentType.readParameters(new StringReader(str), Registries.PARTICLE_TYPE.getReadOnlyWrapper());
+                        //Only cache default particle effects, others are created dynamically on the fly
+                        if (effect.getClass() == DefaultParticleType.class)
+                            PARTICLE_EFFECTS_CACHE.put(str, effect);
+                    }
+                } else {
+                    effect = ParticleEffectArgumentType.readParameters(new StringReader(str), Registries.PARTICLE_TYPE.getReadOnlyWrapper());
+                }
+            } else if (particleType instanceof ParticleEffect e) {
+                effect = e;
+            } else {
+                throw new PetPetException("client.particle() expects a string or a particle type!");
+            }
+            ParticleManager manager = MinecraftClient.getInstance().particleManager;
+            return manager.addParticle(effect, x, y, z, xVel, yVel, zVel);
+        } catch (Exception e) {
+            throw new PetPetException(e.getMessage());
+        }
+    }
+
+    /**
+     * Create a new particle type from a given string, which can be then
+     * passed into the `.particle()` methods. Will offer improved performance
+     * if you use the same particle many times, as it won't have to parse out
+     * the string every time.
+     * Less useful when using simple particles like "flame", since the
+     * type caching system will handle those automatically, but it should still
+     * be slightly faster.
+     */
+    @PetPetWhitelist
+    public ParticleEffect newParticleType(String string) {
+        try {
+            return ParticleEffectArgumentType.readParameters(new StringReader(string), Registries.PARTICLE_TYPE.getReadOnlyWrapper());
+        } catch (Exception e) {
+            throw new PetPetException(e.getMessage());
+        }
+    }
 }

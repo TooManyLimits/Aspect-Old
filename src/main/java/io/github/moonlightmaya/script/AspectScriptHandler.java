@@ -25,12 +25,14 @@ import io.github.moonlightmaya.script.vanilla.VanillaPart;
 import io.github.moonlightmaya.script.vanilla.VanillaRenderer;
 import io.github.moonlightmaya.util.IOUtils;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.particle.Particle;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.particle.ParticleEffect;
 import net.minecraft.text.Text;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.dimension.DimensionType;
@@ -152,8 +154,9 @@ public class AspectScriptHandler {
         instance.registerClass(RendererAPI.class, PetPetReflector.reflect(RendererAPI.class, "Renderer").copy().makeEditable());
         instance.registerClass(AspectTexture.class, PetPetReflector.reflect(AspectTexture.class, "Texture").copy().makeEditable());
 
-        //no methods or anything, just registering it so it's a legal object to have as a variable
+        //no methods or anything, just registering these so they're legal objects to store as a variable
         instance.registerClass(RenderLayer.class, new PetPetClass("RenderLayer").makeEditable());
+        instance.registerClass(ParticleEffect.class, new PetPetClass("ParticleEffect").makeEditable());
 
         //Gui-only whitelists
         if (aspect.isGui) {
@@ -174,12 +177,13 @@ public class AspectScriptHandler {
         instance.registerClass(VanillaRenderer.class, PetPetReflector.reflect(VanillaRenderer.class, "VanillaRenderer").copy().makeEditable());
         instance.registerClass(VanillaPart.class, PetPetReflector.reflect(VanillaPart.class, "VanillaPart").copy().makeEditable());
 
-        //World
+        //Minecraft ones
         instance.registerClass(ClientWorld.class, WorldAPI.WORLD_CLASS.copy().makeEditable());
         instance.registerClass(BlockState.class, BlockStateAPI.BLOCK_STATE_CLASS.copy().makeEditable());
         instance.registerClass(ItemStack.class, ItemStackAPI.ITEMSTACK_CLASS.copy().makeEditable());
         instance.registerClass(DimensionType.class, DimensionAPI.DIMENSION_CLASS.copy().makeEditable());
         instance.registerClass(Biome.class, BiomeAPI.BIOME_CLASS.copy().makeEditable());
+        instance.registerClass(Particle.class, ParticleAPI.PARTICLE_CLASS.copy().makeEditable());
 
         //Entity
         PetPetClass entityClass = EntityAPI.ENTITY_CLASS.copy().makeEditable();

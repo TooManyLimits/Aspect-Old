@@ -12,8 +12,11 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.BlockArgumentParser;
 import net.minecraft.command.argument.ItemStackArgumentType;
+import net.minecraft.command.argument.ParticleEffectArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.particle.DefaultParticleType;
+import net.minecraft.particle.ParticleEffect;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.LightType;
@@ -25,6 +28,7 @@ import petpet.external.PetPetWhitelist;
 import petpet.lang.run.*;
 import petpet.types.PetPetList;
 
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.function.Function;
 

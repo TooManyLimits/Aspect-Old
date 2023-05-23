@@ -13,7 +13,6 @@
     "entity_renderers.EntityRendererMixin",
     "entity_renderers.LivingEntityRendererAccessor",
     "entity_renderers.LivingEntityRendererMixin",
-    "entity_renderers.specific.PlayerEntityRendererMixin",
     "gui.ChatScreenMixin",
     "gui.InGameHudMixin",
     "input.KeyboardMixin",
@@ -21,6 +20,8 @@
     "models.AnimalModelAccessor",
     "models.PlayerEntityModelAccessor",
     "models.PlayerEntityModelMixin",
+    "particle.BillboardParticleMixin",
+    "particle.ParticleAccessor",
     "world.ClientWorldInvoker",
     "world.WorldRendererAccessor",
     "world.WorldRendererMixin"
