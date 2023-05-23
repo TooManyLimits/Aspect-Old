@@ -190,14 +190,14 @@ AspectListManager = class("AspectListManager", $[
 				thisBound.scrollBarManager.ungrab()
 		}
 
-		events.mouse_down.add(this.mouseDownFunc)
-		events.mouse_move.add(this.mouseMoveFunc)
-		events.mouse_up.add(this.mouseUpFunc)
+		events.MOUSE_DOWN.add(this.mouseDownFunc)
+		events.MOUSE_MOVE.add(this.mouseMoveFunc)
+		events.MOUSE_UP.add(this.mouseUpFunc)
 	},
 	onGuiClose = fn() {
-		events.mouse_down.remove(this.mouseDownFunc)
-		events.mouse_move.remove(this.mouseMoveFunc)
-		events.mouse_up.remove(this.mouseUpFunc)
+		events.MOUSE_DOWN.remove(this.mouseDownFunc)
+		events.MOUSE_MOVE.remove(this.mouseMoveFunc)
+		events.MOUSE_UP.remove(this.mouseUpFunc)
 		this.aspects.each(fn(a) a.unhover()) //unhover aspects
 	}
 ])()

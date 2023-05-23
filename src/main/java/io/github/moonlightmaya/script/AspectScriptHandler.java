@@ -272,6 +272,7 @@ public class AspectScriptHandler {
         runUtil("AspectInternalUtils");
         runUtil("JsonText");
         runUtil("PrettyPrint");
+        runUtil("ParticleHelpers");
 
         //Other APIs not shown here:
 

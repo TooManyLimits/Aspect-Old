@@ -5,15 +5,12 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.moonlightmaya.model.renderlayers.NewRenderLayerFunction;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.RenderPhase;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.LivingEntityRenderer;
 import net.minecraft.client.render.entity.model.EntityModel;
-import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.entity.Entity;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4d;
 
 public class RenderUtils {
 
@@ -37,5 +34,15 @@ public class RenderUtils {
 
     public static RenderLayer getDirectEntityFlint() {
         return NewRenderLayerFunction.flint;
+    }
+
+    /**
+     * Keep track of the world <=> view matrices, update each frame
+     */
+    public static final Matrix4d WORLD_TO_VIEW_MATRIX = new Matrix4d();
+    public static final Matrix4d VIEW_TO_WORLD_MATRIX = new Matrix4d();
+    public static void updateWorldViewMatrices(Matrix4d worldToView) {
+        WORLD_TO_VIEW_MATRIX.set(worldToView);
+        WORLD_TO_VIEW_MATRIX.invert(VIEW_TO_WORLD_MATRIX);
     }
 }

@@ -1,0 +1,21 @@
+classes.ModelPart.methods().particle_7 = fn(particleString, x, y, z, vx, vy, vz) {
+	mat = this.partToWorldMatrix()
+	client.particle(particleString, mat.apply(x, y, z), mat.applyDir(vx, vy, vz))
+}
+
+classes.ModelPart.methods().particle_4 = fn(particleString, x, y, z) {
+	client.particle(particleString, this.partToWorldMatrix().apply(x, y, z))
+}
+
+classes.ModelPart.methods().particle_3 = fn(particleString, pos, vel) {
+	mat = this.partToWorldMatrix()
+	client.particle(particleString, mat.apply(pos), mat.applyDir(vel))
+}
+
+classes.ModelPart.methods().particle_2 = fn(particleString, pos) {
+	client.particle(particleString, this.partToWorldMatrix().apply(pos))
+}
+
+classes.ModelPart.methods().particle_1 = fn(particleString) {
+	client.particle(particleString, this.partToWorldMatrix().apply())
+}

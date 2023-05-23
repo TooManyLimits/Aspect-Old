@@ -27,6 +27,6 @@ models.hud.gui.aspectListEntry.visible(false)
 
 //Set up events
 //This setup does run the two events right away, keep in mind
-events.gui_open.add(require("gui_open"))
-events.gui_close.add(require("gui_close"))
+events.GUI_OPEN.add(require("gui_open"))
+events.GUI_CLOSE.add(require("gui_close"))
 

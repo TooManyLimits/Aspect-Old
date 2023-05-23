@@ -9,6 +9,7 @@ import io.github.moonlightmaya.model.AspectTexture;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.IOUtils;
+import io.github.moonlightmaya.util.RenderUtils;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.world.ClientWorld;
 import org.jetbrains.annotations.Nullable;
@@ -84,6 +85,10 @@ public class AspectManager {
      *                 world part's worldPos() vector.
      */
     public static void renderWorld(VertexConsumerProvider vcp, float tickDelta, AspectMatrixStack matrices) {
+
+        //Update the world to view matrices using the matrix stack info
+        RenderUtils.updateWorldViewMatrices(matrices.peekPosition());
+
         //The render context for all parts is currently "WORLD".
         //In the future, it may be necessary to pass in a context to this method
         //in the event that we want world parts to render with Iris shaders (which we do)

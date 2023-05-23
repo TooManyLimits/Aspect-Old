@@ -66,12 +66,12 @@ ButtonManager = class("ButtonManager", $[
 			thisBound.clearButton.mouseMoved(x / GUI_SCALE, y / GUI_SCALE)
 			thisBound.folderButton.mouseMoved(x / GUI_SCALE, y / GUI_SCALE)
 		}
-		events.mouse_down.add(this.mouseClickFunc)
-		events.mouse_move.add(this.mouseMoveFunc)
+		events.MOUSE_DOWN.add(this.mouseClickFunc)
+		events.MOUSE_MOVE.add(this.mouseMoveFunc)
 	},
 	onGuiClose = fn() {
-		events.mouse_down.remove(this.mouseClickFunc)
-		events.mouse_move.remove(this.mouseMoveFunc)
+		events.MOUSE_DOWN.remove(this.mouseClickFunc)
+		events.MOUSE_MOVE.remove(this.mouseMoveFunc)
 	}
 ])()
 

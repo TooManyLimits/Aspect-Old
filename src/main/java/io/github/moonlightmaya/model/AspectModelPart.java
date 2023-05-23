@@ -8,6 +8,7 @@ import io.github.moonlightmaya.model.rendertasks.ItemTask;
 import io.github.moonlightmaya.model.rendertasks.RenderTask;
 import io.github.moonlightmaya.model.rendertasks.TextTask;
 import io.github.moonlightmaya.util.AspectMatrixStack;
+import io.github.moonlightmaya.util.RenderUtils;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.*;
@@ -50,6 +51,8 @@ public class AspectModelPart extends Transformable {
     //Whether this part needs its matrix recalculated. After calling rot(), pos(), etc. this will be set to true.
     //If it's true at rendering time, then the this.partMatrix field will be updated, and this will be set to false.
     public boolean needsMatrixRecalculation = true;
+
+    private final Matrix4d partToWorldMatrix = new Matrix4d();
 
     //Cube data is always position, texture, normal.
     //Mesh data is position, texture, normal, with (optionally) skinning information.
@@ -407,6 +410,14 @@ public class AspectModelPart extends Transformable {
             matrixStack.multiplyUV(uvMatrix);
         }
 
+        //If we're in the proper render mode, then save the part to world matrices
+        if (owningAspect.renderContext.equals(Aspect.RenderContexts.WORLD)) {
+            this.partToWorldMatrix.set(matrixStack.peekPosition());
+            this.partToWorldMatrix.mulLocal(RenderUtils.VIEW_TO_WORLD_MATRIX);
+            this.partToWorldMatrix.scale(1.0/16);
+            this.partToWorldMatrix.translate(this.partPivot);
+        }
+
         for (RenderTask task : renderTasks)
             task.render(matrixStack, vcp, light, overlay);
 
@@ -631,6 +642,15 @@ public class AspectModelPart extends Transformable {
     @PetPetWhitelist
     public AspectModelPart parent() {
         return parent;
+    }
+
+    /**
+     * Unlike figura, returns the actual part to world matrix,
+     * not a copy. If you want a copy then copy it.
+     */
+    @PetPetWhitelist
+    public Matrix4d partToWorldMatrix() {
+        return this.partToWorldMatrix;
     }
 
     /**
