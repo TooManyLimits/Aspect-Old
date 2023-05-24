@@ -14,6 +14,7 @@ import io.github.moonlightmaya.script.apis.entity.EntityAPI;
 import io.github.moonlightmaya.script.apis.entity.LivingEntityAPI;
 import io.github.moonlightmaya.script.apis.entity.PlayerAPI;
 import io.github.moonlightmaya.script.apis.gui.ManagerAPI;
+import io.github.moonlightmaya.script.apis.math.Quaternions;
 import io.github.moonlightmaya.script.apis.world.*;
 import io.github.moonlightmaya.script.apis.math.Matrices;
 import io.github.moonlightmaya.script.apis.math.Vectors;
@@ -145,6 +146,7 @@ public class AspectScriptHandler {
         instance.registerClass(Matrix2d.class, Matrices.MAT_2.copy().makeEditable());
         instance.registerClass(Matrix3d.class, Matrices.MAT_3.copy().makeEditable());
         instance.registerClass(Matrix4d.class, Matrices.MAT_4.copy().makeEditable());
+        instance.registerClass(Quaterniondc.class, Quaternions.QUATERNION_CLASS.copy().makeEditable());
 
         //Misc
         instance.registerClass(AspectEvent.class, PetPetReflector.reflect(AspectEvent.class, "Event").copy().makeEditable());
@@ -215,6 +217,7 @@ public class AspectScriptHandler {
         setGlobal("mat2", Matrices.MAT_2_CREATE);
         setGlobal("mat3", Matrices.MAT_3_CREATE);
         setGlobal("mat4", Matrices.MAT_4_CREATE);
+        setGlobal("quat", Quaternions.QUAT_CREATE);
 
         //Classes (stored in table for convenience)
         PetPetTable<String, PetPetClass> classes = new PetPetTable<>();

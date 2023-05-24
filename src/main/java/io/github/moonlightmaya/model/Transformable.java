@@ -104,11 +104,6 @@ public abstract class Transformable {
         needsMatrixRecalculation = true;
     }
 
-    public void setRot(Quaternionf rot) {
-        partRot.set(rot);
-        needsMatrixRecalculation = true;
-    }
-
     public void setRot(Quaterniond rot) {
         partRot.set(rot);
         needsMatrixRecalculation = true;
@@ -143,12 +138,12 @@ public abstract class Transformable {
         return new Vector3d(partRot.getEulerAnglesXYZ(new Vector3f()));
     }
 
-    //@PetPetWhitelist
+    @PetPetWhitelist
     public Transformable quat_1(Quaterniond quat) {
         setRot(quat);
         return this;
     }
-    //@PetPetWhitelist
+    @PetPetWhitelist
     public Quaterniond quat_0() {
         return new Quaterniond(partRot);
     }

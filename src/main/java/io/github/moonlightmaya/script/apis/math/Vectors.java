@@ -69,7 +69,11 @@ public class Vectors {
             registerHelperCType("dist2_1", "distanceSquared");
             registerHelperDType("dist2", "distanceSquared");
 
-            //Vector3 exclusive
+            //Normalize
+            registerHelper("fix", "normalize", new Class[0]);
+            registerHelper("normalize", "normalize", new Class[0]);
+
+            //Vector3 exclusive cross functions
             VEC_3.addMethod("cross_1", new JavaFunction(Vector3d.class, "cross", true, Vector3dc.class));
             VEC_3.addMethod("cross_3", new JavaFunction(Vector3d.class, "cross", true, double.class, double.class, double.class));
 
@@ -111,10 +115,18 @@ public class Vectors {
             registerHelperCType("sub_1", "sub");
             registerHelperDType("sub", "sub");
 
-            //tf for transform, "transform" is a long word
-            VEC_2.addMethod("tf", new JavaFunction(Vector2d.class, "mul", true, Matrix2dc.class));
-            VEC_3.addMethod("tf", new JavaFunction(Vector3d.class, "mul", true, Matrix3dc.class));
-            VEC_4.addMethod("tf", new JavaFunction(Vector4d.class, "mul", true, Matrix4dc.class));
+            //Transform by matrix
+            VEC_2.addMethod("transform", new JavaFunction(Vector2d.class, "mul", true, Matrix2dc.class));
+            VEC_3.addMethod("transform", new JavaFunction(Vector3d.class, "mul", true, Matrix3dc.class));
+            VEC_4.addMethod("transform", new JavaFunction(Vector4d.class, "mul", true, Matrix4dc.class));
+
+            VEC_2.addMethod("transform", new JavaFunction(Vector2d.class, "mul", true, Matrix2dc.class));
+            VEC_3.addMethod("transform", new JavaFunction(Vector3d.class, "mul", true, Matrix3dc.class));
+            VEC_4.addMethod("transform", new JavaFunction(Vector4d.class, "mul", true, Matrix4dc.class));
+
+            //Rotate by quaternion
+            VEC_3.addMethod("rotate", new JavaFunction(Vector3d.class, "rotate", true, Quaterniondc.class));
+            VEC_4.addMethod("rotate", new JavaFunction(Vector4d.class, "rotate", true, Quaterniondc.class));
 
             //JOML is extremely weird and they have lots and lots and lots of inconsistencies all over the place...
             //For instance, take the "div" function.
