@@ -1,10 +1,15 @@
 package io.github.moonlightmaya.model;
 
 import io.github.moonlightmaya.script.vanilla.VanillaPart;
+import io.github.moonlightmaya.util.AspectMatrixStack;
+import net.minecraft.client.util.math.MatrixStack;
 import org.joml.*;
 import petpet.external.PetPetWhitelist;
+import petpet.types.PetPetList;
 
 import java.lang.Math;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A base class for things which can have their position and rendering
@@ -23,26 +28,46 @@ public abstract class Transformable {
     public final Quaternionf partRot = new Quaternionf();
     public final Vector3f partScale = new Vector3f(1, 1, 1);
     public boolean visible = true;
-    public VanillaPart vanillaParent; //The vanilla part that this will take transforms from
+
+    /**
+     * A list of objects which will act on the transformable's matrices,
+     * and modify them if need be.
+     */
+    public PetPetList<Transformer> transformers;
 
     //Whether this needs its matrix recalculated. After calling rot(), pos(), etc. this will be set to true.
     //If it's true at rendering time, then the matrix field will be updated, and this will be set to false.
     public boolean needsMatrixRecalculation = true;
 
-
-    //Recalculation of the matrix
-    //Assume that *only one thing is being rendered at a time* (one thread)
-    //Otherwise, this static variable will cause bad things.
-    private static final Matrix4f tempMatrixSavedTransform = new Matrix4f();
     protected void recalculateMatrixIfNeeded() {
-        if (needsMatrixRecalculation || vanillaParent != null) {
+        //If needsMatrixRecalculation, or any of the transformers
+        //demand it, we should recalculate
+        boolean shouldRecalculate = needsMatrixRecalculation;
+        if (!shouldRecalculate) {
+            for (Transformer t : transformers)
+                if (t.forceRecalculation()) {
+                    shouldRecalculate = true;
+                    break;
+                }
+        }
+
+        //If we should recalculate, then... do it
+        if (shouldRecalculate) {
             //Scale down the pivot value, it's in "block" units
             positionMatrix.translation(partPivot.mul(1f/16));
 
-            if (vanillaParent != null) {
-                positionMatrix.mul(vanillaParent.inverseDefaultTransform);
-                tempMatrixSavedTransform.set(vanillaParent.savedTransform);
-                positionMatrix.mul(tempMatrixSavedTransform);
+            //Arbitrarily decide that other transformers should happen
+            //before the ones imposed by the pos, rot, scale etc of this
+            //class. There is a case to be made for abstracting away
+            //this "transformable" class's actions as yet another transformer,
+            //but we're not worrying about that right now.
+
+            for (Transformer t : transformers) {
+                if (t != null) {
+                    //If the method returns true, cancel further transformers
+                    if (t.affectMatrix(positionMatrix))
+                        break;
+                }
             }
 
             positionMatrix
@@ -210,14 +235,29 @@ public abstract class Transformable {
     }
 
     @PetPetWhitelist
-    public Transformable vanillaParent_1(VanillaPart vanillaPart) {
-        vanillaParent = vanillaPart;
-        return this;
+    public PetPetList<Transformer> transformers() {
+        return transformers;
     }
 
-    @PetPetWhitelist
-    public VanillaPart vanillaParent_0() {
-        return vanillaParent;
+    /**
+     * Something which can act on a transformable and modify its
+     * matrices.
+     * - Vanilla parts
+     * - Animations
+     */
+    public interface Transformer {
+        /**
+         * @return true if this transformer should force
+         * the part it's on to recalculate
+         */
+        boolean forceRecalculation();
+
+        /**
+         * Affect the passed matrix.
+         * If it returns true, then further transformers
+         * on the part will be canceled.
+         */
+        boolean affectMatrix(Matrix4f matrix);
     }
 
 }

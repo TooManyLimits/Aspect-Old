@@ -97,12 +97,12 @@ public class VanillaRenderer {
             vanillaParts.get(entry.getKey()).names.add(entry.getKey());
         }
         //Set the petpet field
-        parts = new PetPetTable<>();
+        parts.clear();
         parts.putAll(vanillaParts);
     }
 
     //PETPET METHODS
-    public PetPetTable<Object, VanillaPart> parts; //Set by initVanillaParts()
+    public final PetPetTable<Object, VanillaPart> parts = new PetPetTable<>(); //Set by initVanillaParts()
 
     @PetPetWhitelist
     public PetPetTable<Object, VanillaPart> parts() {

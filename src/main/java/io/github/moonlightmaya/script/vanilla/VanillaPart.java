@@ -1,6 +1,7 @@
 package io.github.moonlightmaya.script.vanilla;
 
 import io.github.moonlightmaya.mixin.ModelPartAccessor;
+import io.github.moonlightmaya.model.Transformable;
 import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.model.ModelTransform;
 import org.joml.Matrix4d;
@@ -20,7 +21,7 @@ import java.util.stream.Stream;
  * Interface for an aspect to interact with vanilla ModelPart objects
  */
 @PetPetWhitelist
-public class VanillaPart {
+public class VanillaPart implements Transformable.Transformer {
 
     public final ModelPart referencedPart;
     public final List<Object> names = new ArrayList<>(); //names for this part
@@ -141,5 +142,34 @@ public class VanillaPart {
     public VanillaPart visible(Boolean b) {
         appliedVisibility = b;
         return this;
+    }
+
+    //Transformer implementation below, rather simple
+
+    /**
+     * Always recalculate matrices for vanilla parts
+     */
+    @Override
+    public boolean forceRecalculation() {
+        return true;
+    }
+
+    //Recalculation of the matrix
+    //Assume that *only one thing is being rendered at a time* (one thread)
+    //Otherwise, this static variable will cause bad things.
+    //However, since rendering is single threaded, accessing this variable
+    //statically does not cause issues.
+    private static final Matrix4f tempMatrixSavedTransform = new Matrix4f();
+
+    /**
+     * First undo the "default" transformation by multiplying the inverse
+     * default transform, then add the saved transform to the part.
+     */
+    @Override
+    public boolean affectMatrix(Matrix4f matrix) {
+        matrix.mul(this.inverseDefaultTransform);
+        tempMatrixSavedTransform.set(this.savedTransform);
+        matrix.mul(tempMatrixSavedTransform);
+        return false;
     }
 }
