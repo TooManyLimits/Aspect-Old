@@ -4,6 +4,7 @@ import io.github.moonlightmaya.manage.AspectMetadata;
 import io.github.moonlightmaya.manage.data.BaseStructures;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.model.WorldRootModelPart;
+import io.github.moonlightmaya.model.animation.Animation;
 import io.github.moonlightmaya.script.AspectScriptHandler;
 import io.github.moonlightmaya.script.events.EventHandler;
 import io.github.moonlightmaya.model.AspectTexture;
@@ -41,17 +42,25 @@ public class Aspect {
     public List<WorldRootModelPart> worldRoots;
     public AspectModelPart hudRoot;
 
-    //whether the aspect is finished loading in. Some processes are asynchronous relative to the constructor
-    // (namely, loading textures), so we don't want to try setting this aspect until everything is ready
+    /**
+     * whether the aspect is finished loading in. Some processes are asynchronous relative to the constructor
+     * (namely, loading textures), so we don't want to try setting this aspect until everything is ready
+     */
     public boolean isReady;
 
+    /**
+     * Important objects to keep saved and accessible:
+     */
     public final List<AspectTexture> textures;
 
     public final Map<String, String> scripts;
-
     public final VanillaRenderer vanillaRenderer;
     public final AspectScriptHandler scriptHandler;
+    public final LinkedHashMap<String, Animation> animations;
 
+    /**
+     * Error related things:
+     */
     private Throwable error;
     private ErrorLocation errorLocation;
 
@@ -101,9 +110,9 @@ public class Aspect {
 
         metadata = new AspectMetadata(materials.metadata());
 
-        //Load textures first, needed for making model parts
+        //Load textures and animations first, needed for making model parts
         textures = new ArrayList<>();
-        for (BaseStructures.Texture base : materials.textures()) {
+        for (BaseStructures.TextureStructure base : materials.textures()) {
             try {
                 AspectTexture tex = new AspectTexture(this, base);
                 tex.uploadIfNeeded(); //upload texture
@@ -114,8 +123,13 @@ public class Aspect {
                 throw re;
             }
         }
-        //Set the aspect to be ready, *after* all textures finish "uploadIfNeeded()"
-        RenderUtils.executeOnRenderThread(() -> isReady = true);
+
+        //Load animations
+        animations = new LinkedHashMap<>();
+        for (BaseStructures.AnimationStructure anim : materials.animations()) {
+            Animation animation = new Animation(anim, this);
+            animations.put(animation.name, animation);
+        }
 
         //Create vanilla renderer
         vanillaRenderer = new VanillaRenderer();
@@ -135,10 +149,13 @@ public class Aspect {
         //Separate out the list of script objects into a map instead
         //Names are keys, source is values
         scripts = new HashMap<>();
-        for (BaseStructures.Script script : materials.scripts())
+        for (BaseStructures.ScriptStructure script : materials.scripts())
             scripts.put(script.name(), script.source());
 
         scriptHandler = new AspectScriptHandler(this);
+
+        //Set the aspect to be ready, *after* all textures finish "uploadIfNeeded()" on the render thread
+        RenderUtils.executeOnRenderThread(() -> isReady = true);
     }
 
 
@@ -199,6 +216,8 @@ public class Aspect {
     public void tick(ClientWorld world) {
         if (isErrored()) return;
         try {
+            for (Animation anim : this.animations.values())
+                anim.tick();
             //If the world changed, change the global var
             if (world != lastWorld) {
                 scriptHandler.setGlobal("world", world);
@@ -257,6 +276,20 @@ public class Aspect {
      */
     public void renderWorld(VertexConsumerProvider vcp, float tickDelta, AspectMatrixStack matrixStack) {
         if (isErrored()) return;
+
+        //Ensure textures are uploaded
+        for (AspectTexture tex : textures)
+            tex.uploadIfNeeded();
+
+        //Set the render context
+        renderContext = RenderContexts.WORLD;
+
+        //Update animations
+        for (Animation animation : animations.values()) {
+            animation.render(tickDelta);
+        }
+
+        //Call events
         scriptHandler.callEvent(EventHandler.WORLD_RENDER, tickDelta, renderContext);
         try {
             for (WorldRootModelPart worldRoot : worldRoots) {
@@ -266,6 +299,7 @@ public class Aspect {
             error(t, ErrorLocation.RENDER_WORLD);
         }
         scriptHandler.callEvent(EventHandler.POST_WORLD_RENDER, tickDelta, renderContext);
+
         //After rendering the world, reset my context to other
         this.renderContext = RenderContexts.OTHER;
     }

@@ -4,7 +4,11 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.*;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.manage.data.BaseStructures;
+import io.github.moonlightmaya.model.animation.Animation;
+import io.github.moonlightmaya.model.animation.Interpolation;
+import io.github.moonlightmaya.model.animation.Keyframe;
 import io.github.moonlightmaya.util.ColorUtils;
+import io.github.moonlightmaya.util.DataStructureUtils;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -48,7 +52,29 @@ public class JsonStructures {
         public JsonArray outliner;
         public Part[] fixedOutliner;
         public Texture[] textures;
+        public JsonAnimation[] animations;
 
+        /**
+         * After the initial GSON parse, some data may not be in the right format.
+         * This will resolve that.
+         *
+         */
+        public void fix() {
+            if (resolution == null) resolution = new Resolution(16, 16);
+            if (elements == null) elements = new Part[0];
+            if (outliner == null) outliner = new JsonArray();
+            fixedOutliner = getGson().fromJson(outliner, Part[].class);
+            if (textures == null) textures = new Texture[0];
+            if (animations == null) animations = new JsonAnimation[0];
+        }
+
+        /**
+         * A custom gson is necessary because we need the outliner part deserializer.
+         * This is because the Blockbench "outliner" array contains both group model parts
+         * and UUIDs of parts defined in the "elements" array previously. Using the custom
+         * gson and the custom deserializer, we can simplify the process of deserializing
+         * both of these types of part.
+         */
         public Gson getGson() {
             return new GsonBuilder()
                     .registerTypeAdapter(Vector2f.class, Vector2fDeserializer.INSTANCE)
@@ -63,7 +89,21 @@ public class JsonStructures {
 
     public record Part(String name, float color, Vector3f origin, Vector3f rotation, Boolean visibility, String type,
                        String uuid, Vector3f from, Vector3f to, Double inflate, JsonObject vertices, JsonObject faces, JsonStructures.Part[] children) {
-            public BaseStructures.ModelPartStructure toBaseStructure(List<Integer> texMapper, Resolution resolution) throws AspectImporter.AspectImporterException {
+            public BaseStructures.ModelPartStructure toBaseStructure(List<Integer> texMapper, JsonAnimation[] animations, List<Integer> animMapper, Resolution resolution) throws AspectImporter.AspectImporterException {
+
+                //Find animators
+                List<BaseStructures.AnimatorStructure> foundAnimators = new ArrayList<>(0);
+                for (int i = 0; i < animations.length; i++) {
+                    //For each animation, check if it has an animator for me.
+                    JsonAnimation curAnimation = animations[i];
+                    JsonAnimator thisAnimator = curAnimation.animators.get(this.uuid);
+                    //If it does, then create the base structure for the animator, assigning the
+                    //index according to the animMapper provided
+                    if (thisAnimator != null) {
+                        int mappedIndex = animMapper.get(i);
+                        foundAnimators.add(thisAnimator.toBaseStructure(mappedIndex));
+                    }
+                }
 
                 //Mesh! parse it and return it
                 if (this.vertices != null) {
@@ -102,19 +142,27 @@ public class JsonStructures {
                         int split = 0;
                         for (BaseStructures.MeshData meshData : meshes.values()) {
                             splitMeshes.add(new BaseStructures.ModelPartStructure(
-                                    "split" + (split++), new Vector3f(), new Vector3f(), new Vector3f(), visibility == null ? true : visibility, List.of(),
-                                    AspectModelPart.ModelPartType.MESH, null, meshData
+                                    "split" + (split++),
+                                    new Vector3f(), new Vector3f(), visibility == null ? true : visibility,
+                                    List.of(), AspectModelPart.ModelPartType.MESH, foundAnimators, null, meshData
                             ));
                         }
                         return new BaseStructures.ModelPartStructure(
-                                name, new Vector3f(), rotation == null ? new Vector3f() : rotation, origin, visibility == null ? true : visibility,
-                                splitMeshes, AspectModelPart.ModelPartType.GROUP, null, null
+                                name,
+                                rotation == null ? new Vector3f() : rotation,
+                                origin == null ? new Vector3f() : origin,
+                                visibility == null ? true : visibility,
+                                splitMeshes, AspectModelPart.ModelPartType.GROUP,
+                                foundAnimators, null, null
                         );
                     } else if (meshes.size() == 1) {
                         BaseStructures.MeshData meshData = meshes.values().iterator().next();
                         return new BaseStructures.ModelPartStructure(
-                                name, new Vector3f(), rotation == null ? new Vector3f() : rotation, origin, visibility == null ? true : visibility,
-                                List.of(), AspectModelPart.ModelPartType.MESH, null, meshData
+                                name,
+                                rotation == null ? new Vector3f() : rotation,
+                                origin == null ? new Vector3f() : origin,
+                                visibility == null ? true : visibility,
+                                List.of(), AspectModelPart.ModelPartType.MESH, foundAnimators, null, meshData
                         );
                     } else {
                         throw new AspectImporter.AspectImporterException("Failed to import mesh, bug, contact devs");
@@ -144,13 +192,16 @@ public class JsonStructures {
                         List<BaseStructures.ModelPartStructure> splitCubes = new ArrayList<>(n);
                         for (int i = 0; i < n; i++) {
                             splitCubes.add(new BaseStructures.ModelPartStructure(
-                                "split" + i, new Vector3f(), new Vector3f(), new Vector3f(), visibility == null ? true : visibility, List.of(),
-                                AspectModelPart.ModelPartType.CUBE, new BaseStructures.CubeData(from, to, faces.get(i)), null
+                                "split" + i, new Vector3f(), new Vector3f(), visibility == null ? true : visibility, List.of(),
+                                AspectModelPart.ModelPartType.CUBE, foundAnimators, new BaseStructures.CubeData(from, to, faces.get(i)), null
                             ));
                         }
                         return new BaseStructures.ModelPartStructure(
-                                name, new Vector3f(), rotation == null ? new Vector3f() : rotation, origin, visibility == null ? true : visibility,
-                                splitCubes, AspectModelPart.ModelPartType.GROUP, null, null
+                                name,
+                                rotation == null ? new Vector3f() : rotation,
+                                origin == null ? new Vector3f() : origin,
+                                visibility == null ? true : visibility,
+                                splitCubes, AspectModelPart.ModelPartType.GROUP, foundAnimators, null, null
                         );
                     }
                 }
@@ -159,12 +210,19 @@ public class JsonStructures {
                 ArrayList<BaseStructures.ModelPartStructure> baseChildren = new ArrayList<>(children == null ? 0 : children.length);
                 if (children != null)
                     for (Part p : children)
-                        baseChildren.add(p.toBaseStructure(texMapper, resolution));
+                        baseChildren.add(p.toBaseStructure(texMapper, animations, animMapper, resolution));
+
+                //Get the bb type. If type is not specified/null, make it a group
+                AspectModelPart.ModelPartType bbType = this.type == null ?
+                        AspectModelPart.ModelPartType.GROUP :
+                        AspectModelPart.ModelPartType.valueOf(type.toUpperCase());
 
                 return new BaseStructures.ModelPartStructure(
-                        name, new Vector3f(), rotation == null ? new Vector3f() : rotation, origin, visibility == null ? true : visibility,
-                        baseChildren,
-                        type != null ? AspectModelPart.ModelPartType.valueOf(type.toUpperCase()) : AspectModelPart.ModelPartType.GROUP,
+                        name,
+                        rotation == null ? new Vector3f() : rotation,
+                        origin == null ? new Vector3f() : origin,
+                        visibility == null ? true : visibility,
+                        baseChildren, bbType, foundAnimators,
                         (faces != null && faces.size() == 1) ? new BaseStructures.CubeData(from, to, faces.get(0)) : null,
                         null
                 );
@@ -238,13 +296,108 @@ public class JsonStructures {
     public record Texture(
              String name, String source
     ) {
-        public BaseStructures.Texture toBaseStructure(String relativePath) {
+        public BaseStructures.TextureStructure toBaseStructure(String relativePath) {
             String src = source.replace("data:image/png;base64,", "");
-            return new BaseStructures.Texture(relativePath + "/" + strippedName(), Base64.getDecoder().decode(src));
+            return new BaseStructures.TextureStructure(relativePath + "/" + strippedName(), Base64.getDecoder().decode(src));
         }
 
         public String strippedName() {
             return name.endsWith(".png") ? name.substring(0, name.length()-4) : name;
+        }
+    }
+
+    public record JsonAnimation(
+            String name, String loop, boolean override, float length, float snapping, LinkedHashMap<String, JsonAnimator> animators
+    ) {
+        public BaseStructures.AnimationStructure toBaseStructure() {
+            //Base structure doesn't care about the animators like the json does, so we can pretty simply convert
+            Animation.LoopMode loopMode = Animation.LoopMode.valueOf(this.loop.toUpperCase());
+            return new BaseStructures.AnimationStructure(name, loopMode, override, length, snapping);
+        }
+    }
+
+    public record JsonAnimator(
+            JsonKeyframe[] keyframes //thats it lol
+    ) {
+        public BaseStructures.AnimatorStructure toBaseStructure(int mappedIndex) throws AspectImporter.AspectImporterException {
+            List<BaseStructures.KeyframeStructure> posKeyframes = new ArrayList<>();
+            List<BaseStructures.KeyframeStructure> rotKeyframes = new ArrayList<>();
+            List<BaseStructures.KeyframeStructure> scaleKeyframes = new ArrayList<>();
+            for (JsonKeyframe keyframe : keyframes) {
+                BaseStructures.KeyframeStructure baseKeyframe = keyframe.toBaseStructure();
+                switch (keyframe.channel) {
+                    case "position" -> posKeyframes.add(baseKeyframe);
+                    case "rotation" -> rotKeyframes.add(baseKeyframe);
+                    case "scale" -> scaleKeyframes.add(baseKeyframe);
+                    default -> throw new AspectImporter.AspectImporterException("Unrecognized animation channel \"" + keyframe.channel + "\"");
+                }
+            }
+            Comparator<BaseStructures.KeyframeStructure> sortByTime = Comparator.comparing(BaseStructures.KeyframeStructure::time);
+            posKeyframes.sort(sortByTime);
+            rotKeyframes.sort(sortByTime);
+            scaleKeyframes.sort(sortByTime);
+            return new BaseStructures.AnimatorStructure(mappedIndex, posKeyframes, rotKeyframes, scaleKeyframes);
+        }
+    }
+
+    public record JsonKeyframe(
+            //I don't know why data_points is an array and I'm sorry
+            String channel, float time, String interpolation, DataPoint[] data_points,
+            //Bezier
+            Vector3f bezier_left_time, Vector3f bezier_left_value, Vector3f bezier_right_time, Vector3f bezier_right_value
+    ) {
+        public BaseStructures.KeyframeStructure toBaseStructure() throws AspectImporter.AspectImporterException {
+            //Get interpolation, default to linear if unrecognized
+            Interpolation.Builtin interpolation = DataStructureUtils.getOrDefault(
+                    Interpolation.Builtin::valueOf,
+                    (this.interpolation != null ? this.interpolation : "linear").toUpperCase(),
+                    Interpolation.Builtin.LINEAR,
+                    "Unrecognized interpolation " + this.interpolation + ", defaulting to linear"
+            );
+
+            data_points[0].verify(); //check data
+
+            return new BaseStructures.KeyframeStructure(
+                    time, interpolation,
+                    data_points[0].realX(), data_points[0].realY(), data_points[0].realZ(),
+                    bezier_left_time, bezier_left_value, bezier_right_time, bezier_right_value
+            );
+        }
+    }
+
+    public record DataPoint(
+            Object x, Object y, Object z //can be either strings or numbers
+    ) {
+        public void verify() throws AspectImporter.AspectImporterException {
+            if (!(x instanceof String) && !(x instanceof Number))
+                throw new AspectImporter.AspectImporterException("Failed to parse data point: expected string or number, but got " + (x == null ? "null" : x.getClass()));
+            if (!(y instanceof String) && !(y instanceof Number))
+                throw new AspectImporter.AspectImporterException("Failed to parse data point: expected string or number, but got " + (y == null ? "null" : y.getClass()));
+            if (!(z instanceof String) && !(z instanceof Number))
+                throw new AspectImporter.AspectImporterException("Failed to parse data point: expected string or number, but got " + (z == null ? "null" : z.getClass()));
+        }
+
+        public Object realX() {
+            return checkNumberString(x);
+        }
+        public Object realY() {
+            return checkNumberString(y);
+        }
+        public Object realZ() {
+            return checkNumberString(z);
+        }
+
+        /**
+         * Sometimes blockbench loves to take ordinary numbers and export them as strings
+         * so these functions
+         */
+        private static Object checkNumberString(Object o) {
+            if (o instanceof String s) {
+                try {
+                    return Float.parseFloat(s);
+                } catch (Exception ignored) {}
+            }
+            return o;
         }
     }
 
@@ -261,6 +414,8 @@ public class JsonStructures {
         @Override
         public Part deserialize(JsonElement element, Type type, JsonDeserializationContext ctx) throws JsonParseException {
             if (element.isJsonPrimitive()) {
+                if (!uuidPartMap.containsKey(element.getAsString()))
+                    throw new JsonParseException("Invalid bbmodel, found uuid in outliner not present in elements (" + element.getAsString() + ")");
                 return uuidPartMap.get(element.getAsString());
             } else {
                 JsonObject json = (JsonObject) element;

@@ -29,10 +29,10 @@ global fn for(start, end, increment, func) {
 vec3(0,0,0).class().methods().augmented = fn() vec4(this.x, this.y, this.z, 1)
 
 //mat4 apply, 3 numbers and vector versions
-mat4().class().methods().apply_3 = fn(x, y, z) vec4(x, y, z, 1).tf(this).xyz
-mat4().class().methods().apply_1 = fn(v) v.augmented().tf(this).xyz
-mat4().class().methods().apply_0 = fn() vec4(0,0,0,1).tf(this).xyz
+mat4().class().methods().apply_3 = fn(x, y, z) vec4(x, y, z, 1).transform(this).xyz
+mat4().class().methods().apply_1 = fn(v) v.augmented().transform(this).xyz
+mat4().class().methods().apply_0 = fn() vec4(0,0,0,1).transform(this).xyz
 
-mat4().class().methods().applyDir_3 = fn(x, y, z) vec4(x, y, z, 0).tf(this).xyz
-mat4().class().methods().applyDir_1 = fn(v) v.xyz_.tf(this).xyz
-mat4().class().methods().applyDir_0 = fn() vec4(0,0,0,0).tf(this).xyz
+mat4().class().methods().applyDir_3 = fn(x, y, z) vec4(x, y, z, 0).transform(this).xyz
+mat4().class().methods().applyDir_1 = fn(v) v.xyz_.transform(this).xyz
+mat4().class().methods().applyDir_0 = fn() vec4(0,0,0,0).transform(this).xyz

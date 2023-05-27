@@ -3,7 +3,11 @@ package io.github.moonlightmaya.manage.data;
 import io.github.moonlightmaya.manage.data.importing.AspectImporter;
 import io.github.moonlightmaya.manage.data.importing.JsonStructures;
 import io.github.moonlightmaya.model.AspectModelPart;
+import io.github.moonlightmaya.model.animation.Animation;
+import io.github.moonlightmaya.model.animation.Interpolation;
 import io.github.moonlightmaya.util.IOUtils;
+import io.github.moonlightmaya.util.MathUtils;
+import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 import petpet.types.PetPetList;
@@ -13,7 +17,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.lang.Math;
 import java.util.*;
-import java.util.function.BiConsumer;
 
 /**
  * Contains the "base" structures in the data graph.
@@ -30,8 +33,9 @@ public class BaseStructures {
             ModelPartStructure entityRoot,
             List<ModelPartStructure> worldRoots,
             ModelPartStructure hudRoot,
-            List<Texture> textures,
-            List<Script> scripts
+            List<TextureStructure> textures,
+            List<AnimationStructure> animations,
+            List<ScriptStructure> scripts
     ) {
         /**
          * Note that the metadata is written out first!!
@@ -39,46 +43,58 @@ public class BaseStructures {
          * the metadata of a file when opening it!
          */
         public void write(DataOutputStream out) throws IOException {
+            //Metadata must be first
             metadata.write(out);
 
-            entityRoot.write(out);
+            //Animations are needed by model parts, so we must write and read them before model parts
+            IOUtils.writeVarInt(out, animations.size());
+            for (AnimationStructure animation : animations) animation.write(out);
 
-            out.writeInt(worldRoots.size());
-            for (ModelPartStructure worldRoot : worldRoots) worldRoot.write(out);
+            entityRoot.write(out, animations);
 
-            hudRoot.write(out);
+            IOUtils.writeVarInt(out, worldRoots.size());
+            for (ModelPartStructure worldRoot : worldRoots) worldRoot.write(out, animations);
 
-            out.writeInt(textures.size());
-            for (Texture texture : textures) texture.write(out);
+            hudRoot.write(out, animations);
 
-            out.writeInt(scripts.size());
-            for (Script script : scripts) script.write(out);
+            IOUtils.writeVarInt(out, textures.size());
+            for (TextureStructure texture : textures) texture.write(out);
+
+            IOUtils.writeVarInt(out, scripts.size());
+            for (ScriptStructure script : scripts) script.write(out);
         }
 
         public static AspectStructure read(DataInputStream in) throws IOUtils.AspectIOException {
             try {
+                //Metadata always first, so we can read just a metadata object from a stream if needed
                 MetadataStructure metadata = MetadataStructure.read(in);
 
-                ModelPartStructure entityRoot = ModelPartStructure.read(in);
+                //Animations are needed by model parts, so we put them early
+                int numAnimations = IOUtils.readVarInt(in);
+                List<AnimationStructure> animations = numAnimations > 0 ? new ArrayList<>(numAnimations) : List.of();
+                for (int i = 0; i < numAnimations; i++)
+                    animations.add(AnimationStructure.read(in));
 
-                int numWorldRoots = in.readInt();
+                ModelPartStructure entityRoot = ModelPartStructure.read(in, animations);
+
+                int numWorldRoots = IOUtils.readVarInt(in);
                 List<ModelPartStructure> worldRoots = numWorldRoots > 0 ? new ArrayList<>(numWorldRoots) : List.of();
                 for (int i = 0; i < numWorldRoots; i++)
-                    worldRoots.add(ModelPartStructure.read(in));
+                    worldRoots.add(ModelPartStructure.read(in, animations));
 
-                ModelPartStructure hudRoot = ModelPartStructure.read(in);
+                ModelPartStructure hudRoot = ModelPartStructure.read(in, animations);
 
-                int numTextures = in.readInt();
-                List<Texture> textures = numTextures > 0 ? new ArrayList<>(numTextures) : List.of();
+                int numTextures = IOUtils.readVarInt(in);
+                List<TextureStructure> textures = numTextures > 0 ? new ArrayList<>(numTextures) : List.of();
                 for (int i = 0; i < numTextures; i++)
-                    textures.add(Texture.read(in));
+                    textures.add(TextureStructure.read(in));
 
-                int numScripts = in.readInt();
-                List<Script> scripts = numScripts > 0 ? new ArrayList<>(numScripts) : List.of();
+                int numScripts = IOUtils.readVarInt(in);
+                List<ScriptStructure> scripts = numScripts > 0 ? new ArrayList<>(numScripts) : List.of();
                 for (int i = 0; i < numScripts; i++)
-                    scripts.add(Script.read(in));
+                    scripts.add(ScriptStructure.read(in));
                 return new AspectStructure(
-                        metadata, entityRoot, worldRoots, hudRoot, textures, scripts
+                        metadata, entityRoot, worldRoots, hudRoot, textures, animations, scripts
                 );
             } catch (IOException e) {
                 throw new IOUtils.AspectIOException(e);
@@ -96,7 +112,7 @@ public class BaseStructures {
             out.writeUTF(name);
             out.writeUTF(version);
             IOUtils.writeVector3f(out, color);
-            out.writeInt(authors.size());
+            IOUtils.writeVarInt(out, authors.size());
             for (String author : authors)
                 out.writeUTF(author);
         }
@@ -105,7 +121,7 @@ public class BaseStructures {
             String name = in.readUTF();
             String version = in.readUTF();
             Vector3f color = IOUtils.readVector3f(in);
-            int authorCount = in.readInt();
+            int authorCount = IOUtils.readVarInt(in);
             List<String> authors = new PetPetList<>(authorCount);
             for (int i = 0; i < authorCount; i++)
                 authors.add(in.readUTF());
@@ -115,53 +131,78 @@ public class BaseStructures {
         }
     }
 
-
     public record ModelPartStructure(
             String name,
-            Vector3f pos, Vector3f rot, Vector3f pivot, boolean visible,
+            Vector3f rot, Vector3f pivot, boolean visible,
             List<ModelPartStructure> children,
             AspectModelPart.ModelPartType type,
+            List<AnimatorStructure> animators,
             @Nullable CubeData cubeData,
             @Nullable MeshData meshData
     ) {
-        public void write(DataOutputStream out) throws IOException {
+        public void write(DataOutputStream out, List<AnimationStructure> animations) throws IOException {
             out.writeUTF(name);
-            IOUtils.writeVector3f(out, pos);
             IOUtils.writeVector3f(out, rot);
             IOUtils.writeVector3f(out, pivot);
-            out.write((visible ? 1 : 0) | (cubeData != null ? 2 : 0) | (meshData != null ? 4 : 0));
+
+            out.write(
+                    (visible ? 1 : 0) | //Visible flag
+                    (cubeData != null ? 2 : 0) | //Has cube data
+                    (meshData != null ? 4 : 0) | //Has mesh data
+                    (animators.size() > 0 ? 8 : 0)); //Has at least 1 animator
+
             if (children != null) {
-                out.writeInt(children.size());
+                IOUtils.writeVarInt(out, children.size());
                 for (ModelPartStructure child : children)
-                    child.write(out);
+                    child.write(out, animations);
             } else {
-                out.writeInt(0);
+                IOUtils.writeVarInt(out, 0);
             }
+
             out.write(type.ordinal());
+
+            if (animators.size() > 0) {
+                IOUtils.writeVarInt(out, animators.size());
+                for (AnimatorStructure animator : animators)
+                    animator.write(out, animations);
+            }
+
             if (cubeData != null)
                 cubeData.write(out);
             if (meshData != null)
                 meshData.write(out);
         }
 
-        public static ModelPartStructure read(DataInputStream in) throws IOException {
+        public static ModelPartStructure read(DataInputStream in, List<AnimationStructure> animations) throws IOException {
             String name = in.readUTF();
-            Vector3f pos = IOUtils.readVector3f(in);
             Vector3f rot = IOUtils.readVector3f(in);
             Vector3f pivot = IOUtils.readVector3f(in);
+
             int flags = in.read();
             boolean visible = (flags & 1) > 0;
             boolean hasCubeData = (flags & 2) > 0;
             boolean hasMeshData = (flags & 4) > 0;
-            int numChildren = in.readInt();
+            boolean hasAnimations = (flags & 8) > 0;
+
+            int numChildren = IOUtils.readVarInt(in);
             List<ModelPartStructure> children = numChildren > 0 ? new ArrayList<>(numChildren) : List.of();
             for (int i = 0; i < numChildren; i++)
-                children.add(ModelPartStructure.read(in));
+                children.add(ModelPartStructure.read(in, animations));
+
             AspectModelPart.ModelPartType type = AspectModelPart.ModelPartType.values()[in.read()];
+
+            List<AnimatorStructure> animators = new ArrayList<>();
+            if (hasAnimations) {
+                int count = IOUtils.readVarInt(in);
+                for (int i = 0; i < count; i++)
+                    animators.add(AnimatorStructure.read(in, animations));
+            }
+
             CubeData cubeData = hasCubeData ? CubeData.read(in) : null;
             MeshData meshData = hasMeshData ? MeshData.read(in) : null;
+
             return new ModelPartStructure(
-                    name, pos, rot, pivot, visible, children, type, cubeData, meshData
+                    name, rot, pivot, visible, children, type, animators, cubeData, meshData
             );
         }
     }
@@ -198,7 +239,7 @@ public class BaseStructures {
                 faces.get(face++).write(out);
             }
             if (presentFaces != 0)
-                out.writeInt(tex);
+                IOUtils.writeVarInt(out, tex);
         }
 
         public static CubeFaces read(DataInputStream in) throws IOException {
@@ -212,7 +253,7 @@ public class BaseStructures {
                 if (present)
                     faces.add(CubeFace.read(in));
             }
-            int tex = in.readInt();
+            int tex = IOUtils.readVarInt(in);
             return new CubeFaces(presentFaces, faces, tex);
         }
     }
@@ -334,12 +375,12 @@ public class BaseStructures {
         public void write(DataOutputStream out) throws IOException {
             //Write all vertex positions
             int vertexCount = this.vertexPositions.size();
-            out.writeInt(vertexCount);
+            IOUtils.writeVarInt(out, vertexCount);
             for (Vector3f vertexPos : this.vertexPositions)
                 IOUtils.writeVector3f(out, vertexPos);
 
             //number of faces
-            out.writeInt(this.faces.size());
+            IOUtils.writeVarInt(out, this.faces.size());
 
             //Create bit vector for face sizes
             //0 means the face is a triangle, 1 means quad
@@ -361,7 +402,7 @@ public class BaseStructures {
             //Write the actual face values
             Writer writer = DataOutputStream::writeByte;
             if (vertexCount > 255) writer = DataOutputStream::writeShort;
-            if (vertexCount > 65535) writer = DataOutputStream::writeInt;
+            if (vertexCount > 65535) writer = IOUtils::writeVarInt;
 
             int curUVCount = 0; //current uv may increment by 3 or 4 each time
 
@@ -391,24 +432,24 @@ public class BaseStructures {
             }
 
             //Tex
-            out.writeInt(tex);
+            IOUtils.writeVarInt(out, tex);
         }
 
         public static MeshData read(DataInputStream in) throws IOException {
             //Read vertex positions
-            int vertexCount = in.readInt();
+            int vertexCount = IOUtils.readVarInt(in);
             List<Vector3f> vertexPositions = new ArrayList<>(vertexCount);
             for (int i = 0; i < vertexCount; i++)
                 vertexPositions.add(IOUtils.readVector3f(in));
 
             //Get bit vector for tris/quads
-            int faceCount = in.readInt();
+            int faceCount = IOUtils.readVarInt(in);
             byte[] bitVector = in.readNBytes((int) Math.ceil(faceCount / 8.0));
 
             //Get reader
             Reader reader = DataInputStream::readUnsignedByte;
             if (vertexCount > 255) reader = DataInputStream::readUnsignedShort;
-            if (vertexCount > 65535) reader = DataInputStream::readInt;
+            if (vertexCount > 65535) reader = IOUtils::readVarInt;
 
             List<Vector2f> uvs = new ArrayList<>();
             List<Vector4i> faces = new ArrayList<>(faceCount);
@@ -436,7 +477,7 @@ public class BaseStructures {
                 }
             }
 
-            int tex = in.readInt();
+            int tex = IOUtils.readVarInt(in);
             return new MeshData(vertexPositions, uvs, faces, tex);
         }
 
@@ -453,26 +494,221 @@ public class BaseStructures {
     }
 
 
-    public record Texture(
+    public record TextureStructure(
             String name,
             byte[] data
     ) {
         public void write(DataOutputStream out) throws IOException {
             out.writeUTF(name);
-            out.writeInt(data.length);
+            IOUtils.writeVarInt(out, data.length);
             out.write(data);
         }
 
-        public static Texture read(DataInputStream in) throws IOException {
+        public static TextureStructure read(DataInputStream in) throws IOException {
             String name = in.readUTF();
-            int dataLen = in.readInt();
+            int dataLen = IOUtils.readVarInt(in);
             byte[] data = new byte[dataLen];
             in.readNBytes(data, 0, dataLen);
-            return new Texture(name, data);
+            return new TextureStructure(name, data);
         }
     }
 
-    public record Script(
+    public record AnimationStructure(
+            String name, Animation.LoopMode loopMode, boolean override, float length, float snapping
+    ) {
+        public void write(DataOutputStream out) throws IOException {
+            out.writeUTF(name);
+            IOUtils.writeVarInt(out, loopMode.ordinal());
+            out.writeBoolean(override);
+            out.writeFloat(length);
+        }
+
+        public static AnimationStructure read(DataInputStream in) throws IOException {
+            String name = in.readUTF();
+            Animation.LoopMode loopMode = Animation.LoopMode.values()[IOUtils.readVarInt(in)];
+            boolean override = in.readBoolean();
+            float length = in.readFloat();
+            float snapping = in.readFloat();
+            return new AnimationStructure(name, loopMode, override, length, snapping);
+        }
+    }
+
+    /**
+     * Unlike in .bbmodel files, where animators are stored inside of animation objects
+     * and use UUIDs to reference specific model parts, we do not want to store
+     * UUIDs of model parts. So instead we store the Animator objects inside a
+     * ModelPartStructure. As a result, we need some way for an animator to know
+     * which animation it's part of.
+     */
+    public record AnimatorStructure(
+            int animationIndex, //Which animation does this animator belong to?
+            List<KeyframeStructure> posKeyframes,
+            List<KeyframeStructure> rotKeyframes,
+            List<KeyframeStructure> scaleKeyframes
+    ) {
+        public void write(DataOutputStream out, List<AnimationStructure> animations) throws IOException {
+            AnimationStructure animation = animations.get(this.animationIndex);
+
+            IOUtils.writeVarInt(out, animationIndex);
+
+            IOUtils.writeVarInt(out, posKeyframes.size());
+            for (KeyframeStructure kf : posKeyframes)
+                kf.write(out, animation.snapping);
+
+            IOUtils.writeVarInt(out, rotKeyframes.size());
+            for (KeyframeStructure kf : rotKeyframes)
+                kf.write(out, animation.snapping);
+
+            IOUtils.writeVarInt(out, scaleKeyframes.size());
+            for (KeyframeStructure kf : scaleKeyframes)
+                kf.write(out, animation.snapping);
+        }
+
+        public static AnimatorStructure read(DataInputStream in, List<AnimationStructure> animations) throws IOException {
+            int animationIndex = IOUtils.readVarInt(in);
+
+            AnimationStructure animation = animations.get(animationIndex);
+
+            int numPosKeyframes = IOUtils.readVarInt(in);
+            List<KeyframeStructure> posKeyframes = new ArrayList<>(numPosKeyframes);
+            for (int i = 0; i < numPosKeyframes; i++)
+                posKeyframes.add(KeyframeStructure.read(in, animation.snapping));
+
+            int numRotKeyframes = IOUtils.readVarInt(in);
+            List<KeyframeStructure> rotKeyframes = new ArrayList<>(numRotKeyframes);
+            for (int i = 0; i < numRotKeyframes; i++)
+                rotKeyframes.add(KeyframeStructure.read(in, animation.snapping));
+
+            int numScaleKeyframes = IOUtils.readVarInt(in);
+            List<KeyframeStructure> scaleKeyframes = new ArrayList<>(numScaleKeyframes);
+            for (int i = 0; i < numScaleKeyframes; i++)
+                scaleKeyframes.add(KeyframeStructure.read(in, animation.snapping));
+
+            return new AnimatorStructure(animationIndex, posKeyframes, rotKeyframes, scaleKeyframes);
+        }
+    }
+
+    public record KeyframeStructure(
+            float time, Interpolation.Builtin interpolation,
+            Object x, Object y, Object z, //string or number
+            @Nullable Vector3f bezierLeftTime,
+            @Nullable Vector3f bezierLeftValue,
+            @Nullable Vector3f bezierRightTime,
+            @Nullable Vector3f bezierRightValue
+    ) {
+
+        /**
+         * 0: The value is 0
+         * 1: The value is an int
+         * 2: The value is an arbitrary float
+         * 3: The value is a string
+         */
+        private int getBitsFor(Object val) {
+            if (val instanceof String)
+                return 3;
+            if (val instanceof Number n) {
+                float v = n.floatValue();
+                if (MathUtils.epsilon(v))
+                    return 0;
+                if (MathUtils.epsilon(v % 1))
+                    return 1;
+                return 2;
+            }
+            throw new RuntimeException("Should be impossible?");
+        }
+
+        private void writeValue(DataOutputStream out, Object val, byte flags, int index) throws IOException {
+            int bits = (flags >> (index * 2)) & 0b11;
+            switch (bits) {
+                case 0 -> {}
+                case 1 -> IOUtils.writeVarInt(out, Math.round(((Number) val).floatValue()));
+                case 2 -> out.writeFloat(((Number) val).floatValue());
+                case 3 -> out.writeUTF((String) val);
+                default -> throw new IOException("Unexpected writing keyframe bits: " + bits + ". Should be impossible?");
+            }
+        }
+
+        private static Object readValue(DataInputStream in, byte flags, int index) throws IOException {
+            int bits = (flags >> (index * 2)) & 0b11;
+            return switch (bits) {
+                case 0 -> 0f;
+                case 1 -> (float) IOUtils.readVarInt(in);
+                case 2 -> in.readFloat();
+                case 3 -> in.readUTF();
+                default -> throw new IOException("Unexpected reading keyframe bits: " + bits + ". Should be impossible?");
+            };
+        }
+
+        public void write(DataOutputStream out, float snapping) throws IOException {
+            //Construct bit flags and write them
+            boolean isTimeIntAfterSnapping = MathUtils.epsilon((time * snapping) % 1);
+            byte bitFlags = (byte) (
+                    getBitsFor(x) |
+                    getBitsFor(y) << 2 |
+                    getBitsFor(z) << 4 |
+                    (isTimeIntAfterSnapping ? 1 : 0) << 6
+            );
+            out.writeByte(bitFlags);
+
+            //Write interpolation
+            IOUtils.writeVarInt(out, interpolation.ordinal());
+
+            //Write bezier things if this is bezier
+            if (interpolation == Interpolation.Builtin.BEZIER) {
+                IOUtils.writeVector3f(out, this.bezierLeftTime);
+                IOUtils.writeVector3f(out, this.bezierLeftValue);
+                IOUtils.writeVector3f(out, this.bezierRightTime);
+                IOUtils.writeVector3f(out, this.bezierRightValue);
+            }
+
+            //Write values
+            writeValue(out, x, bitFlags, 0);
+            writeValue(out, y, bitFlags, 1);
+            writeValue(out, z, bitFlags, 2);
+
+            //Write time
+            if (isTimeIntAfterSnapping)
+                IOUtils.writeVarInt(out, Math.round(time * snapping));
+            else
+                out.writeFloat(time);
+        }
+
+        public static KeyframeStructure read(DataInputStream in, float snapping) throws IOException {
+            //Read flags
+            byte flags = in.readByte();
+            //Read interpolation
+            Interpolation.Builtin interpolation = Interpolation.Builtin.values()[IOUtils.readVarInt(in)];
+            //Read bezier things if this is bezier
+            Vector3f bezierLeftTime = null, bezierLeftValue = null, bezierRightTime = null, bezierRightValue = null;
+            if (interpolation == Interpolation.Builtin.BEZIER) {
+                bezierLeftTime = IOUtils.readVector3f(in);
+                bezierLeftValue = IOUtils.readVector3f(in);
+                bezierRightTime = IOUtils.readVector3f(in);
+                bezierRightValue = IOUtils.readVector3f(in);
+            }
+            //Read values
+            Object x = readValue(in, flags, 0);
+            Object y = readValue(in, flags, 1);
+            Object z = readValue(in, flags, 2);
+            //Read time
+            boolean isTimeIntAfterSnapping = (flags & 0b1000000) > 0;
+            float time = isTimeIntAfterSnapping ? IOUtils.readVarInt(in) / snapping : in.readFloat();
+            //Create
+            return new KeyframeStructure(time, interpolation, x, y, z, bezierLeftTime, bezierLeftValue, bezierRightTime, bezierRightValue);
+        }
+
+        //True if it's a bezier keyframe
+        public boolean isBezier() {
+            return this.interpolation == Interpolation.Builtin.BEZIER;
+        }
+
+        //True if this has a string element
+        public boolean isFunction() {
+            return x instanceof String || y instanceof String || z instanceof String;
+        }
+    }
+
+    public record ScriptStructure(
             String name,
             String source
     ) {
@@ -481,10 +717,10 @@ public class BaseStructures {
             out.writeUTF(source);
         }
 
-        public static Script read(DataInputStream in) throws IOException {
+        public static ScriptStructure read(DataInputStream in) throws IOException {
             String name = in.readUTF();
             String source = in.readUTF();
-            return new Script(name, source);
+            return new ScriptStructure(name, source);
         }
     }
 

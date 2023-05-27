@@ -47,7 +47,7 @@ public class AspectTexture extends ResourceTexture {
      */
     private boolean isClosed = false;
 
-    public AspectTexture(Aspect aspect, BaseStructures.Texture baseTex) throws IOException {
+    public AspectTexture(Aspect aspect, BaseStructures.TextureStructure baseTex) throws IOException {
         super(AspectMod.id("aspect_textures/" + aspect.getAspectUUID() + "/" + baseTex.name()));
         ByteBuffer buffer = BufferUtils.createByteBuffer(baseTex.data().length);
         buffer.put(baseTex.data());

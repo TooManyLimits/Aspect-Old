@@ -6,6 +6,8 @@ import io.github.moonlightmaya.AspectMod;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.model.Transformable;
 import io.github.moonlightmaya.model.WorldRootModelPart;
+import io.github.moonlightmaya.model.animation.Animation;
+import io.github.moonlightmaya.model.animation.Animator;
 import io.github.moonlightmaya.model.rendertasks.BlockTask;
 import io.github.moonlightmaya.model.rendertasks.ItemTask;
 import io.github.moonlightmaya.model.rendertasks.TextTask;
@@ -44,10 +46,7 @@ import petpet.external.PetPetReflector;
 import petpet.lang.compile.Compiler;
 import petpet.lang.lex.Lexer;
 import petpet.lang.parse.Parser;
-import petpet.lang.run.JavaFunction;
-import petpet.lang.run.PetPetClass;
-import petpet.lang.run.PetPetClosure;
-import petpet.lang.run.PetPetException;
+import petpet.lang.run.*;
 import petpet.types.PetPetTable;
 
 import java.io.InputStream;
@@ -146,7 +145,7 @@ public class AspectScriptHandler {
         instance.registerClass(Matrix2d.class, Matrices.MAT_2.copy().makeEditable());
         instance.registerClass(Matrix3d.class, Matrices.MAT_3.copy().makeEditable());
         instance.registerClass(Matrix4d.class, Matrices.MAT_4.copy().makeEditable());
-        instance.registerClass(Quaterniondc.class, Quaternions.QUATERNION_CLASS.copy().makeEditable());
+        instance.registerClass(Quaterniond.class, Quaternions.QUATERNION_CLASS.copy().makeEditable());
 
         //Misc
         instance.registerClass(AspectEvent.class, PetPetReflector.reflect(AspectEvent.class, "Event").copy().makeEditable());
@@ -155,10 +154,12 @@ public class AspectScriptHandler {
         instance.registerClass(ClientAPI.class, PetPetReflector.reflect(ClientAPI.class, "Client").copy().makeEditable());
         instance.registerClass(RendererAPI.class, PetPetReflector.reflect(RendererAPI.class, "Renderer").copy().makeEditable());
         instance.registerClass(AspectTexture.class, PetPetReflector.reflect(AspectTexture.class, "Texture").copy().makeEditable());
+        instance.registerClass(Animation.class, PetPetReflector.reflect(Animation.class, "Animation").copy().makeEditable());
 
         //no methods or anything, just registering these so they're legal objects to store as a variable
         instance.registerClass(RenderLayer.class, new PetPetClass("RenderLayer").makeEditable());
         instance.registerClass(ParticleEffect.class, new PetPetClass("ParticleEffect").makeEditable());
+        instance.registerClass(Animator.class, new PetPetClass("Animator").makeEditable());
 
         //Gui-only whitelists
         if (aspect.isGui) {
@@ -238,6 +239,12 @@ public class AspectScriptHandler {
             texturesTable.put(tex.name(), tex);
         setGlobal("textures", texturesTable);
 
+        //Animations
+        PetPetTable<String, Animation> animationsTable = new PetPetTable<>();
+        for (Animation anim : aspect.animations.values())
+            animationsTable.put(anim.name, anim);
+        setGlobal("animations", animationsTable);
+
         //World roots in models
         PetPetTable<String, WorldRootModelPart> worldRoots = new PetPetTable<>(aspect.worldRoots.size());
         for (WorldRootModelPart worldRootModelPart : aspect.worldRoots)
@@ -304,19 +311,8 @@ public class AspectScriptHandler {
         for (Map.Entry<String, String> entry : aspect.scripts.entrySet()) {
             String name = entry.getKey();
             String source = entry.getValue();
-            try {
-                PetPetClosure compiled = instance.compile(name, source);
-                compiledScripts.put(name, compiled);
-            } catch (Lexer.LexingException e) {
-                DisplayUtils.displayError("Lexing error in script " + name + ": " + e.getMessage(), true);
-                throw new RuntimeException("Failed to load script " + name, e);
-            } catch (Parser.ParserException e) {
-                DisplayUtils.displayError("Parsing error in script " + name + ": " + e.getMessage(), true);
-                throw new RuntimeException("Failed to load script " + name, e);
-            } catch (Compiler.CompilationException e) {
-                DisplayUtils.displayError("Compilation error in script " + name + ": " + e.getMessage(), true);
-                throw new RuntimeException("Failed to load script " + name, e);
-            }
+            PetPetClosure compiled = this.compile(name, source);
+            this.compiledScripts.put(name, compiled);
         }
     }
 
@@ -416,6 +412,21 @@ public class AspectScriptHandler {
             error(t);
         }
         return arg;
+    }
+
+    public PetPetClosure compile(String name, String src) {
+        try {
+            return instance.compile(name, src);
+        } catch (Lexer.LexingException e) {
+            DisplayUtils.displayError("Lexing error in " + name + ": " + e.getMessage(), shouldPrintToChat);
+            throw new RuntimeException("Failed to load [" + name + "]", e);
+        } catch (Parser.ParserException e) {
+            DisplayUtils.displayError("Parsing error in " + name + ": " + e.getMessage(), shouldPrintToChat);
+            throw new RuntimeException("Failed to load [" + name + "]", e);
+        } catch (Compiler.CompilationException e) {
+            DisplayUtils.displayError("Compilation error in " + name + ": " + e.getMessage(), shouldPrintToChat);
+            throw new RuntimeException("Failed to load [" + name + "]", e);
+        }
     }
 
     public void error(Throwable t) {

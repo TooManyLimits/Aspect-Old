@@ -24,7 +24,7 @@ public class Quaternions {
 
         //Setters
         QUATERNION_CLASS.addMethod("set_4", new JavaFunction(Quaterniond.class, "set", true, double.class, double.class, double.class, double.class));
-        QUATERNION_CLASS.addMethod("set_1", new JavaFunction(Quaterniond.class, "set", true, Quaterniond.class));
+        QUATERNION_CLASS.addMethod("set_1", new JavaFunction(Quaterniond.class, "set", true, Quaterniondc.class));
 
         //Modifying
         JavaFunction normalizer = new JavaFunction(Quaterniond.class, "normalize", true, new Class[0]);
@@ -32,7 +32,7 @@ public class Quaternions {
         QUATERNION_CLASS.addMethod("fix", normalizer);
         QUATERNION_CLASS.addMethod("inv", new JavaFunction(Quaterniond.class, "invert", true, new Class[0]));
         QUATERNION_CLASS.addMethod("conj", new JavaFunction(Quaterniond.class, "conjugate", true, new Class[0]));
-        QUATERNION_CLASS.addMethod("slerp", new JavaFunction(Quaterniond.class, "slerp", true, Quaterniond.class, double.class));
+        QUATERNION_CLASS.addMethod("slerp", new JavaFunction(Quaterniond.class, "slerp", true, Quaterniondc.class, double.class));
         QUATERNION_CLASS.addMethod("mul", new JavaFunction(Quaterniond.class, "mul", true, Quaterniondc.class));
         QUATERNION_CLASS.addMethod("mulR", new JavaFunction(Quaterniond.class, "premul", true, Quaterniondc.class));
 

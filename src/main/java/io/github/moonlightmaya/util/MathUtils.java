@@ -4,12 +4,15 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 import org.joml.Vector3d;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 
 public class MathUtils {
 
+    //Useful constants
     public static final Vector3d ZERO_VEC_3 = new Vector3d();
+    public static final Vector3f ZERO_VEC_3F = new Vector3f();
 
     public static Vector3d fromVec3d(Vec3d mcVec) {
         return new Vector3d(mcVec.x, mcVec.y, mcVec.z);
@@ -21,6 +24,18 @@ public class MathUtils {
 
     public static BlockPos getBlockPos(double x, double y, double z) {
         return new BlockPos((int) Math.floor(x), (int) Math.floor(y), (int) Math.floor(z));
+    }
+
+    public static boolean epsilon(float v) {
+        return Math.abs(v) < 0.0001;
+    }
+
+    public static float bezier(float p0, float p1, float p2, float p3, float t) {
+        float d = 1 - t;
+        float t2 = t * t;
+        float d2 = d * d;
+        return  d2 * (d * p0 + t * p1) +
+                t2 * (d * p2 + t * p3);
     }
 
     /**

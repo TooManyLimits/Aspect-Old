@@ -114,7 +114,7 @@ public class IOUtils {
     //first 3 categories , it costs an extra byte
 
     private static int getCase(float v) {
-        if (v == 0) return 0;
+        if (MathUtils.epsilon(v)) return 0;
         if ((byte) v == v) return 1;
         if (v >= 0 && v < 1 && ((int) (v * 256) == v*256)) return 2;
         return 3;
@@ -184,6 +184,34 @@ public class IOUtils {
         float z = readVectorElem(dis, zCase);
         float w = readVectorElem(dis, wCase);
         return new Vector4f(x, y, z, w);
+    }
+
+    //VarInt code from https://wiki.vg/VarInt_And_VarLong
+    public static void writeVarInt(DataOutputStream dos, int value) throws IOException {
+        while (true) {
+            if ((value & ~0x7F) == 0) {
+                dos.writeByte(value);
+                return;
+            }
+            dos.writeByte((value & 0x7F) | 0x80);
+            // Note: >>> means that the sign bit is shifted with the rest of the number rather than being left alone
+            value >>>= 7;
+        }
+    }
+    public static int readVarInt(DataInputStream dis) throws IOException {
+        int value = 0;
+        int position = 0;
+        byte currentByte;
+
+        while (true) {
+            currentByte = dis.readByte();
+            value |= (currentByte & 0x7F) << position;
+            if ((currentByte & 0x80) == 0) break;
+            position += 7;
+            if (position >= 32) throw new IOException("VarInt is too big");
+        }
+
+        return value;
     }
 
     public static class AspectIOException extends RuntimeException {

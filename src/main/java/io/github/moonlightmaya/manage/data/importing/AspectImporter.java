@@ -6,6 +6,7 @@ import com.google.gson.GsonBuilder;
 import io.github.moonlightmaya.AspectMod;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.manage.data.BaseStructures;
+import io.github.moonlightmaya.util.DataStructureUtils;
 import io.github.moonlightmaya.util.IOUtils;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -38,9 +39,11 @@ public class AspectImporter {
             .setPrettyPrinting().create();
 
     private BaseStructures.MetadataStructure metadata;
-    private LinkedHashMap<String, BaseStructures.Texture> textures;
-    private List<BaseStructures.Script> scripts;
-    private int textureOffset;
+    private LinkedHashMap<String, BaseStructures.TextureStructure> textures;
+    //Much like textures, animations with the same name will be merged
+    private LinkedHashMap<String, BaseStructures.AnimationStructure> animations;
+    private List<BaseStructures.ScriptStructure> scripts;
+    private int textureOffset, animationOffset;
 
     public AspectImporter(Path aspectFolder) {
         this.rootPath = aspectFolder;
@@ -59,6 +62,7 @@ public class AspectImporter {
                 metadata = getMetadata();
                 //Read the globally shared textures to here
                 textures = getTextures();
+                animations = new LinkedHashMap<>();
                 //Read scripts
                 scripts = getScripts();
                 //Get entity model parts:
@@ -73,6 +77,7 @@ public class AspectImporter {
                     metadata,
                     entityRoot, worldRoots, hudRoot,
                     Lists.newArrayList(textures.values()),
+                    Lists.newArrayList(animations.values()),
                     scripts
                 );
 
@@ -109,34 +114,34 @@ public class AspectImporter {
     }
 
 
-    private List<BaseStructures.Script> getScriptsIn(Path p, String prefix) throws IOException {
+    private List<BaseStructures.ScriptStructure> getScriptsIn(Path p, String prefix) throws IOException {
         //Get petpet files
         List<File> files = IOUtils.getByExtension(p, "petpet");
-        List<BaseStructures.Script> result = new ArrayList<>(files.size());
+        List<BaseStructures.ScriptStructure> result = new ArrayList<>(files.size());
         for (File f : files) {
             String name = f.getName().substring(0, f.getName().length()-".petpet".length());
             String code = Files.readString(f.toPath());
-            result.add(new BaseStructures.Script(name, code));
+            result.add(new BaseStructures.ScriptStructure(name, code));
         }
 
         //Get subfolders
         List<File> subfolders = IOUtils.getSubFolders(p);
         for (File subfolder : subfolders) {
             String subfolderPrefix = prefix + "/" + subfolder.getName();
-            List<BaseStructures.Script> subfolderScripts = getScriptsIn(subfolder.toPath(), subfolderPrefix);
+            List<BaseStructures.ScriptStructure> subfolderScripts = getScriptsIn(subfolder.toPath(), subfolderPrefix);
             result.addAll(subfolderScripts);
         }
 
         return result;
     }
 
-    private List<BaseStructures.Script> getScripts() throws IOException {
+    private List<BaseStructures.ScriptStructure> getScripts() throws IOException {
         //If main.petpet exists in the root, then add it directly,
         //and don't check for a scripts directory
         Path mainPath = rootPath.resolve("main.petpet");
         if (Files.exists(mainPath) && !mainPath.toFile().isDirectory()) {
-            ArrayList<BaseStructures.Script> scripts = new ArrayList<>();
-            scripts.add(new BaseStructures.Script("main", Files.readString(mainPath)));
+            ArrayList<BaseStructures.ScriptStructure> scripts = new ArrayList<>();
+            scripts.add(new BaseStructures.ScriptStructure("main", Files.readString(mainPath)));
             return scripts;
         }
 
@@ -150,14 +155,14 @@ public class AspectImporter {
         return List.of();
     }
 
-    private LinkedHashMap<String, BaseStructures.Texture> getTextures() throws IOException {
+    private LinkedHashMap<String, BaseStructures.TextureStructure> getTextures() throws IOException {
         Path p = rootPath.resolve("textures");
         List<File> files = IOUtils.getByExtension(p, "png");
-        LinkedHashMap<String, BaseStructures.Texture> texes = new LinkedHashMap<>();
+        LinkedHashMap<String, BaseStructures.TextureStructure> texes = new LinkedHashMap<>();
         for (File f : files) {
             String name = f.getName().substring(0, f.getName().length()-".png".length()); //strip .png
             byte[] bytes = Files.readAllBytes(f.toPath());
-            texes.put(name, new BaseStructures.Texture(name, bytes));
+            texes.put(name, new BaseStructures.TextureStructure(name, bytes));
         }
         textureOffset += texes.size();
         return texes;
@@ -170,7 +175,7 @@ public class AspectImporter {
     private BaseStructures.ModelPartStructure parseBBModel(File f) throws IOException, AspectImporterException {
         String str = Files.readString(f.toPath());
         JsonStructures.BBModel bbmodel = gson.fromJson(str, JsonStructures.BBModel.class);
-        bbmodel.fixedOutliner = bbmodel.getGson().fromJson(bbmodel.outliner, JsonStructures.Part[].class);
+        bbmodel.fix(); //Fix any invalid data
         return handleBBModel(bbmodel, f.toPath());
     }
 
@@ -196,8 +201,8 @@ public class AspectImporter {
         }
 
         return new BaseStructures.ModelPartStructure(
-                name, new Vector3f(), new Vector3f(), new Vector3f(), true,
-                bbmodels, AspectModelPart.ModelPartType.GROUP, null, null
+                name, new Vector3f(), new Vector3f(), true,
+                bbmodels, AspectModelPart.ModelPartType.GROUP, List.of(),null, null
         );
     }
 
@@ -214,8 +219,8 @@ public class AspectImporter {
         }
         //Neither exists, so return an empty part
         return new BaseStructures.ModelPartStructure(
-                name, new Vector3f(), new Vector3f(), new Vector3f(), true,
-                new ArrayList<>(0), AspectModelPart.ModelPartType.GROUP, null, null
+                name, new Vector3f(), new Vector3f(), true,
+                new ArrayList<>(0), AspectModelPart.ModelPartType.GROUP, List.of(), null, null
         );
     }
 
@@ -246,6 +251,8 @@ public class AspectImporter {
         bbmodel's list. However, we want to convert these to a global index, since we want all textures from all
         bbmodels inside one big list. A "0" in one bbmodel might refer to the 11th texture in the overall aspect,
         so we make a "mapping" from 0 -> 10 for that bbmodel.
+
+        A similar mapping process is performed for animations.
          */
 
         //Process json's textures and create a mapping.
@@ -256,12 +263,13 @@ public class AspectImporter {
             //if you don't want this to mess with you. Really shouldn't be too hard.
             if (textures.containsKey(jsonTexture.strippedName())) {
                 //If a texture of the same name is loaded globally, create a mapping
-                jsonToGlobalTextureMapper.add(indexOfKey(textures, jsonTexture.strippedName()));
+                jsonToGlobalTextureMapper.add(DataStructureUtils.indexOfKey(textures, jsonTexture.strippedName()));
             } else {
                 //Otherwise, create mapping using the texture offset, and store texture in main list
                 //Texture name contains the path to the bbmodel file concatenated with the name
                 String relativePath = this.rootPath.relativize(filePath).toString();
                 relativePath = relativePath.substring(0, relativePath.length() - ".bbmodel".length());
+
                 //replace backslashes (again, if this breaks your files, then don't name them with backslashes :skull:)
                 relativePath = relativePath.replace("\\", "/");
                 AspectMod.LOGGER.debug("Relative texture path name: {}", relativePath);
@@ -273,10 +281,24 @@ public class AspectImporter {
         }
         textureOffset += numNewTextures;
 
+        //Repeat for animations
+        int numNewAnimations = 0;
+        List<Integer> jsonToGlobalAnimatorMapper = new ArrayList<>();
+        for (JsonStructures.JsonAnimation jsonAnimation : model.animations) {
+            if (this.animations.containsKey(jsonAnimation.name())) {
+                jsonToGlobalAnimatorMapper.add(DataStructureUtils.indexOfKey(this.animations, jsonAnimation.name()));
+            } else {
+                this.animations.put(jsonAnimation.name(), jsonAnimation.toBaseStructure());
+                jsonToGlobalAnimatorMapper.add(numNewAnimations + animationOffset);
+                numNewAnimations++;
+            }
+        }
+        animationOffset += numNewAnimations;
+
         //Gather children
         List<BaseStructures.ModelPartStructure> children = new ArrayList<>(model.fixedOutliner.length);
         for (JsonStructures.Part p : model.fixedOutliner)
-            children.add(p.toBaseStructure(jsonToGlobalTextureMapper, model.resolution));
+            children.add(p.toBaseStructure(jsonToGlobalTextureMapper, model.animations, jsonToGlobalAnimatorMapper, model.resolution));
 
         //Construct name of part
         File partFile = filePath.toFile();
@@ -284,21 +306,13 @@ public class AspectImporter {
 
         //Create final model part
         return new BaseStructures.ModelPartStructure(
-                partName, new Vector3f(), new Vector3f(), new Vector3f(),
+                partName, new Vector3f(), new Vector3f(),
                 true, children, AspectModelPart.ModelPartType.GROUP,
-                null, null
+                List.of(), null, null
         );
     }
 
-    private static <K, V>  int indexOfKey(LinkedHashMap<K, V> map, K key) {
-        int i = 0;
-        for (K elem : map.keySet()) {
-            if (elem.equals(key))
-                return i;
-            i++;
-        }
-        return -1;
-    }
+
 
     public static class AspectImporterException extends Exception {
         public AspectImporterException(String message) {

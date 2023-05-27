@@ -6,6 +6,7 @@ import io.github.moonlightmaya.game_interfaces.AspectConfig;
 import io.github.moonlightmaya.manage.data.BaseStructures;
 import io.github.moonlightmaya.manage.data.importing.AspectImporter;
 import io.github.moonlightmaya.model.AspectTexture;
+import io.github.moonlightmaya.model.animation.Animation;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.IOUtils;
@@ -94,19 +95,12 @@ public class AspectManager {
         //in the event that we want world parts to render with Iris shaders (which we do)
 
         for (Aspect aspect : ASPECTS.values()) {
-            //For each loaded aspect, ensure its textures are uploaded
-            for (AspectTexture tex : aspect.textures)
-                tex.uploadIfNeeded();
-
-            //And render the aspect's world parts
-            aspect.renderContext = Aspect.RenderContexts.WORLD;
             aspect.renderWorld(vcp, tickDelta, matrices);
         }
 
         //Also render the GUI aspect's world parts if it exists
         Aspect guiAspect = getGuiAspect();
         if (guiAspect != null) {
-            guiAspect.renderContext = Aspect.RenderContexts.WORLD;
             guiAspect.renderWorld(vcp, tickDelta, matrices);
         }
     }

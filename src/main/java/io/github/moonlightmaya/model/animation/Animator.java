@@ -1,17 +1,62 @@
 package io.github.moonlightmaya.model.animation;
 
+import io.github.moonlightmaya.Aspect;
+import io.github.moonlightmaya.manage.data.BaseStructures;
 import io.github.moonlightmaya.model.Transformable;
+import io.github.moonlightmaya.util.DataStructureUtils;
 import org.joml.Matrix4f;
 
 public class Animator implements Transformable.Transformer {
 
+    public final Channel pos, rot, scale;
+    private boolean isActive = false;
+    private final Animation animation;
+
+    public Animator(BaseStructures.AnimatorStructure baseStructure, Aspect aspect) {
+        int animIndex = baseStructure.animationIndex();
+        animation = DataStructureUtils.valueAtIndex(aspect.animations, animIndex);
+        animation.animators.add(this); //Add this to the animation's list
+        pos = new Channel(animation, baseStructure.posKeyframes());
+        rot = new Channel(animation, baseStructure.rotKeyframes());
+        scale = new Channel(animation, baseStructure.scaleKeyframes());
+    }
+
+    /**
+     * Updating the time will set the animator as active, and it will affect parts
+     */
+    public void updateTime(float newTime) {
+        isActive = true;
+        pos.updateTime(newTime);
+        rot.updateTime(newTime);
+        scale.updateTime(newTime);
+    }
+
+    /**
+     * Will set the animator as inactive, not affecting the part or
+     * forcing recalculation
+     */
+    public void deactivate() {
+        isActive = false;
+    }
+
     @Override
     public boolean forceRecalculation() {
-        return false;
+        return isActive;
     }
 
     @Override
     public boolean affectMatrix(Matrix4f matrix) {
+        if (isActive) {
+            //Get weight, multiply by it
+            float w = (float) animation.weight_0();
+            matrix.rotateXYZ(rot.queryLatest().mul(w));
+            matrix.scale(scale.queryLatest().sub(1,1,1).mul(w).add(1,1,1));
+            matrix.translate(pos.queryLatest().mul(w));
+        }
         return false;
+    }
+
+    public String toString() {
+        return "Animator(keyframes=" + rot.keyframeCount() + "," + pos.keyframeCount() + "," + scale.keyframeCount() + ")";
     }
 }

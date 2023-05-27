@@ -71,7 +71,7 @@ fn printRecursive(json, object, depthLeft, indent, allowHover, alreadyPrinted) {
 	//Print out the object, doing different things depending on the type
 	if object.class() == tableClass {
 		//This is a table, recurse it
-		json.next("table(" + object.size() + "): $[\n").color(PPRINT_COLOR_TABLE[tableClass])
+		json.next("table: $[\n").color(PPRINT_COLOR_TABLE[tableClass])
 		global PPRINT_DEPTH = PPRINT_DEPTH + 1
 		alreadyPrinted[object] = true
 		object.each(fn(k, v) {
@@ -89,7 +89,7 @@ fn printRecursive(json, object, depthLeft, indent, allowHover, alreadyPrinted) {
 		json.next(spacing).color(PPRINT_SPACER_COLOR).next("]").color(PPRINT_COLOR_TABLE[tableClass])
 	} else if object.class() == listClass {
 		//This is a list, recurse
-		json.next("list(" + object.size() + "): ![\n").color(PPRINT_COLOR_TABLE[listClass])
+		json.next("list: ![\n").color(PPRINT_COLOR_TABLE[listClass])
 		global PPRINT_DEPTH = PPRINT_DEPTH + 1
 		alreadyPrinted[object] = true
 		object.each(fn(elem) {

@@ -3,6 +3,7 @@ package io.github.moonlightmaya.model;
 import com.google.common.collect.ImmutableList;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.manage.data.BaseStructures;
+import io.github.moonlightmaya.model.animation.Animator;
 import io.github.moonlightmaya.model.rendertasks.BlockTask;
 import io.github.moonlightmaya.model.rendertasks.ItemTask;
 import io.github.moonlightmaya.model.rendertasks.RenderTask;
@@ -67,9 +68,13 @@ public class AspectModelPart extends Transformable {
         this.owningAspect = owningAspect;
         name = baseStructure.name();
         type = baseStructure.type();
-        setPos(baseStructure.pos());
         setRot(baseStructure.rot());
         setPivot(baseStructure.pivot());
+
+        //Process animators
+        for (BaseStructures.AnimatorStructure animatorStructure : baseStructure.animators()) {
+            this.transformers.add(new Animator(animatorStructure, owningAspect));
+        }
 
         this.parent = parent;
         visible = baseStructure.visible();
@@ -115,10 +120,7 @@ public class AspectModelPart extends Transformable {
         type = base.type;
         tempCubeData = base.tempCubeData;
         parent = base.parent;
-        if (base.renderLayers != null) {
-            renderLayers = new PetPetList<>();
-            renderLayers.addAll(base.renderLayers);
-        }
+        renderLayers = base.renderLayers;
 
         if (deepCopyChildList) {
             children = new PetPetList<>(base.children.size());
@@ -138,15 +140,8 @@ public class AspectModelPart extends Transformable {
             vertexData = base.vertexData;
         }
 
-        partPos.set(base.partPos);
-        partRot.set(base.partRot);
-        partScale.set(base.partScale);
-        partPivot.set(base.partPivot);
-        positionMatrix.set(base.positionMatrix);
-        normalMatrix.set(base.normalMatrix);
-        needsMatrixRecalculation = base.needsMatrixRecalculation;
-
-        visible = base.visible;
+        //Clone the transformable properties over
+        cloneFrom(base);
     }
 
     public void setUV(float x, float y) {
@@ -472,7 +467,8 @@ public class AspectModelPart extends Transformable {
         }
     }
 
-    //Small helper
+    //Small helper, can't use .equals() since PetPetList overrides it to
+    //literal equality
     private static boolean arePetPetListsEqual(PetPetList<?> a, PetPetList<?> b) {
         if (a == null && b == null) return true;
         if (a == null || b == null) return false;
@@ -487,7 +483,8 @@ public class AspectModelPart extends Transformable {
         GROUP,
         CUBE,
         MESH,
-        NULL
+        NULL_OBJECT,
+        LOCATOR,
     }
 
     //Meshes have different rotation order from

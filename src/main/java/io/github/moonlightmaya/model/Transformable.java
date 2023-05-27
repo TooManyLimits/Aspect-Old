@@ -33,11 +33,23 @@ public abstract class Transformable {
      * A list of objects which will act on the transformable's matrices,
      * and modify them if need be.
      */
-    public PetPetList<Transformer> transformers;
+    public PetPetList<Transformer> transformers = new PetPetList<>();
 
     //Whether this needs its matrix recalculated. After calling rot(), pos(), etc. this will be set to true.
     //If it's true at rendering time, then the matrix field will be updated, and this will be set to false.
     public boolean needsMatrixRecalculation = true;
+
+    public void cloneFrom(Transformable other) {
+        partPos.set(other.partPos);
+        partRot.set(other.partRot);
+        partScale.set(other.partScale);
+        partPivot.set(other.partPivot);
+        positionMatrix.set(other.positionMatrix);
+        normalMatrix.set(other.normalMatrix);
+        needsMatrixRecalculation = other.needsMatrixRecalculation;
+        visible = other.visible;
+        transformers = other.transformers;
+    }
 
     protected void recalculateMatrixIfNeeded() {
         //If needsMatrixRecalculation, or any of the transformers
