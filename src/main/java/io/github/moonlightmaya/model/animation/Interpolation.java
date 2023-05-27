@@ -63,7 +63,8 @@ public interface Interpolation {
             neighbor = frames[targetIndex-1];
             isNeighborLeft = true;
         }
-        Vector3f tValues = bezier.calculateTValue(neighbor, isNeighborLeft, time);
+        //Get the T values
+        Vector3f tValues = bezier.calculateTValues(neighbor, isNeighborLeft, time);
 
         //Get the control points
         Vector3f p0 = frames[targetIndex-1].evaluate();

@@ -1,20 +1,12 @@
 package io.github.moonlightmaya.model.animation;
 
-import io.github.moonlightmaya.Aspect;
-import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.MathUtils;
-import it.unimi.dsi.fastutil.floats.Float2FloatFunction;
 import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
-import petpet.lang.compile.Compiler;
-import petpet.lang.lex.Lexer;
-import petpet.lang.parse.Parser;
 import petpet.lang.run.PetPetCallable;
 import petpet.lang.run.PetPetException;
-
-import java.util.function.Function;
 
 /**
  * A keyframe is an object with the following capabilities:
@@ -152,14 +144,6 @@ public abstract class Keyframe {
             this.bezierRightTime = bezierRightTime;
             this.bezierRightValue = bezierRightValue;
         }
-
-        private Float2FloatFunction cachedFunctionXLeft;
-        private Float2FloatFunction cachedFunctionYLeft;
-        private Float2FloatFunction cachedFunctionZLeft;
-
-        private Float2FloatFunction cachedFunctionXRight;
-        private Float2FloatFunction cachedFunctionYRight;
-        private Float2FloatFunction cachedFunctionZRight;
         private final Vector3f tValueAvoidAlloc = new Vector3f();
 
         /**
@@ -174,12 +158,7 @@ public abstract class Keyframe {
         /**
          * Calculate the bezier values for an interpolation with the left neighbor, and cache them
          */
-        public Vector3f calculateTValue(Keyframe neighbor, boolean isNeighborLeft, float delta) {
-            //If we don't yet have cached functions for this direction, create them
-            if (
-                    (isNeighborLeft && cachedFunctionXLeft == null) ||
-                    (!isNeighborLeft && cachedFunctionXRight == null)
-            ) {
+        public Vector3f calculateTValues(Keyframe neighbor, boolean isNeighborLeft, float time) {
                 //Get the 4 points
                 Vector3f p0 = new Vector3f(isNeighborLeft ? neighbor.time : this.time);
                 Vector3f p3 = new Vector3f(isNeighborLeft ? this.time : neighbor.time);
@@ -198,96 +177,18 @@ public abstract class Keyframe {
                         MathHelper.clamp(p2.z, p0.z, p3.z)
                 );
 
-
-
-                //-p0 t^3 + 3 p0 t^2 - 3 p0 t + p0 + 3 p1 t^3 - 6 p1 t^2 + 3 p1 t - 3 p2 t^3 + 3 p2 t^2 + p3 t^3
-                //Get a,b,c
-                Vector3f a = new Vector3f(p1).sub(p2).mul(3).add(p3).sub(p0);
-                Vector3f b = new Vector3f(p1).mul(-2).add(p0).add(p2).mul(3);
-                Vector3f c = new Vector3f(p1).sub(p0).mul(3);
-
-                //Get the functions
-                if (isNeighborLeft) {
-                    cachedFunctionXLeft = setupCachedFunction(a, b, c, p0, Vector3f::x);
-                    cachedFunctionYLeft = setupCachedFunction(a, b, c, p0, Vector3f::y);
-                    cachedFunctionZLeft = setupCachedFunction(a, b, c, p0, Vector3f::z);
-                } else {
-                    cachedFunctionXRight = setupCachedFunction(a, b, c, p0, Vector3f::x);
-                    cachedFunctionYRight = setupCachedFunction(a, b, c, p0, Vector3f::y);
-                    cachedFunctionZRight = setupCachedFunction(a, b, c, p0, Vector3f::z);
+                //Binary search go nyoom
+                Vector3f start = new Vector3f(0);
+                Vector3f end = new Vector3f(1);
+                final int iterations = 8; //plenty
+                for (int i = 0; i < iterations; i++) {
+                    Vector3f test = tValueAvoidAlloc.set(start).add(end).mul(0.5f);
+                    //Change start or end
+                    if (MathUtils.bezier(p0.x, p1.x, p2.x, p3.x, test.x) < time) start.x = test.x; else end.x = test.x;
+                    if (MathUtils.bezier(p0.y, p1.y, p2.y, p3.y, test.y) < time) start.y = test.y; else end.y = test.y;
+                    if (MathUtils.bezier(p0.z, p1.z, p2.z, p3.z, test.z) < time) start.z = test.z; else end.z = test.z;
                 }
-            }
-
-            //Call the cached functions to get the t values.
-            if (isNeighborLeft) {
-                return tValueAvoidAlloc.set(
-                        cachedFunctionXLeft.get(delta),
-                        cachedFunctionYLeft.get(delta),
-                        cachedFunctionZLeft.get(delta)
-                );
-            } else {
-                return tValueAvoidAlloc.set(
-                        cachedFunctionXRight.get(delta),
-                        cachedFunctionYRight.get(delta),
-                        cachedFunctionZRight.get(delta)
-                );
-            }
-        }
-
-        private Float2FloatFunction setupCachedFunction(Vector3f a, Vector3f b, Vector3f c, Vector3f d, Function<Vector3f, Float> get) {
-            float av = get.apply(a);
-            float bv = get.apply(b);
-            float cv = get.apply(c);
-            float dv = get.apply(d);
-            if (av == 0) { //Quadratic
-                if (bv == 0) { //Linear
-                    if (cv == 0) { //Constant
-                        return f -> dv;
-                    } else {
-                        return f -> (f - dv) / cv;
-                    }
-                } else {
-                    float c2 = cv*cv;
-                    float b4 = 4*bv;
-                    float b2 = 2*bv;
-                    return f -> (float) (Math.sqrt(c2-b4*(dv-f))-cv)/b2;
-                }
-            } else { //Cubic
-                float Q = bv / (3*av);
-                float R = -(Q*Q*Q) + bv*cv/(6*av*av);
-                float cS = (cv / (3 * av) - Q*Q);
-                float S = cS*cS*cS;
-                float r3 = (float) Math.sqrt(3);
-                float nr3 = -r3;
-                return f -> {
-                    float F = R - (dv - f);
-                    float H = F * F + S;
-                    if (H >= 0) { //Real numbers, handle normally
-                        float G = (float) Math.sqrt(H);
-                        return (float) (Math.cbrt(F + G) + Math.cbrt(F - G) - Q);
-                    } else { //Imaginary numbers, need some extra math
-                        //"F + G" ==> A + Bi
-                        //Compute the length multiplier, s
-                        double len = Math.sqrt(-S);
-                        //Compute the angle and third it
-                        double angle = Math.asin(Math.sqrt(-H) / len) / 3;
-                        //Get new length
-                        double nlen = Math.cbrt(len);
-                        //Get A and B's new values after the cube root
-                        float A = (float) (F * nlen / len);
-                        float B = (float) (nlen * Math.sin(angle));
-
-                        //Rotate each vector each direction by 120 degrees
-                        //And check if it's the valid answer
-                        float A1 = (B*nr3 - A) * 0.5f;
-                        float testing = 2*A1-Q;
-                        if (testing >= 0 && testing <= 1)
-                            return testing;
-                        float A2 = (B*r3 - A) * 0.5f;
-                        return 2*A2-Q;
-                    }
-                };
-            }
+                return tValueAvoidAlloc.set(start).add(end).mul(0.5f);
         }
 
         @Override

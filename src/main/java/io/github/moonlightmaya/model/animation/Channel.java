@@ -97,8 +97,8 @@ public class Channel {
 
     //A more optimized query that skips the search and bases it off of the last updateTime
     private final Vector3f noAlloc = new Vector3f();
-    public Vector3f queryLatest() {
-        if (this.keyframes.length == 0) return noAlloc.set(0, 0, 0);
+    public Vector3f queryLatest(float defaultX, float defaultY, float defaultZ) {
+        if (this.keyframes.length == 0) return noAlloc.set(defaultX, defaultY, defaultZ);
         return curInterpolation.interpolate(this.keyframes, curTime, curTarget, noAlloc);
     }
 
@@ -108,11 +108,11 @@ public class Channel {
 
 
         if (newTime > curTime) {
-            while (curTarget < this.keyframes.length && this.keyframes[curTarget].time <= newTime) {
+            while (curTarget < this.keyframes.length - 1 && this.keyframes[curTarget].time <= newTime) {
                 curTarget++;
             }
         } else if (newTime < curTime) {
-            while (curTarget >= 1 && this.keyframes[curTarget-1].time > newTime) {
+            while (curTarget > 1 && this.keyframes[curTarget-1].time > newTime) {
                 curTarget--;
             }
         }

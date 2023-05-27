@@ -4,6 +4,7 @@ import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.manage.data.BaseStructures;
 import io.github.moonlightmaya.model.Transformable;
 import io.github.moonlightmaya.util.DataStructureUtils;
+import net.minecraft.util.math.MathHelper;
 import org.joml.Matrix4f;
 
 public class Animator implements Transformable.Transformer {
@@ -49,9 +50,9 @@ public class Animator implements Transformable.Transformer {
         if (isActive) {
             //Get weight, multiply by it
             float w = (float) animation.weight_0();
-            matrix.rotateXYZ(rot.queryLatest().mul(w));
-            matrix.scale(scale.queryLatest().sub(1,1,1).mul(w).add(1,1,1));
-            matrix.translate(pos.queryLatest().mul(w));
+            matrix.rotateXYZ(rot.queryLatest(0,0,0).mul(w * MathHelper.PI / 180).mul(-1, -1, 1));
+            matrix.scale(scale.queryLatest(1,1,1).sub(1,1,1).mul(w).add(1,1,1));
+            matrix.translate(pos.queryLatest(0,0,0).mul(w));
         }
         return false;
     }
