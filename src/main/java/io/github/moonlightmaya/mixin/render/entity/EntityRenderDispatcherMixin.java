@@ -9,6 +9,7 @@ import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.math.Vec3d;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,6 +32,13 @@ public class EntityRenderDispatcherMixin {
         Aspect aspect = AspectManager.getAspect(entity.getUuid());
         if (aspect != null) {
             VanillaRenderer.CURRENT_RENDERER.push(aspect.vanillaRenderer);
+
+            // Save the current entity -> view matrix if needed.
+            // This matrix is also calculated in LivingEntityRendererMixin, but
+            // if this isn't a living entity, that will never be called, so
+            // we need to do it here instead, before the render occurs.
+            if (!(entity instanceof LivingEntity))
+                aspect.vanillaRenderer.savedVanillaModelTransform.set(matrices.peek().getPositionMatrix());
             //Just saving this render offset in case someone wants to access it, even though it's not used in rendering
             aspect.vanillaRenderer.renderOffset.set(offset.x, offset.y, offset.z);
         }

@@ -24,6 +24,10 @@ public class RenderUtils {
             RenderSystem.recordRenderCall(r);
     }
 
+    public static <T extends Entity> EntityRenderer<? super T> getRenderer(T entity) {
+        return MinecraftClient.getInstance().getEntityRenderDispatcher().getRenderer(entity);
+    }
+
     public static @Nullable EntityModel<?> getModel(Entity entity) {
         EntityRenderer<?> renderer = MinecraftClient.getInstance().getEntityRenderDispatcher().getRenderer(entity);
         if (renderer instanceof LivingEntityRenderer<?,?> living) {

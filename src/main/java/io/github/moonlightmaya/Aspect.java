@@ -12,13 +12,11 @@ import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.EntityUtils;
 import io.github.moonlightmaya.util.RenderUtils;
-import io.github.moonlightmaya.script.vanilla.VanillaModelPartSorter;
 import io.github.moonlightmaya.script.vanilla.VanillaRenderer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import org.jetbrains.annotations.Nullable;
@@ -169,11 +167,7 @@ public class Aspect {
         if (isErrored()) return;
 
         //Generate vanilla data
-        //TODO: Make this better, more automatic
-        EntityModel<?> model = RenderUtils.getModel(user);
-        if (model != null) {
-            vanillaRenderer.initVanillaParts(VanillaModelPartSorter.getModelInfo(model));
-        }
+        vanillaRenderer.initVanillaParts(user);
 
         //Notify the script of the first entity load, triggering events
         scriptHandler.onEntityFirstLoad();

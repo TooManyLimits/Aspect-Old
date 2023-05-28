@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 public class VanillaPart implements Transformable.Transformer {
 
     public final ModelPart referencedPart;
-    public final List<Object> names = new ArrayList<>(); //names for this part
+    public final String name;
 
     private final HashMap<String, VanillaPart> childrenBacking = new PetPetTable<>(); //backing map for the children
 
@@ -66,10 +66,12 @@ public class VanillaPart implements Transformable.Transformer {
      */
     public final Matrix4f inverseDefaultTransform = new Matrix4f();
 
-    public VanillaPart(ModelPart part) {
+    public VanillaPart(String name, ModelPart part) {
+        this.name = name;
         this.referencedPart = part;
+
         for (Map.Entry<String, ModelPart> child : ((ModelPartAccessor) (Object) part).getChildren().entrySet()) {
-            childrenBacking.put(child.getKey(), new VanillaPart(child.getValue()));
+            childrenBacking.put(child.getKey(), new VanillaPart(child.getKey(), child.getValue()));
         }
 
         //Read the default transform and store its inverse for later
@@ -119,7 +121,7 @@ public class VanillaPart implements Transformable.Transformer {
 
     @PetPetWhitelist
     public String __tostring() {
-        return "VanillaPart(names=" + names + ")";
+        return "VanillaPart(name=" + name + ")";
     }
 
     @PetPetWhitelist

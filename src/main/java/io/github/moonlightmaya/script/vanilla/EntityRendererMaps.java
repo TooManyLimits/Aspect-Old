@@ -1,8 +1,10 @@
 package io.github.moonlightmaya.script.vanilla;
 
+import io.github.moonlightmaya.util.RenderUtils;
 import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.feature.FeatureRenderer;
+import net.minecraft.entity.Entity;
 import org.jetbrains.annotations.Nullable;
 import petpet.types.PetPetTable;
 
@@ -73,6 +75,10 @@ public class EntityRendererMaps {
         listeningState = ListeningState.IDLE;
     }
 
+    public static @Nullable ModelPart getRoot(Entity entity) {
+        EntityRenderer<?> renderer = RenderUtils.getRenderer(entity);
+        return MODEL_PARTS.get(renderer);
+    }
 
     /**
      * This tracks whether the next call to

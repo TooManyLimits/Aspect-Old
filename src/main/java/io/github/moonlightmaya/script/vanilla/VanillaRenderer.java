@@ -1,7 +1,9 @@
 package io.github.moonlightmaya.script.vanilla;
 
+import io.github.moonlightmaya.mixin.render.vanilla.part.ModelPartAccessor;
 import io.github.moonlightmaya.util.MathUtils;
 import net.minecraft.client.model.ModelPart;
+import net.minecraft.entity.Entity;
 import org.joml.Matrix4d;
 import org.joml.Matrix4f;
 import org.joml.Vector3d;
@@ -39,6 +41,7 @@ public class VanillaRenderer {
      * the entity offset, the camera rotation/positioning, rotation of the
      * entire entity, and so on. Saved here as an intermediate while calculating
      * model part transforms.
+     * This matrix transforms from entity space -> view space.
      */
     public final Matrix4f savedVanillaModelTransform = new Matrix4f();
 
@@ -70,7 +73,8 @@ public class VanillaRenderer {
     public Map<ModelPart, VanillaPart> vanillaPartInverse = new HashMap<>();
 
     /**
-     * Generate the map from objects to root vanilla parts.
+     * Initialize the part map for this user.
+     * Generate the map from strings to root vanilla parts.
      *
      * Also generate an "inverse" map for faster lookups
      * of ModelPart -> VanillaPart for this VanillaRenderer.
@@ -81,21 +85,26 @@ public class VanillaRenderer {
      * TODO: call this function again when F3+T happens,
      * TODO: as the model part instances change and this becomes outdated
      */
-    public void initVanillaParts(Map<Object, ModelPart> vanillaModel) {
+    public void initVanillaParts(Entity user) {
+        //Clear the maps
         vanillaParts.clear();
         vanillaPartInverse.clear();
+        //Get the root model part of this entity
+        ModelPart root = EntityRendererMaps.getRoot(user);
+
         //Fill vanilla part map from the vanilla model data
-        for (Map.Entry<Object, ModelPart> entry : vanillaModel.entrySet()) {
-            if (vanillaPartInverse.containsKey(entry.getValue())) {
-                //Make sure to use the same underlying part for aliases
-                vanillaParts.put(entry.getKey(), vanillaPartInverse.get(entry.getValue()));
-            } else {
-                VanillaPart newPart = new VanillaPart(entry.getValue());
-                vanillaParts.put(entry.getKey(), newPart);
+        if (root != null) //If root is null, no parts
+            //Iterate over the root's children
+            for (Map.Entry<String, ModelPart> entry : ((ModelPartAccessor) (Object) root).getChildren().entrySet()) {
+                String partName = entry.getKey();
+                ModelPart part = entry.getValue();
+                //Create the new part and add it to the name->part table
+                VanillaPart newPart = new VanillaPart(partName, part);
+                vanillaParts.put(partName, newPart);
+                //Populate the inverse vanilla part map
                 newPart.traverse().forEach(p -> vanillaPartInverse.put(p.referencedPart, p));
             }
-            vanillaParts.get(entry.getKey()).names.add(entry.getKey());
-        }
+
         //Set the petpet field
         parts.clear();
         parts.putAll(vanillaParts);

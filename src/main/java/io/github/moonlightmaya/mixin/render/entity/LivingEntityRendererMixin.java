@@ -17,8 +17,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(LivingEntityRenderer.class)
 public abstract class LivingEntityRendererMixin {
 
-
-    @Shadow protected EntityModel<?> model;
     private final Matrix4f aspect$preTransformSnapshot = new Matrix4f();
     private final Matrix3f aspect$tempMatrix = new Matrix3f();
 
@@ -47,6 +45,7 @@ public abstract class LivingEntityRendererMixin {
             //However, we now have to undo the x/y flip that Minecraft did, as well as the extra translation.
 
             //Save the original matrix before applying our wacky flip and translate to it
+            //This matrix goes from entity space -> view space
             topRenderer.savedVanillaModelTransform.set(matrixStack.peek().getPositionMatrix());
 
             //And apply it to the matrix, undoing the previous things applied by Minecraft
