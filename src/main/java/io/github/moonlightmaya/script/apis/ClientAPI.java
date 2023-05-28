@@ -1,7 +1,7 @@
 package io.github.moonlightmaya.script.apis;
 
 import com.mojang.brigadier.StringReader;
-import io.github.moonlightmaya.mixin.world.WorldRendererAccessor;
+import io.github.moonlightmaya.mixin.render.world.WorldRendererAccessor;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.MathUtils;
 import net.fabricmc.loader.api.FabricLoader;
@@ -10,7 +10,6 @@ import net.minecraft.client.Mouse;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleManager;
 import net.minecraft.client.util.Window;
-import net.minecraft.client.world.ClientWorld;
 import net.minecraft.command.argument.ParticleEffectArgumentType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.particle.DefaultParticleType;

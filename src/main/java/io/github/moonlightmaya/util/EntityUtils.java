@@ -1,6 +1,6 @@
 package io.github.moonlightmaya.util;
 
-import io.github.moonlightmaya.mixin.world.ClientWorldInvoker;
+import io.github.moonlightmaya.mixin.render.world.ClientWorldInvoker;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.PlayerListEntry;

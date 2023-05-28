@@ -1,4 +1,4 @@
-package io.github.moonlightmaya.mixin.models;
+package io.github.moonlightmaya.mixin.render.models;
 
 import net.minecraft.client.render.entity.model.PlayerEntityModel;
 import org.spongepowered.asm.mixin.Mixin;

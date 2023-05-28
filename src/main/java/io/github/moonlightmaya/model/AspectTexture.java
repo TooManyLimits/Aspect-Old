@@ -4,7 +4,7 @@ import com.mojang.blaze3d.platform.TextureUtil;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.AspectMod;
 import io.github.moonlightmaya.manage.data.BaseStructures;
-import io.github.moonlightmaya.mixin.TextureManagerAccessor;
+import io.github.moonlightmaya.mixin.render.TextureManagerAccessor;
 import io.github.moonlightmaya.util.ColorUtils;
 import io.github.moonlightmaya.util.RenderUtils;
 import net.minecraft.client.MinecraftClient;

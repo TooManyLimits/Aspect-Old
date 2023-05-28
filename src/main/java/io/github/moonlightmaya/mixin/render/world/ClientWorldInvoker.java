@@ -1,4 +1,4 @@
-package io.github.moonlightmaya.mixin.world;
+package io.github.moonlightmaya.mixin.render.world;
 
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;

@@ -1,4 +1,4 @@
-package io.github.moonlightmaya.mixin.particle;
+package io.github.moonlightmaya.mixin.render.particle;
 
 import net.minecraft.client.particle.Particle;
 import org.spongepowered.asm.mixin.Mixin;

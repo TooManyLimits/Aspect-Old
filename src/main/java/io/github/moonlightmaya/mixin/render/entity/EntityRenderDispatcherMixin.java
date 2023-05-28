@@ -1,13 +1,15 @@
-package io.github.moonlightmaya.mixin;
+package io.github.moonlightmaya.mixin.render.entity;
 
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.manage.AspectManager;
+import io.github.moonlightmaya.script.vanilla.EntityRendererMaps;
 import io.github.moonlightmaya.script.vanilla.VanillaRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
+import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.math.Vec3d;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -43,5 +45,14 @@ public class EntityRenderDispatcherMixin {
             VanillaRenderer.CURRENT_RENDERER.pop();
     }
 
+
+    /**
+     * Clear the vanilla part maps when we reload, because
+     * the instances of entity renderers change.
+     */
+    @Inject(method = "reload", at = @At("HEAD"))
+    public void clearVanillaPartMaps(ResourceManager manager, CallbackInfo ci) {
+        EntityRendererMaps.clear();
+    }
 
 }

@@ -1,4 +1,4 @@
-package io.github.moonlightmaya.mixin.world;
+package io.github.moonlightmaya.mixin.render.world;
 
 import net.minecraft.client.render.WorldRenderer;
 import org.spongepowered.asm.mixin.Mixin;

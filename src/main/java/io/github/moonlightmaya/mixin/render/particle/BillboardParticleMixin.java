@@ -1,4 +1,4 @@
-package io.github.moonlightmaya.mixin.particle;
+package io.github.moonlightmaya.mixin.render.particle;
 
 import io.github.moonlightmaya.quack.BillboardParticleAccessor;
 import net.minecraft.client.particle.BillboardParticle;

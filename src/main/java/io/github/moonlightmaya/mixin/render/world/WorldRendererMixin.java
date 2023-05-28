@@ -1,11 +1,9 @@
-package io.github.moonlightmaya.mixin.world;
+package io.github.moonlightmaya.mixin.render.world;
 
 import io.github.moonlightmaya.Aspect;
-import io.github.moonlightmaya.AspectMod;
 import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import net.minecraft.client.render.*;
-import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.Vec3d;

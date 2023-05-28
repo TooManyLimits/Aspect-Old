@@ -1,6 +1,6 @@
 package io.github.moonlightmaya.script.vanilla;
 
-import io.github.moonlightmaya.mixin.ModelPartAccessor;
+import io.github.moonlightmaya.mixin.render.vanilla.part.ModelPartAccessor;
 import io.github.moonlightmaya.model.Transformable;
 import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.model.ModelTransform;

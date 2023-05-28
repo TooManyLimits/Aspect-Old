@@ -1,4 +1,4 @@
-package io.github.moonlightmaya.mixin;
+package io.github.moonlightmaya.mixin.render;
 
 import net.minecraft.client.texture.AbstractTexture;
 import net.minecraft.client.texture.TextureManager;

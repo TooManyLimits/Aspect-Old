@@ -1,4 +1,4 @@
-package io.github.moonlightmaya.mixin;
+package io.github.moonlightmaya.mixin.render.vanilla.part;
 
 import io.github.moonlightmaya.script.vanilla.VanillaPart;
 import io.github.moonlightmaya.script.vanilla.VanillaRenderer;

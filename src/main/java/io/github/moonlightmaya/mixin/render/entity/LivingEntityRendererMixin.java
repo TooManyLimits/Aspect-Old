@@ -1,4 +1,4 @@
-package io.github.moonlightmaya.mixin.entity_renderers;
+package io.github.moonlightmaya.mixin.render.entity;
 
 import io.github.moonlightmaya.script.vanilla.VanillaRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;

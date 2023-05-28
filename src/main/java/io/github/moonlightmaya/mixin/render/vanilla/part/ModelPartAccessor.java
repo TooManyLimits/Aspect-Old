@@ -1,4 +1,4 @@
-package io.github.moonlightmaya.mixin;
+package io.github.moonlightmaya.mixin.render.vanilla.part;
 
 import net.minecraft.client.model.ModelPart;
 import org.spongepowered.asm.mixin.Mixin;

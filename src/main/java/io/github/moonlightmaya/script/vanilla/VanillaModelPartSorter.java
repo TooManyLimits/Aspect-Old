@@ -1,7 +1,7 @@
 package io.github.moonlightmaya.script.vanilla;
 
-import io.github.moonlightmaya.mixin.models.AnimalModelAccessor;
-import io.github.moonlightmaya.mixin.models.PlayerEntityModelAccessor;
+import io.github.moonlightmaya.mixin.BAD.AnimalModelAccessor;
+import io.github.moonlightmaya.mixin.BAD.PlayerEntityModelAccessor;
 import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.render.entity.model.*;
 

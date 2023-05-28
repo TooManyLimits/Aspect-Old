@@ -1,6 +1,6 @@
 package io.github.moonlightmaya.script.apis.world;
 
-import io.github.moonlightmaya.mixin.particle.ParticleAccessor;
+import io.github.moonlightmaya.mixin.render.particle.ParticleAccessor;
 import io.github.moonlightmaya.quack.BillboardParticleAccessor;
 import net.minecraft.client.particle.BillboardParticle;
 import net.minecraft.client.particle.FishingParticle;

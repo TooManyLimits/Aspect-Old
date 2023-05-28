@@ -1,4 +1,4 @@
-package io.github.moonlightmaya.mixin.models;
+package io.github.moonlightmaya.mixin.BAD;
 
 import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.render.entity.model.AnimalModel;
