@@ -35,6 +35,10 @@ public class EntityRenderersMixin {
      *
      * In some cases getPart() might not be called at all, so we should keep that in mind
      * and provide an empty list of model parts.
+     *
+     * TODO: Potentially pivot to EntityModelLoader.getModelPart() mixin instead?
+     * TODO: This may allow us to handle feature renderers easier, as many of them
+     * TODO: don't use the context.getPart() function.
      */
     @Inject(method = "method_32174", at = @At(
             value = "INVOKE",

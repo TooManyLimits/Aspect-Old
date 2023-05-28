@@ -75,9 +75,8 @@ public class EntityRendererMaps {
         listeningState = ListeningState.IDLE;
     }
 
-    public static @Nullable ModelPart getRoot(Entity entity) {
-        EntityRenderer<?> renderer = RenderUtils.getRenderer(entity);
-        return MODEL_PARTS.get(renderer);
+    public static @Nullable ModelPart getRoot(EntityRenderer<?> entityRenderer) {
+        return MODEL_PARTS.get(entityRenderer);
     }
 
     /**

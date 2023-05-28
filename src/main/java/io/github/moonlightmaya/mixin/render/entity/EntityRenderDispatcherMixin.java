@@ -32,6 +32,9 @@ public class EntityRenderDispatcherMixin {
         Aspect aspect = AspectManager.getAspect(entity.getUuid());
         if (aspect != null) {
             VanillaRenderer.CURRENT_RENDERER.push(aspect.vanillaRenderer);
+            //Update the vanilla renderer if needed
+            if (aspect.vanillaRenderer.needsUpdate)
+                aspect.vanillaRenderer.update(entity);
 
             // Save the current entity -> view matrix if needed.
             // This matrix is also calculated in LivingEntityRendererMixin, but
@@ -57,10 +60,17 @@ public class EntityRenderDispatcherMixin {
     /**
      * Clear the vanilla part maps when we reload, because
      * the instances of entity renderers change.
+     * Also mark all vanilla renderers as needing to be updated.
      */
     @Inject(method = "reload", at = @At("HEAD"))
     public void clearVanillaPartMaps(ResourceManager manager, CallbackInfo ci) {
         EntityRendererMaps.clear();
+        AspectManager.forEachAspect(aspect -> {
+            //If the aspect vanilla renderer is initialized (read: now wrong),
+            //mark it as needing an update
+            if (aspect.vanillaRenderer.initialized)
+                aspect.vanillaRenderer.needsUpdate = true;
+        });
     }
 
 }

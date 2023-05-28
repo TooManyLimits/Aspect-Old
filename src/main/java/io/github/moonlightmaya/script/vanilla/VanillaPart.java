@@ -1,5 +1,6 @@
 package io.github.moonlightmaya.script.vanilla;
 
+import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.mixin.render.vanilla.part.ModelPartAccessor;
 import io.github.moonlightmaya.model.Transformable;
 import net.minecraft.client.model.ModelPart;
@@ -23,10 +24,27 @@ import java.util.stream.Stream;
 @PetPetWhitelist
 public class VanillaPart implements Transformable.Transformer {
 
-    public final ModelPart referencedPart;
+    public ModelPart referencedPart;
     public final String name;
+    public VanillaRenderer renderer;
 
     private final HashMap<String, VanillaPart> childrenBacking = new PetPetTable<>(); //backing map for the children
+
+    /**
+     * When we press F3+T, the entity renderers reload, and the instances
+     * of ModelPart change. As such, we need to update our VanillaPart
+     * instances to match the new model parts.
+     */
+    public void update(ModelPart newPart) {
+        //Name shouldn't change
+        this.referencedPart = newPart;
+        for (Map.Entry<String, ModelPart> childEntry : ((ModelPartAccessor) (Object) newPart).getChildren().entrySet()) {
+            String childName = childEntry.getKey();
+            ModelPart childPart = childEntry.getValue();
+            VanillaPart vanillaChild = childrenBacking.get(childName);
+            vanillaChild.update(childPart);
+        }
+    }
 
     /**
      * The transform applied _by vanilla_ to this part, which
@@ -66,12 +84,13 @@ public class VanillaPart implements Transformable.Transformer {
      */
     public final Matrix4f inverseDefaultTransform = new Matrix4f();
 
-    public VanillaPart(String name, ModelPart part) {
+    public VanillaPart(VanillaRenderer renderer, String name, ModelPart part) {
+        this.renderer = renderer;
         this.name = name;
         this.referencedPart = part;
 
         for (Map.Entry<String, ModelPart> child : ((ModelPartAccessor) (Object) part).getChildren().entrySet()) {
-            childrenBacking.put(child.getKey(), new VanillaPart(child.getKey(), child.getValue()));
+            childrenBacking.put(child.getKey(), new VanillaPart(renderer, child.getKey(), child.getValue()));
         }
 
         //Read the default transform and store its inverse for later
@@ -125,28 +144,26 @@ public class VanillaPart implements Transformable.Transformer {
     }
 
     @PetPetWhitelist
-    public Matrix4d getMatrix() {
+    public Matrix4d matrix_0() {
         return savedTransform;
     }
 
     @PetPetWhitelist
-    public boolean getVisible() {
-        return savedVisibility;
-    }
-
-    @PetPetWhitelist
-    public VanillaPart matrix(Matrix4d mat) {
+    public VanillaPart matrix_1(Matrix4d mat) {
         appliedTransform.set(mat);
         return this;
     }
 
     @PetPetWhitelist
-    public VanillaPart visible(Boolean b) {
+    public boolean visible_0() {
+        return savedVisibility;
+    }
+
+    @PetPetWhitelist
+    public VanillaPart visible_1(Boolean b) {
         appliedVisibility = b;
         return this;
     }
-
-    //Transformer implementation below, rather simple
 
     /**
      * Always recalculate matrices for vanilla parts
@@ -169,8 +186,8 @@ public class VanillaPart implements Transformable.Transformer {
      */
     @Override
     public boolean affectMatrix(Matrix4f matrix) {
-        matrix.mul(this.inverseDefaultTransform);
-        tempMatrixSavedTransform.set(this.savedTransform);
+        matrix.mul(inverseDefaultTransform);
+        tempMatrixSavedTransform.set(savedTransform);
         matrix.mul(tempMatrixSavedTransform);
         return false;
     }

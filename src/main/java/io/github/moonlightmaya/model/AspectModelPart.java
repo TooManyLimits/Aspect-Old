@@ -8,6 +8,7 @@ import io.github.moonlightmaya.model.rendertasks.BlockTask;
 import io.github.moonlightmaya.model.rendertasks.ItemTask;
 import io.github.moonlightmaya.model.rendertasks.RenderTask;
 import io.github.moonlightmaya.model.rendertasks.TextTask;
+import io.github.moonlightmaya.script.vanilla.VanillaPart;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.util.RenderUtils;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;

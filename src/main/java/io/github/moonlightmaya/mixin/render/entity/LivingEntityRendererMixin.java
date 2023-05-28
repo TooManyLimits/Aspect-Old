@@ -64,8 +64,6 @@ public abstract class LivingEntityRendererMixin {
 
             //Save this matrix in the currently set vanilla renderer, as its "aspectModelTransform".
             topRenderer.aspectModelTransform.set(aspect$preTransformSnapshot);
-
-
         }
 
     }

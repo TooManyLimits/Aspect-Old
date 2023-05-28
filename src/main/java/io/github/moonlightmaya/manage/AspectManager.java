@@ -191,10 +191,16 @@ public class AspectManager {
      * Submits a task to clear all aspects from storage, but not the GUI aspect.
      */
     public static void clearAllAspects() {
+        forEachAspect(Aspect::destroy);
+    }
+
+    /**
+     * Submits a task that will run something for each aspect in the map
+     */
+    public static void forEachAspect(Consumer<Aspect> consumer) {
         TASKS.add(() -> {
             for (Aspect aspect : ASPECTS.values())
-                aspect.destroy();
-            ASPECTS.clear();
+                consumer.accept(aspect);
         });
     }
 

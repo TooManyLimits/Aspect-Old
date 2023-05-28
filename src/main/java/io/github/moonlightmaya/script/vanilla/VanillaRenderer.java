@@ -1,13 +1,19 @@
 package io.github.moonlightmaya.script.vanilla;
 
+import io.github.moonlightmaya.mixin.render.entity.LivingEntityRendererAccessor;
 import io.github.moonlightmaya.mixin.render.vanilla.part.ModelPartAccessor;
 import io.github.moonlightmaya.util.MathUtils;
+import io.github.moonlightmaya.util.RenderUtils;
 import net.minecraft.client.model.ModelPart;
+import net.minecraft.client.render.entity.EntityRenderer;
+import net.minecraft.client.render.entity.LivingEntityRenderer;
+import net.minecraft.client.render.entity.feature.FeatureRenderer;
 import net.minecraft.entity.Entity;
 import org.joml.Matrix4d;
 import org.joml.Matrix4f;
 import org.joml.Vector3d;
 import petpet.external.PetPetWhitelist;
+import petpet.types.PetPetList;
 import petpet.types.PetPetTable;
 
 import java.util.*;
@@ -18,6 +24,13 @@ import java.util.*;
  */
 @PetPetWhitelist
 public class VanillaRenderer {
+
+    /**
+     * Set when this vanilla renderer needs an update.
+     * This is true when we activate F3+T.
+     */
+    public boolean needsUpdate = false;
+    public boolean initialized = false; //Set to true once this is initialized
 
     /**
      * Mixins will modify values in the top value of CURRENT_RENDERER.
@@ -69,8 +82,9 @@ public class VanillaRenderer {
      * wearing this aspect. These are calculated once for an aspect when it is
      * seen, and then not again until some kind of reload occurs.
      */
-    public Map<Object, VanillaPart> vanillaParts = new HashMap<>();
-    public Map<ModelPart, VanillaPart> vanillaPartInverse = new HashMap<>();
+    public final Map<String, VanillaPart> vanillaParts = new HashMap<>();
+    public final Map<ModelPart, VanillaPart> vanillaPartInverse = new HashMap<>();
+    public final List<FeatureRenderer<?, ?>> featureRenderers = new ArrayList<>();
 
     /**
      * Initialize the part map for this user.
@@ -81,16 +95,19 @@ public class VanillaRenderer {
      * There can't be a single global ModelPart -> VanillaPart map,
      * because each ModelPart may be shared by several VanillaParts
      * across multiple Aspects.
-     *
-     * TODO: call this function again when F3+T happens,
-     * TODO: as the model part instances change and this becomes outdated
      */
     public void initVanillaParts(Entity user) {
+        if (initialized)
+            throw new IllegalStateException("Vanilla renderer initialized twice? Should not happen, please report to devs");
+
         //Clear the maps
         vanillaParts.clear();
         vanillaPartInverse.clear();
-        //Get the root model part of this entity
-        ModelPart root = EntityRendererMaps.getRoot(user);
+        featureRenderers.clear();
+
+        //Get the renderer and root model part of this entity
+        EntityRenderer<?> renderer = RenderUtils.getRenderer(user);
+        ModelPart root = EntityRendererMaps.getRoot(renderer);
 
         //Fill vanilla part map from the vanilla model data
         if (root != null) //If root is null, no parts
@@ -99,23 +116,72 @@ public class VanillaRenderer {
                 String partName = entry.getKey();
                 ModelPart part = entry.getValue();
                 //Create the new part and add it to the name->part table
-                VanillaPart newPart = new VanillaPart(partName, part);
+                VanillaPart newPart = new VanillaPart(this, partName, part);
                 vanillaParts.put(partName, newPart);
                 //Populate the inverse vanilla part map
                 newPart.traverse().forEach(p -> vanillaPartInverse.put(p.referencedPart, p));
             }
 
-        //Set the petpet field
+        //If it's a LivingEntityRenderer, add all the features to the features list
+        if (renderer instanceof LivingEntityRenderer<?,?>) {
+            List<FeatureRenderer<?, ?>> featureRenderers = ((LivingEntityRendererAccessor) renderer).getFeatures();
+            this.featureRenderers.addAll(featureRenderers);
+        }
+
+        //Set the petpet fields
         parts.clear();
         parts.putAll(vanillaParts);
+        features.clear();
+        features.addAll(featureRenderers);
+
+        initialized = true;
     }
+
+    /**
+     * Update the renderer based on the user.
+     * Only called if needsUpdate is true.
+     *
+     * The renderer needs an update if the underlying
+     * ModelPart instances change, which happens after
+     * the F3+T function is activated.
+     */
+    public void update(Entity user) {
+        //Clear the inverse map, as the model part instances are changing
+        vanillaPartInverse.clear();
+
+        //Get the new entity renderer
+        EntityRenderer<?> newEntityRenderer = RenderUtils.getRenderer(user);
+        ModelPart root = EntityRendererMaps.getRoot(newEntityRenderer);
+
+        //Fill vanilla part map from the vanilla model data
+        if (root != null) //If root is null, no parts
+            //Iterate over the root's children and update the corresponding vanilla part
+            for (Map.Entry<String, ModelPart> entry : ((ModelPartAccessor) (Object) root).getChildren().entrySet()) {
+                String partName = entry.getKey();
+                ModelPart part = entry.getValue();
+                VanillaPart vanillaPart = this.vanillaParts.get(partName);
+                vanillaPart.update(part);
+
+                //Repopulate the inverse vanilla part map
+                vanillaPart.traverse().forEach(p -> vanillaPartInverse.put(p.referencedPart, p));
+            }
+
+        needsUpdate = false;
+    }
+
 
     //PETPET METHODS
     public final PetPetTable<Object, VanillaPart> parts = new PetPetTable<>(); //Set by initVanillaParts()
+    public final PetPetList<FeatureRenderer<?, ?>> features = new PetPetList<>(); //Set by initVanillaParts()
 
     @PetPetWhitelist
     public PetPetTable<Object, VanillaPart> parts() {
         return parts;
+    }
+
+    @PetPetWhitelist
+    public PetPetList<FeatureRenderer<?,?>> features() {
+        return features;
     }
 
     @PetPetWhitelist

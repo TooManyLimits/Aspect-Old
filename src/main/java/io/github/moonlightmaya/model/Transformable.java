@@ -1,15 +1,10 @@
 package io.github.moonlightmaya.model;
 
-import io.github.moonlightmaya.script.vanilla.VanillaPart;
-import io.github.moonlightmaya.util.AspectMatrixStack;
-import net.minecraft.client.util.math.MatrixStack;
 import org.joml.*;
 import petpet.external.PetPetWhitelist;
 import petpet.types.PetPetList;
 
 import java.lang.Math;
-import java.util.List;
-import java.util.Set;
 
 /**
  * A base class for things which can have their position and rendering
