@@ -33,12 +33,18 @@ import java.util.*;
 public class Aspect {
 
     /**
-     * The roots of the different model part instances, as well as their temporarily held data.
-     * The data is saved from when the Aspect instance is first constructed. Then, when the user of the
-     * Aspect loads in for the first time, the data is converted into the model parts themselves, and the
-     * data is discarded.
+     * The roots of the different "special" model part groups.
+     *
+     * In Figura, these different types of model parts were all connected under one large tree.
+     * You could have world parts inside of HUD parts inside of entity parts, for example.
+     * This was a large technical burden on the rendering side, requiring all kinds of conversions
+     * between different "special" groups.
+     *
+     * Aspect resolves this by requiring that these different "special" groups be separated out
+     * into their own distinct model part trees. If you think about it, it doesn't make much
+     * sense for a WORLD part to be a child of a HUD part anyway.
      */
-    public AspectModelPart entityRoot; private BaseStructures.ModelPartStructure entityRootData;
+    public AspectModelPart entityRoot;
     public List<WorldRootModelPart> worldRoots;
     public AspectModelPart hudRoot;
 
@@ -134,8 +140,8 @@ public class Aspect {
         //Create vanilla renderer
         vanillaRenderer = new VanillaRenderer();
 
-        //Save the entity root data
-        entityRootData = materials.entityRoot();
+        //Entity root
+        entityRoot = new AspectModelPart(materials.entityRoot(), this, null);
 
         //World roots don't need the entity itself. Since they render as part of the world,
         //They cannot interact with vanilla model parents (at least through parent types).
@@ -161,17 +167,15 @@ public class Aspect {
 
     public void onEntityFirstLoad(Entity user) {
         if (isErrored()) return;
-        //Generate vanilla data for parent part purposes
+
+        //Generate vanilla data
+        //TODO: Make this better, more automatic
         EntityModel<?> model = RenderUtils.getModel(user);
         if (model != null) {
             vanillaRenderer.initVanillaParts(VanillaModelPartSorter.getModelInfo(model));
         }
 
-        //Discard the data after, no longer needed
-        entityRoot = new AspectModelPart(entityRootData, this, null);
-        entityRootData = null;
-
-        //Notify the script
+        //Notify the script of the first entity load, triggering events
         scriptHandler.onEntityFirstLoad();
     }
 

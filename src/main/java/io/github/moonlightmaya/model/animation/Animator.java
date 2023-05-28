@@ -50,6 +50,8 @@ public class Animator implements Transformable.Transformer {
         if (isActive) {
             //Get weight, multiply by it
             float w = (float) animation.weight_0();
+            //Values in keyframes are degrees, but we need radians
+            //Also, blockbench reverses the X and Y values of rotations for animations vs. just rotating the parts
             matrix.rotateXYZ(rot.queryLatest(0,0,0).mul(w * MathHelper.PI / 180).mul(-1, -1, 1));
             matrix.scale(scale.queryLatest(1,1,1).sub(1,1,1).mul(w).add(1,1,1));
             matrix.translate(pos.queryLatest(0,0,0).mul(w));
