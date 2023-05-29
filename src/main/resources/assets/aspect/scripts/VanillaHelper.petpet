@@ -1,0 +1,127 @@
+
+//Run the function now if the user exists, 
+//or register it to the init event if they don't
+fn runNowOrLater(func) {
+	if user func() else events.USER_INIT.add(func)
+}
+
+
+
+//Keep a lowercased table, since we don't want keywords
+//to be case sensitive
+lowercasedPartsTable = $[]
+
+//Find the vanilla model part which matches the given name, if it exists, or else null
+fn findPart(name) {
+	found = null
+	//Set found to null, iterate the parts table to find the correct vanilla part
+	lowercasedPartsTable.each(fn(partName, part) {
+		if found or partName.class() == 0.class() //already found, or it's a number, skip
+			return null
+		if name.starts(partName)
+			found = part
+	})
+	//return the found part, or null if we found nothing
+	found
+}
+
+fn setupKeywordsRecursive(modelPart) {
+	//Only set keywords for groups
+	if modelPart.bbType() == "GROUP" {
+		//If we find a part, then add it to the transformers list
+		if (vanillaPart = findPart(modelPart.name()))
+			modelPart.transformers().push(vanillaPart)
+		
+		//Recurse on all the children
+		modelPart.getChildren().each(this)
+	}
+}
+
+//Run this function and your part names will be scanned for keywords,
+//and the vanilla parents will be added accordingly
+global fn setupKeywords() {
+	//Vanilla model only exists once the user is loaded in,
+	//so register this to the event
+	runNowOrLater(fn() {
+		//Generate a copy of the vanilla parts with lowercase names,
+		//just in case any names aren't already lowercase
+		lowercasedPartsTable.clear()
+		vanilla.parts().each(fn(partName, part) {
+			//If the part name is a string, lowercase it, if it's a number, don't
+			lowercasedPartsTable[
+				if partName.class() == "".class() partName.lower() else partName
+			] = part
+		})
+
+		//Recursively setup keywords for parts
+		setupKeywordsRecursive(models.entity)
+		setupKeywordsRecursive(models.hud)
+		models.world.eachV(setupKeywordsRecursive)
+
+		//Remove this after it's called
+		events.USER_INIT.remove(this)
+	})
+}
+
+featuresMap = $[
+	player = !["armor", "heldItems", "arrows", "ears", "cape", "headItem", "elytra", "parrot", "riptide", "stingers"],
+	armor_stand = !["armor", "heldItems", "elytra", "headItem"],
+	mooshroom = !["mushrooms"],
+	llama = !["decor"],
+	panda = !["heldItem"],
+	wandering_trader = !["headItem", "heldItem"],
+	spider = !["eyes"],
+	warden = !["glow", "spots1", "spots2", "tendrils", "heart"],
+	phantom = !["eyes"],
+	cat = !["collar"],
+	slime = !["overlay"],
+	snow_golem = !["pumpkin"],
+	creeper = !["charge"],
+	wither = !["armor"],
+	fox = !["heldItem"],
+	shulker = !["head"],
+	iron_golem = !["crack", "flower"],
+	giant = !["heldItem", "armor"],
+	tropical_fish = !["overlay"],
+	strider = !["saddle"],
+	sheep = !["wool"],
+	villager = !["headItem", "clothing", "heldItem"],
+	horse = !["marking", "armor"],
+	pig = !["saddle"],
+	zombie_villager = !["headItem", "elytra", "heldItems", "armor", "clothing"],
+	zombie = !["headItem", "elytra", "heldItems", "armor"],
+	husk = !["headItem", "elytra", "heldItems", "armor"],
+	drowned = !["headItem", "elytra", "heldItems", "armor", "overlay"],
+	skeleton = !["headItem", "elytra", "heldItems", "armor"],
+	stray = !["headItem", "elytra", "heldItems", "armor", "overlay"],
+	wither_skeleton = !["headItem", "elytra", "heldItems", "armor"],
+	piglin = !["headItem", "elytra", "heldItems", "armor"],
+	wolf = !["collar"],
+	dolphin = !["heldItem"],
+	vindicator = !["headItem", "heldItem"],
+	illusioner = !["headItem", "heldItem"],
+	evoker = !["headItem", "heldItem"],
+	pillager = !["headItem", "heldItem"],
+	enderman = !["eyes", "heldItem"],
+	witch = !["heldItem"],
+	allay = !["heldItem"],
+	vex = !["heldItem"]
+]
+
+//Provides some alternate names for the
+//feature renderers, instead of using just the
+//numbers
+global fn setupFeatures() {
+	runNowOrLater(fn() {
+		typename = {
+			t = user.getType()
+			t.sub(t.find(":")+1, t.len())
+		}
+		if (featureNameList = featuresMap[typename]) {
+			features = vanilla.features()
+			featureNameList.eachI(fn(i, name) {
+				features[name] = features[i]
+			})
+		}
+	})
+}

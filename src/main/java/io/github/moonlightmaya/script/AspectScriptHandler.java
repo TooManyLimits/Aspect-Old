@@ -285,7 +285,7 @@ public class AspectScriptHandler {
         runUtil("JsonText");
         runUtil("PrettyPrint");
         runUtil("ParticleHelpers");
-        runUtil("KeywordHelper");
+        runUtil("VanillaHelper");
 
         //Other APIs not shown here:
 
