@@ -81,7 +81,10 @@ public class AspectTexture extends ResourceTexture {
             //Delete ourself from the game's texture manager, if we don't do this then
             //the texture will stay registered there forever, leaking memory
             //Hopefully this doesn't concurrent access exception or whatever... it's on the render thread so should be ok?
-            ((TextureManagerAccessor) MinecraftClient.getInstance().getTextureManager()).getTextures().remove(this.location);
+            //Update: Without the if statement, it does throw ConcurrentModificationException when closing the game
+            //We now only do this if the game is running at the time
+            if (MinecraftClient.getInstance().isRunning())
+                ((TextureManagerAccessor) MinecraftClient.getInstance().getTextureManager()).getTextures().remove(this.location);
         });
     }
 
