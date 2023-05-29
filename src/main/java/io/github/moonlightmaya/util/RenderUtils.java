@@ -3,6 +3,10 @@ package io.github.moonlightmaya.util;
 import com.mojang.blaze3d.systems.RenderCall;
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.moonlightmaya.model.renderlayers.NewRenderLayerFunction;
+import io.github.moonlightmaya.util.compat.SodiumCompat;
+import me.jellysquid.mods.sodium.client.render.vertex.VertexBufferWriter;
+import me.jellysquid.mods.sodium.client.render.vertex.VertexFormatDescription;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
@@ -13,6 +17,7 @@ import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.entity.Entity;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4d;
+import org.lwjgl.system.MemoryStack;
 
 public class RenderUtils {
 
@@ -58,25 +63,41 @@ public class RenderUtils {
      * into thinking they're doing something, when really they're just sending
      * vertices into the void.
      */
-    public static final VertexConsumerProvider SILLY_LITTLE_VCP =  layer -> new VertexConsumer() {
-        @Override
-        public VertexConsumer vertex(double x, double y, double z) {return this;}
-        @Override
-        public VertexConsumer color(int red, int green, int blue, int alpha) {return this;}
-        @Override
-        public VertexConsumer texture(float u, float v) {return this;}
-        @Override
-        public VertexConsumer overlay(int u, int v) {return this;}
-        @Override
-        public VertexConsumer light(int u, int v) {return this;}
-        @Override
-        public VertexConsumer normal(float x, float y, float z) {return this;}
-        @Override
-        public void next() {}
-        @Override
-        public void fixedColor(int red, int green, int blue, int alpha) {}
-        @Override
-        public void unfixColor() {}
-    };
+
+    private static VertexConsumerProvider sillyLittleVcp = null;
+    private static VertexConsumer sillyLittleVc = null;
+
+    public static VertexConsumerProvider getSillyLittleVcp() {
+        if (sillyLittleVcp == null) {
+            //Sodium doesn't like this, so we need a special workaround to return its own instance
+            if (FabricLoader.getInstance().isModLoaded("sodium")) {
+                sillyLittleVc = SodiumCompat.SillyLittleSodiumVertexConsumer.instance;
+            } else {
+                sillyLittleVc = new VertexConsumer() {
+                    @Override
+                    public VertexConsumer vertex(double x, double y, double z) {return this;}
+                    @Override
+                    public VertexConsumer color(int red, int green, int blue, int alpha) {return this;}
+                    @Override
+                    public VertexConsumer texture(float u, float v) {return this;}
+                    @Override
+                    public VertexConsumer overlay(int u, int v) {return this;}
+                    @Override
+                    public VertexConsumer light(int u, int v) {return this;}
+                    @Override
+                    public VertexConsumer normal(float x, float y, float z) {return this;}
+                    @Override
+                    public void next() {}
+                    @Override
+                    public void fixedColor(int red, int green, int blue, int alpha) {}
+                    @Override
+                    public void unfixColor() {}
+                };
+            }
+            //Vcp just provides the do-nothing vertex consumer
+            sillyLittleVcp = layer -> sillyLittleVc;
+        }
+        return sillyLittleVcp;
+    }
 
 }

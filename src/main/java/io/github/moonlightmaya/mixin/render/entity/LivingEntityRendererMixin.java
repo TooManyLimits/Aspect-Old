@@ -103,8 +103,8 @@ public abstract class LivingEntityRendererMixin {
             if (vanillaFeature != null) {
                 if (!vanillaFeature.visible) {
                     //If invisible, render the original with our silly little VCP so that no vertices actually appear,
-                    //but all the operations of rendering still take place. Wasting CPU in the name of laziness, yay!
-                    featureRenderer.render(matrixStack, RenderUtils.SILLY_LITTLE_VCP, light, entity, v0, v1, v2, v3, v4, v5);
+                    //but all the operations of rendering still take place.
+                    featureRenderer.render(matrixStack, RenderUtils.getSillyLittleVcp(), light, entity, v0, v1, v2, v3, v4, v5);
                 } else {
                     //Otherwise, apply our own fancy modifications to the matrices:
                     vanillaFeature.recalculateMatrixIfNeeded();

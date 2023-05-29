@@ -17,6 +17,14 @@ repositories {
 	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
 	// for more information about repositories.
 	maven { url 'https://jitpack.io' } //For PetPet
+
+	maven { //Modrinth
+		name = "Modrinth"
+		url = "https://api.modrinth.com/maven"
+		content {
+			includeGroup "maven.modrinth"
+		}
+	}
 }
 
 dependencies {
@@ -34,6 +42,8 @@ dependencies {
 	// modImplementation "net.fabricmc.fabric-api:fabric-api-deprecated:${project.fabric_version}"
 
 	include(implementation('com.github.Moonlight-Maya:PetPet:v0.4.6')) //PetPet
+
+	modCompileOnly("maven.modrinth:sodium:mc1.19.4-0.4.10")
 }
 
 processResources {
