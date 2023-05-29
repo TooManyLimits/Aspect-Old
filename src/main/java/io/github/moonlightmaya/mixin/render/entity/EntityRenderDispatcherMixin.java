@@ -21,9 +21,10 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 @Mixin(EntityRenderDispatcher.class)
 public class EntityRenderDispatcherMixin {
 
+    //Mixin plugin says this method header is wrong but uhhh it still runs :skull:
     @Inject(method = "render", at = @At(value = "INVOKE", shift = At.Shift.BEFORE,
             target = "Lnet/minecraft/client/render/entity/EntityRenderer;render(Lnet/minecraft/entity/Entity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V"),
-            locals = LocalCapture.CAPTURE_FAILHARD)
+            locals = LocalCapture.CAPTURE_FAILEXCEPTION)
     public void beforeRenderEntity(Entity entity, double x, double y, double z, float yaw,
                                    float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers,
                                    int light, CallbackInfo ci,

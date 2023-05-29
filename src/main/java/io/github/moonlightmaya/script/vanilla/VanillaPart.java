@@ -1,6 +1,5 @@
 package io.github.moonlightmaya.script.vanilla;
 
-import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.mixin.render.vanilla.part.ModelPartAccessor;
 import io.github.moonlightmaya.model.Transformable;
 import net.minecraft.client.model.ModelPart;
@@ -12,9 +11,7 @@ import petpet.external.PetPetWhitelist;
 import petpet.types.PetPetTable;
 import petpet.types.immutable.PetPetTableView;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -84,13 +81,12 @@ public class VanillaPart implements Transformable.Transformer {
      */
     public final Matrix4f inverseDefaultTransform = new Matrix4f();
 
-    public VanillaPart(VanillaRenderer renderer, String name, ModelPart part) {
-        this.renderer = renderer;
+    public VanillaPart(String name, ModelPart part) {
         this.name = name;
         this.referencedPart = part;
 
         for (Map.Entry<String, ModelPart> child : ((ModelPartAccessor) (Object) part).getChildren().entrySet()) {
-            childrenBacking.put(child.getKey(), new VanillaPart(renderer, child.getKey(), child.getValue()));
+            childrenBacking.put(child.getKey(), new VanillaPart(child.getKey(), child.getValue()));
         }
 
         //Read the default transform and store its inverse for later

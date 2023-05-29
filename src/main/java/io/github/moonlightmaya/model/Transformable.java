@@ -46,7 +46,7 @@ public abstract class Transformable {
         transformers = other.transformers;
     }
 
-    protected void recalculateMatrixIfNeeded() {
+    public void recalculateMatrixIfNeeded() {
         //If needsMatrixRecalculation, or any of the transformers
         //demand it, we should recalculate
         boolean shouldRecalculate = needsMatrixRecalculation;
@@ -231,13 +231,13 @@ public abstract class Transformable {
     }
 
     @PetPetWhitelist
-    public Transformable visible_1(Boolean b) {
+    public Transformable visible_1(boolean b) {
         this.visible = b;
         return this;
     }
 
     @PetPetWhitelist
-    public Boolean visible_0() {
+    public boolean visible_0() {
         return visible;
     }
 

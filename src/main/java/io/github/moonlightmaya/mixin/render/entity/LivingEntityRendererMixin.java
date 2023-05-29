@@ -1,18 +1,30 @@
 package io.github.moonlightmaya.mixin.render.entity;
 
+import io.github.moonlightmaya.script.vanilla.VanillaFeature;
 import io.github.moonlightmaya.script.vanilla.VanillaRenderer;
+import io.github.moonlightmaya.util.RenderUtils;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.LivingEntityRenderer;
+import net.minecraft.client.render.entity.feature.FeatureRenderer;
 import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
+
+import java.util.Iterator;
+import java.util.List;
 
 @Mixin(LivingEntityRenderer.class)
 public abstract class LivingEntityRendererMixin {
@@ -67,5 +79,49 @@ public abstract class LivingEntityRendererMixin {
         }
 
     }
+
+    /**
+     *
+     *
+     * HANDLING FOR FEATURE RENDERERS
+     *
+     *
+     */
+
+    @Redirect(
+            method = "render(Lnet/minecraft/entity/LivingEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/render/entity/feature/FeatureRenderer;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;ILnet/minecraft/entity/Entity;FFFFFF)V"
+            )
+    )
+    public void alterFeatureRenderer(FeatureRenderer featureRenderer, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int light, Entity entity, float v0, float v1, float v2, float v3, float v4, float v5) {
+        if (!VanillaRenderer.CURRENT_RENDERER.isEmpty()) {
+            //Get the VanillaFeature corresponding to this feature renderer:
+            VanillaRenderer topRenderer = VanillaRenderer.CURRENT_RENDERER.peek();
+            VanillaFeature vanillaFeature = topRenderer.featureRendererInverse.get(featureRenderer);
+            if (vanillaFeature != null) {
+                if (!vanillaFeature.visible) {
+                    //If invisible, render the original with our silly little VCP so that no vertices actually appear,
+                    //but all the operations of rendering still take place. Wasting CPU in the name of laziness, yay!
+                    featureRenderer.render(matrixStack, RenderUtils.SILLY_LITTLE_VCP, light, entity, v0, v1, v2, v3, v4, v5);
+                } else {
+                    //Otherwise, apply our own fancy modifications to the matrices:
+                    vanillaFeature.recalculateMatrixIfNeeded();
+                    matrixStack.push();
+                    matrixStack.multiplyPositionMatrix(vanillaFeature.positionMatrix);
+                    //And render as usual
+                    featureRenderer.render(matrixStack, vertexConsumerProvider, light, entity, v0, v1, v2, v3, v4, v5);
+                    matrixStack.pop(); //Remove our transformation
+                }
+                return;
+            }
+        }
+        //If nothing out of the order happened (if it did, that would cause an early return), then render normally
+        featureRenderer.render(matrixStack, vertexConsumerProvider, light, entity, v0, v1, v2, v3, v4, v5);
+    }
+
+
+
 
 }

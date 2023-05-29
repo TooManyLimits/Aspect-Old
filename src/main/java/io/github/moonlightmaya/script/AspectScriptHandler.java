@@ -23,6 +23,7 @@ import io.github.moonlightmaya.script.apis.math.Vectors;
 import io.github.moonlightmaya.script.events.AspectEvent;
 import io.github.moonlightmaya.script.events.EventHandler;
 import io.github.moonlightmaya.model.AspectTexture;
+import io.github.moonlightmaya.script.vanilla.VanillaFeature;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.script.vanilla.VanillaPart;
 import io.github.moonlightmaya.script.vanilla.VanillaRenderer;
@@ -179,6 +180,7 @@ public class AspectScriptHandler {
         //Vanilla renderer
         instance.registerClass(VanillaRenderer.class, PetPetReflector.reflect(VanillaRenderer.class, "VanillaRenderer").copy().makeEditable());
         instance.registerClass(VanillaPart.class, PetPetReflector.reflect(VanillaPart.class, "VanillaPart").copy().makeEditable());
+        instance.registerClass(VanillaFeature.class, PetPetReflector.reflect(VanillaFeature.class, "VanillaFeature").copy().makeEditable().setParent(transformableClass));
 
         //Minecraft ones
         instance.registerClass(ClientWorld.class, WorldAPI.WORLD_CLASS.copy().makeEditable());

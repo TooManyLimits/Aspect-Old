@@ -84,7 +84,12 @@ public class VanillaRenderer {
      */
     public final Map<String, VanillaPart> vanillaParts = new HashMap<>();
     public final Map<ModelPart, VanillaPart> vanillaPartInverse = new HashMap<>();
-    public final List<FeatureRenderer<?, ?>> featureRenderers = new ArrayList<>();
+
+    //Analogous fields for feature renderers
+    //Feature renderers don't have names normally, so a list could suffice,
+    //but we may wish to provide some aliases for common feature renderers.
+    public final Map<Double, VanillaFeature> featureRenderers = new HashMap<>();
+    public final Map<FeatureRenderer<?, ?>, VanillaFeature> featureRendererInverse = new HashMap<>();
 
     /**
      * Initialize the part map for this user.
@@ -116,23 +121,28 @@ public class VanillaRenderer {
                 String partName = entry.getKey();
                 ModelPart part = entry.getValue();
                 //Create the new part and add it to the name->part table
-                VanillaPart newPart = new VanillaPart(this, partName, part);
+                VanillaPart newPart = new VanillaPart(partName, part);
                 vanillaParts.put(partName, newPart);
                 //Populate the inverse vanilla part map
                 newPart.traverse().forEach(p -> vanillaPartInverse.put(p.referencedPart, p));
             }
 
-        //If it's a LivingEntityRenderer, add all the features to the features list
+        //If it's a LivingEntityRenderer, wrap all the features and add them to the features list
         if (renderer instanceof LivingEntityRenderer<?,?>) {
             List<FeatureRenderer<?, ?>> featureRenderers = ((LivingEntityRendererAccessor) renderer).getFeatures();
-            this.featureRenderers.addAll(featureRenderers);
+            for (int i = 0; i < featureRenderers.size(); i++) {
+                FeatureRenderer<?, ?> featureRenderer = featureRenderers.get(i);
+                VanillaFeature vanillaFeature = new VanillaFeature(featureRenderer);
+                this.featureRenderers.put((double) i, vanillaFeature);
+                this.featureRendererInverse.put(featureRenderer, vanillaFeature);
+            }
         }
 
         //Set the petpet fields
         parts.clear();
         parts.putAll(vanillaParts);
         features.clear();
-        features.addAll(featureRenderers);
+        features.putAll(featureRenderers);
 
         initialized = true;
     }
@@ -146,8 +156,9 @@ public class VanillaRenderer {
      * the F3+T function is activated.
      */
     public void update(Entity user) {
-        //Clear the inverse map, as the model part instances are changing
+        //Clear the inverse maps, as the vanilla object instances are changing
         vanillaPartInverse.clear();
+        featureRendererInverse.clear();
 
         //Get the new entity renderer
         EntityRenderer<?> newEntityRenderer = RenderUtils.getRenderer(user);
@@ -166,21 +177,32 @@ public class VanillaRenderer {
                 vanillaPart.traverse().forEach(p -> vanillaPartInverse.put(p.referencedPart, p));
             }
 
+        //If the renderer has feature renderer data, update those
+        if (newEntityRenderer instanceof LivingEntityRenderer<?,?>) {
+            List<FeatureRenderer<?, ?>> newFeatureRenderers = ((LivingEntityRendererAccessor) newEntityRenderer).getFeatures();
+            for (int i = 0; i < newFeatureRenderers.size(); i++) {
+                //For each feature renderer, update the value and repopulate the inverse map
+                featureRenderers.get((double) i).update(newFeatureRenderers.get(i));
+                featureRendererInverse.put(newFeatureRenderers.get(i), featureRenderers.get((double) i));
+            }
+        }
+
+        //Update complete, no longer needed
         needsUpdate = false;
     }
 
 
     //PETPET METHODS
-    public final PetPetTable<Object, VanillaPart> parts = new PetPetTable<>(); //Set by initVanillaParts()
-    public final PetPetList<FeatureRenderer<?, ?>> features = new PetPetList<>(); //Set by initVanillaParts()
+    public final PetPetTable<String, VanillaPart> parts = new PetPetTable<>(); //Set by initVanillaParts()
+    public final PetPetTable<Double, VanillaFeature> features = new PetPetTable<>(); //Set by initVanillaParts()
 
     @PetPetWhitelist
-    public PetPetTable<Object, VanillaPart> parts() {
+    public PetPetTable<String, VanillaPart> parts() {
         return parts;
     }
 
     @PetPetWhitelist
-    public PetPetList<FeatureRenderer<?,?>> features() {
+    public PetPetTable<Double, VanillaFeature> features() {
         return features;
     }
 
