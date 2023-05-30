@@ -24,6 +24,12 @@ global fn for(start, end, increment, func) {
 	}
 }
 
+//Table copy
+$[].class().methods():copy = fn() {
+	res = $[]
+	this.each(fn(k, v) res[k] = v)
+	res
+}
 
 //vector3 augmented
 vec3(0,0,0).class().methods().augmented = fn() vec4(this.x, this.y, this.z, 1)

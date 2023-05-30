@@ -34,11 +34,11 @@ partClass.methods().sizeVertical = fn(tileSize, desiredSize) {
 
 partClass.methods().copyRounded = fn(name, childOf) {
 	newPart = this.copy(name, true, false).visible(true)
-	newPart.getChildren().clear()
+	newPart.children().clear()
 	newPart.clearChildCache()
-	this.getChildren().each(fn(child) {
-		newPart.getChildren().push(child.copy(child.name()))
+	this.children().each(fn(child) {
+		newPart.children().push(child.copy(child.name()))
 	})
-	childOf.getChildren().push(newPart)
+	childOf.children().push(newPart)
 	newPart
 }

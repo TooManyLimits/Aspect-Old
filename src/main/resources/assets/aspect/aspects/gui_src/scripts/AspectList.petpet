@@ -97,7 +97,7 @@ AspectListManager = class("AspectListManager", $[
 
 		listEntriesModelPart = models.hud.gui.aspectList.entries
 		
-		listEntriesModelPart.clearChildCache().getChildren().clear() //clear previous children
+		listEntriesModelPart.clearChildCache().children().clear() //clear previous children
 		index = -1 //set index back to -1
 		
 		fn recurse(folderName, object, curPath) {

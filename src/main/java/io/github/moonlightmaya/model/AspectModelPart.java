@@ -8,7 +8,6 @@ import io.github.moonlightmaya.model.rendertasks.BlockTask;
 import io.github.moonlightmaya.model.rendertasks.ItemTask;
 import io.github.moonlightmaya.model.rendertasks.RenderTask;
 import io.github.moonlightmaya.model.rendertasks.TextTask;
-import io.github.moonlightmaya.script.vanilla.VanillaPart;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.util.RenderUtils;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
@@ -16,7 +15,6 @@ import net.minecraft.block.BlockState;
 import net.minecraft.client.render.*;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.ZipCompressor;
 import org.joml.*;
 import petpet.external.PetPetWhitelist;
 import petpet.lang.run.PetPetCallable;
@@ -27,7 +25,6 @@ import java.lang.Math;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * An element of a hierarchical tree structure, analogous to the structure in Blockbench as well as the file system.
@@ -628,7 +625,7 @@ public class AspectModelPart extends Transformable {
     }
 
     @PetPetWhitelist
-    public PetPetList<AspectModelPart> getChildren() {
+    public PetPetList<AspectModelPart> children() {
         return children;
     }
 

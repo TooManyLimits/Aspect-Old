@@ -1,21 +1,17 @@
-
 //Run the function now if the user exists, 
 //or register it to the init event if they don't
 fn runNowOrLater(func) {
-	if user func() else events.USER_INIT.add(func)
+	if user func() else events.USER_INIT.add(fn() {
+		func()
+		events.USER_INIT.remove(this)
+	})
 }
 
-
-
-//Keep a lowercased table, since we don't want keywords
-//to be case sensitive
-lowercasedPartsTable = $[]
-
 //Find the vanilla model part which matches the given name, if it exists, or else null
-fn findPart(name) {
+fn findPart(name, partsTable) {
 	found = null
 	//Set found to null, iterate the parts table to find the correct vanilla part
-	lowercasedPartsTable.each(fn(partName, part) {
+	partsTable.each(fn(partName, part) {
 		if found or partName.class() == 0.class() //already found, or it's a number, skip
 			return null
 		if name.starts(partName)
@@ -25,17 +21,41 @@ fn findPart(name) {
 	found
 }
 
-fn setupKeywordsRecursive(modelPart) {
+fn setupKeywordsRecursive(modelPart, partsTable) {
 	//Only set keywords for groups
 	if modelPart.bbType() == "GROUP" {
-		//If we find a part, then add it to the transformers list
-		if (vanillaPart = findPart(modelPart.name()))
-			modelPart.transformers().push(vanillaPart)
-		
-		//Recurse on all the children
-		modelPart.getChildren().each(this)
+		//If we find a part, then add it to the transformers list if possible
+		if (vanillaPart = findPart(modelPart.name().lower(), partsTable)) {
+			//If it's a table, don't set the transformer, instead just recurse
+			if (vanillaPart.class() == $[].class()) {
+				modelPart.children().each(fn(child) {
+					setupKeywordsRecursive(child, vanillaPart)
+				})
+			} else {
+				modelPart.transformers().push(vanillaPart)
+				//Recurse on the children with the vanilla part's children
+				modelPart.children().each(fn(child) {
+					setupKeywordsRecursive(child, vanillaPart.children())
+				})
+			}
+		} else {
+			//Recurse on all the children
+			modelPart.children().each(fn(child) {
+				setupKeywordsRecursive(child, partsTable)
+			})
+		}
 	}
 }
+
+//Use this kind of hacky workaround to get something that,
+//when calling children(), returns the parts
+FeatureContainer = class("FeatureContainer", $[
+	__init = fn(feature) {
+		this.feature = feature
+		this
+	},
+	children = fn() this.feature.parts()
+])
 
 //Run this function and your part names will be scanned for keywords,
 //and the vanilla parents will be added accordingly
@@ -43,26 +63,29 @@ global fn setupKeywords() {
 	//Vanilla model only exists once the user is loaded in,
 	//so register this to the event
 	runNowOrLater(fn() {
-		//Generate a copy of the vanilla parts with lowercase names,
-		//just in case any names aren't already lowercase
-		lowercasedPartsTable.clear()
-		vanilla.parts().each(fn(partName, part) {
-			//If the part name is a string, lowercase it, if it's a number, don't
-			lowercasedPartsTable[
-				if partName.class() == "".class() partName.lower() else partName
-			] = part
+
+		//Generate a copy of the vanilla parts
+		partsTable = vanilla.parts().copy()
+
+		//Set up the feature part names as well
+		//This way will insert a table instead of a part object,
+		//so we handle that up above
+		vanilla.features().each(fn(index, feature) {
+			partsTable["feature" + index] = feature.parts()
 		})
 
-		//Recursively setup keywords for parts
-		setupKeywordsRecursive(models.entity)
-		setupKeywordsRecursive(models.hud)
-		models.world.eachV(setupKeywordsRecursive)
+		//pprint(partsTable, 10)
 
-		//Remove this after it's called
-		events.USER_INIT.remove(this)
+		//Recursively setup keywords for parts
+		setupKeywordsRecursive(models.entity, partsTable)
+		setupKeywordsRecursive(models.hud, partsTable)
+		models.world.eachV(fn(v) setupKeywordsRecursive(v, partsTable))
 	})
 }
 
+//Features do not have names given by Minecraft itself, so instead these aliases
+//are defined here for easier understanding. Call setupFeatureAliases() to make
+//these available.
 featuresMap = $[
 	player = !["armor", "heldItems", "arrows", "ears", "cape", "headItem", "elytra", "parrot", "riptide", "stingers"],
 	armor_stand = !["armor", "heldItems", "elytra", "headItem"],
@@ -111,7 +134,7 @@ featuresMap = $[
 //Provides some alternate names for the
 //feature renderers, instead of using just the
 //numbers
-global fn setupFeatures() {
+global fn setupFeatureAliases() {
 	runNowOrLater(fn() {
 		typename = {
 			t = user.getType()

@@ -1,16 +1,23 @@
 package io.github.moonlightmaya.script.vanilla;
 
 import com.google.common.collect.ImmutableList;
+import io.github.moonlightmaya.mixin.render.entity.LivingEntityRendererAccessor;
 import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.render.entity.EntityRenderer;
+import net.minecraft.client.render.entity.LivingEntityRenderer;
+import net.minecraft.client.render.entity.ZombieBaseEntityRenderer;
 import net.minecraft.client.render.entity.feature.FeatureRenderer;
+import net.minecraft.client.render.entity.feature.HeadFeatureRenderer;
 import net.minecraft.entity.EntityType;
+import org.apache.commons.compress.utils.Lists;
+import org.apache.logging.log4j.util.TriConsumer;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * This class deals with the various global state of vanilla model parts
@@ -40,8 +47,8 @@ public class EntityRendererMaps {
      * by their EntityRenderer. Modified by various mixins
      * when needed.
      */
-    private static final Map<EntityRenderer<?>, @Nullable List<ModelPart>> MODEL_PARTS = new HashMap<>();
-    private static final Map<FeatureRenderer<?, ?>, @Nullable List<ModelPart>> FEATURE_RENDERER_PARTS = new HashMap<>();
+    private static final Map<EntityRenderer<?>, List<ModelPart>> MODEL_PARTS = new HashMap<>();
+    private static final Map<FeatureRenderer<?, ?>, List<ModelPart>> FEATURE_RENDERER_PARTS = new HashMap<>();
 
     /**
      * Clear out the maps. Used when the game is reloaded
@@ -78,6 +85,65 @@ public class EntityRendererMaps {
     public static final Map<EntityType<?>, Integer> NUMBER_OF_ROOTS_BEFORE_FEATURE_RENDERERS = new HashMap<>() {{
         put(EntityType.PUFFERFISH, 3);
         put(EntityType.TROPICAL_FISH, 2);
+    }};
+
+    /**
+     * No matter how hard we try, certain entity renderers refuse to conform to a pattern. In vanilla, the only ones
+     * we've found that require such intrusive changes are the Zombie and its derivatives, the Husk and Drowned.
+     * We were unable to find a satisfactory way to deal with these automatically, and thus this SPECIAL_CASE_HANDLERS
+     * map was born.
+     *
+     * The TriConsumer related to your entity renderer's class will be invoked when the EntityRenderer is complete()d.
+     * If the class is not directly in the list, it will search superclasses - hence the HuskEntityRenderer will still
+     * invoke the ZombieBaseEntityRenderer's function. Only one function will be invoked, the one for the class lowest
+     * down the hierarchy.
+     *
+     * What exactly does the zombie do that breaks the pattern and requires this special case?
+     * Well, when Aspect auto-generates feature renderers, it expects a certain ordering on the creation of ModelParts,
+     * and their use in FeatureRenderers. Specifically:
+     * - When a model part is created (tracked through EntityModelLoader.getModelPart()), it is added to a list.
+     * - When addFeature() is called on a feature renderer, all parts in the list are viewed as "connected" to that
+     *   feature renderer, and the list is cleared.
+     * The trouble occurs when an EntityRenderer does the following:
+     * - Non-feature-renderer model parts are created, unimportant for this example
+     * - Create ModelPart A
+     * - Create ModelPart B
+     * - Use ModelPart B to create Feature Renderer 1
+     * - Use ModelPart A to create Feature Renderer 2
+     * In this case, the automatic code would assume that model parts A and B are both meant for
+     * Feature Renderer 1. It has no way of knowing which model parts are for which feature renderers
+     * aside from the order of execution. Zombies and their derivatives are the only mobs I know of that
+     * deviate from this pattern: creating a model part, then creating an (unrelated) feature renderer,
+     * then using that original model part later.
+     *
+     * To use this map, input your entity's EntityRenderer class as the key, and your function as the output.
+     * The function accepts the instance of the entity renderer as well as the MODEL_PARTS and FEATURE_RENDERER_PARTS
+     * maps in this class. Here, you may manipulate the parts as you see fit, according to the entity renderer.
+     * This function is invoked after adding the entity renderer to the map.
+     */
+    public static final Map<Class<? extends EntityRenderer>, TriConsumer<EntityRenderer<?>, Map<EntityRenderer<?>, List<ModelPart>>, Map<FeatureRenderer<?, ?>, List<ModelPart>>>> SPECIAL_CASE_HANDLERS = new HashMap<>() {{
+        put(ZombieBaseEntityRenderer.class, (renderer, entityRendererMap, featureRendererMap) -> {
+            //The zombie's features are not perfectly detected by the automatic code. We need to manually fix them.
+            ZombieBaseEntityRenderer instance = (ZombieBaseEntityRenderer) renderer;
+            List<FeatureRenderer<?, ?>> instanceFeatures = ((LivingEntityRendererAccessor) instance).getFeatures();
+
+            //For zombies, the armor feature is what is incorrect - the HeadFeatureRenderer has stolen its two model parts. Let's grab them:
+            //The head feature renderer is the first feature renderer in the ZombieEntityRenderer.
+            FeatureRenderer<?, ?> headFeature = instanceFeatures.get(0);
+            //The armor feature renderer is the last (fourth) one.
+            FeatureRenderer<?, ?> armorFeature = instanceFeatures.get(3);
+
+            //Get the part lists for each head feature. It's supposed to be 7 for headFeature
+            //and 2 for armorFeature, but the head feature has stolen the model parts from the armor feature,
+            //meaning its 9 and 0.
+            //Take those two stolen model parts away and send them back to the armor feature renderer.
+            List<ModelPart> headFeatureParts = featureRendererMap.get(headFeature);
+            List<ModelPart> armorFeatureParts = featureRendererMap.get(armorFeature);
+
+            //Send the 2 parts over.
+            armorFeatureParts.add(headFeatureParts.remove(0));
+            armorFeatureParts.add(headFeatureParts.remove(0));
+        });
     }};
 
     /**
@@ -120,6 +186,16 @@ public class EntityRendererMaps {
             parts.addAll(storedRoots);
             MODEL_PARTS.put(renderer, parts);
             storedRoots.clear();
+
+            //Execute the special case if needed:
+            Class<?> curClass = renderer.getClass();
+            while (curClass != null) {
+                if (SPECIAL_CASE_HANDLERS.containsKey(curClass)) {
+                    SPECIAL_CASE_HANDLERS.get(curClass).accept(renderer, MODEL_PARTS, FEATURE_RENDERER_PARTS);
+                    break;
+                }
+                curClass = curClass.getSuperclass();
+            }
         }
 
         //Reset the state back to idle
@@ -128,8 +204,8 @@ public class EntityRendererMaps {
     }
 
     public static void completeFeatureRenderer(FeatureRenderer<?, ?> featureRenderer) {
-        //Complete the feature renderer entry using our stored values
-        List<ModelPart> parts = ImmutableList.copyOf(storedFeatureRendererModelParts);
+        //Complete the feature renderer entry using our stored values (copied)
+        List<ModelPart> parts = Lists.newArrayList(storedFeatureRendererModelParts.iterator());
         FEATURE_RENDERER_PARTS.put(featureRenderer, parts);
         //Reset the state
         storedFeatureRendererModelParts.clear();
