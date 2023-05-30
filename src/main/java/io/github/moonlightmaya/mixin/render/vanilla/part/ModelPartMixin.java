@@ -135,7 +135,8 @@ public abstract class ModelPartMixin {
             if (vanillaPart != null) {
                 //Now that we've saved the thing applied by vanilla,
                 //we'll apply Aspect's modification matrix on top of it.
-                aspect$tempMatrix2.set(vanillaPart.appliedTransform);
+                vanillaPart.recalculateMatrixIfNeeded();
+                aspect$tempMatrix2.set(vanillaPart.positionMatrix);
                 matrices.multiplyPositionMatrix(aspect$tempMatrix2);
                 aspect$tempMatrix.set(aspect$tempMatrix2).normal();
                 matrices.peek().getNormalMatrix().mul(aspect$tempMatrix);
@@ -167,9 +168,10 @@ public abstract class ModelPartMixin {
             VanillaRenderer topRenderer = VanillaRenderer.CURRENT_RENDERER.peek();
             VanillaPart vanillaPart = topRenderer.vanillaPartInverse.get(this);
             if (vanillaPart != null) {
-                //If the _applied_ visibility is null, then defer to the saved visibility.
-                //If non-null, then use it.
-                if (vanillaPart.appliedVisibility == null ? !aspect$savedVisibility : !vanillaPart.appliedVisibility)
+                //If the part is set to invisible through petpet, or if Minecraft
+                //wanted it invisible, cancel the rendering before the cubes have
+                //a chance to be pushed.
+                if (!vanillaPart.visible || !aspect$savedVisibility)
                     ci.cancel();
             }
         }

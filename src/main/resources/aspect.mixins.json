@@ -21,7 +21,7 @@
     "render.particle.ParticleAccessor",
     "render.vanilla.part.ModelPartAccessor",
     "render.vanilla.part.ModelPartMixin",
-    "render.vanilla.sort.EntityRendererFactoryContextMixin",
+    "render.vanilla.sort.EntityModelLoaderMixin",
     "render.vanilla.sort.EntityRenderersMixin",
     "render.world.ClientWorldInvoker",
     "render.world.WorldRendererAccessor",

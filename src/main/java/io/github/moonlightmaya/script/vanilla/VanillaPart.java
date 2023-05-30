@@ -4,6 +4,7 @@ import io.github.moonlightmaya.mixin.render.vanilla.part.ModelPartAccessor;
 import io.github.moonlightmaya.model.Transformable;
 import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.model.ModelTransform;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4d;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
@@ -11,7 +12,9 @@ import petpet.external.PetPetWhitelist;
 import petpet.types.PetPetTable;
 import petpet.types.immutable.PetPetTableView;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -19,13 +22,16 @@ import java.util.stream.Stream;
  * Interface for an aspect to interact with vanilla ModelPart objects
  */
 @PetPetWhitelist
-public class VanillaPart implements Transformable.Transformer {
+public class VanillaPart extends Transformable implements Transformable.Transformer {
 
-    public ModelPart referencedPart;
+    public @Nullable ModelPart referencedPart;
     public final String name;
     public VanillaRenderer renderer;
 
-    private final HashMap<String, VanillaPart> childrenBacking = new PetPetTable<>(); //backing map for the children
+    //backing map for the children
+    //Don't want the actual children map accessible by scripts, because
+    //it may mess with the data in a way we don't like
+    private final HashMap<String, VanillaPart> childrenBacking = new PetPetTable<>();
 
     /**
      * When we press F3+T, the entity renderers reload, and the instances
@@ -44,22 +50,83 @@ public class VanillaPart implements Transformable.Transformer {
     }
 
     /**
+     * Creates a part tree from the given list of roots.
+     * If there's only 1 root, then it just creates the map
+     * for that root. Otherwise, it creates a VanillaPart for each
+     * root and has its children as the children of that root, and returns
+     * a map containing those root VanillaPart instances.
+     */
+    public static Map<String, VanillaPart> createTreeFromRoots(List<ModelPart> roots, Map<ModelPart, VanillaPart> inverseMap) {
+        List<VanillaPart> parts = new ArrayList<>(roots.size());
+        for (int i = 0; i < roots.size(); i++) {
+            ModelPart root = roots.get(i);
+            Map<String, VanillaPart> partsForThisRoot = new HashMap<>();
+            //Fill vanilla part map from the vanilla model data
+            //Iterate over the root's children
+            for (Map.Entry<String, ModelPart> entry : ((ModelPartAccessor) (Object) root).getChildren().entrySet()) {
+                //Get the part name and value
+                String partName = entry.getKey();
+                ModelPart part = entry.getValue();
+                //Create the new part and add it to the name->part table
+                VanillaPart newPart = new VanillaPart(partName, part);
+                partsForThisRoot.put(partName, newPart);
+                //Populate the inverse vanilla part map
+                newPart.traverse().forEach(p -> inverseMap.put(p.referencedPart, p));
+            }
+            parts.add(new VanillaPart("root" + (i + 1), partsForThisRoot));
+        }
+
+        //If there's only 1 root, (vast, vast majority of cases) then just return
+        //its backing children map. Otherwise, create a new map which has all the roots.
+        if (parts.size() == 1) {
+            return parts.get(0).childrenBacking;
+        } else {
+            Map<String, VanillaPart> result = new HashMap<>();
+            for (VanillaPart part : parts)
+                result.put(part.name, part);
+            return result;
+        }
+    }
+
+    /**
+     * Update the tree with roots. Like before, handles the cases of having one or more roots.
+     */
+    public static void updateTreeWithRoots(List<ModelPart> roots, Map<String, VanillaPart> partsMap, Map<ModelPart, VanillaPart> inverseMap) {
+        if (roots.size() > 1) {
+            for (int i = 0; i < roots.size(); i++) {
+                ModelPart newRoot = roots.get(i);
+                VanillaPart vanillaRoot = partsMap.get("root" + (i+1));
+                //Iterate over the root's children and update the corresponding vanilla part
+                for (Map.Entry<String, ModelPart> entry : ((ModelPartAccessor) (Object) newRoot).getChildren().entrySet()) {
+                    String partName = entry.getKey();
+                    ModelPart part = entry.getValue();
+                    VanillaPart vanillaPart = vanillaRoot.children.get(partName);
+                    vanillaPart.update(part);
+
+                    //Repopulate the inverse vanilla part map
+                    vanillaPart.traverse().forEach(p -> inverseMap.put(p.referencedPart, p));
+                }
+            }
+        } else if (roots.size() == 1) {
+            //If there's just one root, do not go down another layer in the tree, as it's all at the top.
+            ModelPart newRoot = roots.get(0);
+            for (Map.Entry<String, ModelPart> entry : ((ModelPartAccessor) (Object) newRoot).getChildren().entrySet()) {
+                String partName = entry.getKey();
+                ModelPart part = entry.getValue();
+                VanillaPart vanillaPart = partsMap.get(partName);
+                vanillaPart.update(part);
+
+                //Repopulate the inverse vanilla part map
+                vanillaPart.traverse().forEach(p -> inverseMap.put(p.referencedPart, p));
+            }
+        }
+    }
+
+    /**
      * The transform applied _by vanilla_ to this part, which
      * we save and can then later query from code.
      */
     public final Matrix4d savedTransform = new Matrix4d();
-
-    /**
-     * The transform applied _to the vanilla part_ by aspect,
-     * which can be modified through code.
-     */
-    public final Matrix4d appliedTransform = new Matrix4d();
-
-    /**
-     * Whether to override the visibility of the
-     * model part
-     */
-    public Boolean appliedVisibility = null;
 
     /**
      * The saved vanilla part's visibility, for *reading* purposes
@@ -96,6 +163,15 @@ public class VanillaPart implements Transformable.Transformer {
         children = new PetPetTableView<>(childrenBacking);
     }
 
+    private VanillaPart(String name, Map<String, VanillaPart> realChildren) {
+        this.name = name;
+        this.childrenBacking.putAll(realChildren);
+        this.referencedPart = null;
+
+        //Store the petpet children field
+        children = new PetPetTableView<>(childrenBacking);
+    }
+
     public Stream<VanillaPart> traverse() {
         return Stream.concat(Stream.of(this), this.childrenBacking.values().stream().flatMap(VanillaPart::traverse));
     }
@@ -106,6 +182,10 @@ public class VanillaPart implements Transformable.Transformer {
      * from Blockbench's.
      */
     private void readDefaultTransform() {
+        //If there is no referenced part, the default transform is just identity
+        if (referencedPart == null)
+            return;
+
         ModelTransform defaultTransform = referencedPart.getDefaultTransform();
         float pitch = -defaultTransform.pitch;
         float yaw = -defaultTransform.yaw;
@@ -140,25 +220,13 @@ public class VanillaPart implements Transformable.Transformer {
     }
 
     @PetPetWhitelist
-    public Matrix4d matrix_0() {
+    public Matrix4d originMatrix_0() {
         return savedTransform;
     }
 
     @PetPetWhitelist
-    public VanillaPart matrix_1(Matrix4d mat) {
-        appliedTransform.set(mat);
-        return this;
-    }
-
-    @PetPetWhitelist
-    public boolean visible_0() {
+    public boolean originVisible_0() {
         return savedVisibility;
-    }
-
-    @PetPetWhitelist
-    public VanillaPart visible_1(Boolean b) {
-        appliedVisibility = b;
-        return this;
     }
 
     /**

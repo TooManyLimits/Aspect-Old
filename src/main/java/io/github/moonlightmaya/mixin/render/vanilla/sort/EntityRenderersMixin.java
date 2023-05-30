@@ -27,18 +27,18 @@ public class EntityRenderersMixin {
      * After this call is made, the next call to EntityRendererFactory.Context.getPart()
      * will generally be the model of the entity whose renderer we're currently creating.
      *
-     * getPart() may be called multiple times, but except in a few circumstances, any
+     * getPart() internally calls EntityModelLoader.getModelPart(), which is more general,
+     * and a variety of other situations also use .getModelPart() instead of .getPart().
+     * Therefore, we mixin to getModelPart() instead to handle more cases.
+     *
+     * getModelPart() may be called multiple times, but except in a few circumstances, any
      * subsequent calls after the first are for * feature renderers *, not the main model.
      * The special circumstances are:
      * - Pufferfish, which store all 3 puffed versions of the model (small, medium, large)
      * - Tropical fish, which store both "large" and "small" variants of the model
      *
-     * In some cases getPart() might not be called at all, so we should keep that in mind
+     * In some cases getModelPart() might not be called at all, so we should keep that in mind
      * and provide an empty list of model parts.
-     *
-     * TODO: Potentially pivot to EntityModelLoader.getModelPart() mixin instead?
-     * TODO: This may allow us to handle feature renderers easier, as many of them
-     * TODO: don't use the context.getPart() function.
      */
     @Inject(method = "method_32174", at = @At(
             value = "INVOKE",
@@ -46,7 +46,7 @@ public class EntityRenderersMixin {
             shift = At.Shift.BEFORE
     ))
     private static void reloadEntityRenderersMixin(ImmutableMap.Builder<EntityType<?>, EntityRendererFactory<?>> builder, EntityRendererFactory.Context context, EntityType<?> entityType, EntityRendererFactory<?> factory, CallbackInfo ci) {
-        EntityRendererMaps.prime();
+        EntityRendererMaps.prime(entityType);
     }
 
     /**
@@ -58,7 +58,7 @@ public class EntityRenderersMixin {
             shift = At.Shift.BEFORE
     ))
     private static void reloadPlayerRenderersMixin(ImmutableMap.Builder<EntityType<?>, EntityRendererFactory<?>> builder, EntityRendererFactory.Context context, String modelType, EntityRendererFactory<?> factory, CallbackInfo ci) {
-        EntityRendererMaps.prime();
+        EntityRendererMaps.prime(EntityType.PLAYER);
     }
 
     /**
@@ -80,7 +80,7 @@ public class EntityRenderersMixin {
             index = 1
     )
     private static Object captureEntityRenderer(Object v) {
-        EntityRendererMaps.complete((EntityRenderer<?>) v);
+        EntityRendererMaps.completeEntityRenderer((EntityRenderer<?>) v);
         return v;
     }
 
@@ -93,7 +93,7 @@ public class EntityRenderersMixin {
             index = 1
     )
     private static Object capturePlayerRenderer(Object v) {
-        EntityRendererMaps.complete((EntityRenderer<?>) v);
+        EntityRendererMaps.completeEntityRenderer((EntityRenderer<?>) v);
         return v;
     }
 

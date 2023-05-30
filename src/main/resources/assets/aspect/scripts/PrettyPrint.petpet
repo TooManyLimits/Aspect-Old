@@ -5,7 +5,9 @@ global PPRINT_DEPTH = 0
 global PPRINT_MAX_DEPTH = 0
 
 tableClass = $[].class()
+tableViewClass = $[].view().class()
 listClass = ![].class()
+listViewClass = ![].view().class()
 stringClass = "".class()
 
 global PPRINT_SPACER_COLOR = "#AAAAAA"
@@ -19,13 +21,13 @@ global PPRINT_COLOR_TABLE = $[
 	[true.class()] = "#55FFFF",
 	[0.class()] = "#55FF55",
 	//currently java functions and petpet functions are different classes, this will be worked on
-	[(fn(){}).class()] = "#5555FF", 
+	[(fn(){}).class()] = "#5555FF",
 	[print.class()] = "#5555FF"
 ]
 
 fn colorOf(object) {
-	if object == null 
-		PPRINT_COLOR_NULL 
+	if object == null
+		PPRINT_COLOR_NULL
 	else
 		PPRINT_COLOR_TABLE[object.class()]
 }
@@ -69,9 +71,10 @@ fn printRecursive(json, object, depthLeft, indent, allowHover, alreadyPrinted) {
 	}
 
 	//Print out the object, doing different things depending on the type
-	if object.class() == tableClass {
+	if object.class() == tableClass or object.class() == tableViewClass {
 		//This is a table, recurse it
-		json.next("table: $[\n").color(PPRINT_COLOR_TABLE[tableClass])
+		name = if object.class() == tableClass "table" else "TableView"
+		json.next(name + ": $[\n").color(PPRINT_COLOR_TABLE[tableClass])
 		global PPRINT_DEPTH = PPRINT_DEPTH + 1
 		alreadyPrinted[object] = true
 		object.each(fn(k, v) {
@@ -87,9 +90,10 @@ fn printRecursive(json, object, depthLeft, indent, allowHover, alreadyPrinted) {
 		})
 		global PPRINT_DEPTH = PPRINT_DEPTH - 1
 		json.next(spacing).color(PPRINT_SPACER_COLOR).next("]").color(PPRINT_COLOR_TABLE[tableClass])
-	} else if object.class() == listClass {
+	} else if object.class() == listClass or object.class() == listViewClass {
 		//This is a list, recurse
-		json.next("list: ![\n").color(PPRINT_COLOR_TABLE[listClass])
+		name = if object.class() == listClass "list" else "ListView"
+		json.next(name + ": ![\n").color(PPRINT_COLOR_TABLE[listClass])
 		global PPRINT_DEPTH = PPRINT_DEPTH + 1
 		alreadyPrinted[object] = true
 		object.each(fn(elem) {

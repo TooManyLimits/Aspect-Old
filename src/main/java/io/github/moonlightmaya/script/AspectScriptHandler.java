@@ -179,7 +179,7 @@ public class AspectScriptHandler {
 
         //Vanilla renderer
         instance.registerClass(VanillaRenderer.class, PetPetReflector.reflect(VanillaRenderer.class, "VanillaRenderer").copy().makeEditable());
-        instance.registerClass(VanillaPart.class, PetPetReflector.reflect(VanillaPart.class, "VanillaPart").copy().makeEditable());
+        instance.registerClass(VanillaPart.class, PetPetReflector.reflect(VanillaPart.class, "VanillaPart").copy().makeEditable().setParent(transformableClass));
         instance.registerClass(VanillaFeature.class, PetPetReflector.reflect(VanillaFeature.class, "VanillaFeature").copy().makeEditable().setParent(transformableClass));
 
         //Minecraft ones

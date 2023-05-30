@@ -13,7 +13,6 @@ import org.joml.Matrix4d;
 import org.joml.Matrix4f;
 import org.joml.Vector3d;
 import petpet.external.PetPetWhitelist;
-import petpet.types.PetPetList;
 import petpet.types.PetPetTable;
 
 import java.util.*;
@@ -82,7 +81,7 @@ public class VanillaRenderer {
      * wearing this aspect. These are calculated once for an aspect when it is
      * seen, and then not again until some kind of reload occurs.
      */
-    public final Map<String, VanillaPart> vanillaParts = new HashMap<>();
+    public Map<String, VanillaPart> vanillaParts; //set in init
     public final Map<ModelPart, VanillaPart> vanillaPartInverse = new HashMap<>();
 
     //Analogous fields for feature renderers
@@ -105,34 +104,17 @@ public class VanillaRenderer {
         if (initialized)
             throw new IllegalStateException("Vanilla renderer initialized twice? Should not happen, please report to devs");
 
-        //Clear the maps
-        vanillaParts.clear();
-        vanillaPartInverse.clear();
-        featureRenderers.clear();
-
         //Get the renderer and root model part of this entity
         EntityRenderer<?> renderer = RenderUtils.getRenderer(user);
-        ModelPart root = EntityRendererMaps.getRoot(renderer);
-
-        //Fill vanilla part map from the vanilla model data
-        if (root != null) //If root is null, no parts
-            //Iterate over the root's children
-            for (Map.Entry<String, ModelPart> entry : ((ModelPartAccessor) (Object) root).getChildren().entrySet()) {
-                String partName = entry.getKey();
-                ModelPart part = entry.getValue();
-                //Create the new part and add it to the name->part table
-                VanillaPart newPart = new VanillaPart(partName, part);
-                vanillaParts.put(partName, newPart);
-                //Populate the inverse vanilla part map
-                newPart.traverse().forEach(p -> vanillaPartInverse.put(p.referencedPart, p));
-            }
+        List<ModelPart> roots = EntityRendererMaps.getEntityRoots(renderer);
+        vanillaParts = VanillaPart.createTreeFromRoots(roots, vanillaPartInverse);
 
         //If it's a LivingEntityRenderer, wrap all the features and add them to the features list
         if (renderer instanceof LivingEntityRenderer<?,?>) {
             List<FeatureRenderer<?, ?>> featureRenderers = ((LivingEntityRendererAccessor) renderer).getFeatures();
             for (int i = 0; i < featureRenderers.size(); i++) {
                 FeatureRenderer<?, ?> featureRenderer = featureRenderers.get(i);
-                VanillaFeature vanillaFeature = new VanillaFeature(featureRenderer);
+                VanillaFeature vanillaFeature = new VanillaFeature(featureRenderer, vanillaPartInverse);
                 this.featureRenderers.put((double) i, vanillaFeature);
                 this.featureRendererInverse.put(featureRenderer, vanillaFeature);
             }
@@ -144,6 +126,7 @@ public class VanillaRenderer {
         features.clear();
         features.putAll(featureRenderers);
 
+        //Mark initialized
         initialized = true;
     }
 
@@ -162,20 +145,10 @@ public class VanillaRenderer {
 
         //Get the new entity renderer
         EntityRenderer<?> newEntityRenderer = RenderUtils.getRenderer(user);
-        ModelPart root = EntityRendererMaps.getRoot(newEntityRenderer);
+        List<ModelPart> roots = EntityRendererMaps.getEntityRoots(newEntityRenderer);
 
-        //Fill vanilla part map from the vanilla model data
-        if (root != null) //If root is null, no parts
-            //Iterate over the root's children and update the corresponding vanilla part
-            for (Map.Entry<String, ModelPart> entry : ((ModelPartAccessor) (Object) root).getChildren().entrySet()) {
-                String partName = entry.getKey();
-                ModelPart part = entry.getValue();
-                VanillaPart vanillaPart = this.vanillaParts.get(partName);
-                vanillaPart.update(part);
-
-                //Repopulate the inverse vanilla part map
-                vanillaPart.traverse().forEach(p -> vanillaPartInverse.put(p.referencedPart, p));
-            }
+        //If there are multiple roots, the strategy changes as there's another layer of tree.
+        VanillaPart.updateTreeWithRoots(roots, this.vanillaParts, this.vanillaPartInverse);
 
         //If the renderer has feature renderer data, update those
         if (newEntityRenderer instanceof LivingEntityRenderer<?,?>) {

@@ -1,5 +1,6 @@
 package io.github.moonlightmaya.mixin.render.entity;
 
+import io.github.moonlightmaya.script.vanilla.EntityRendererMaps;
 import io.github.moonlightmaya.script.vanilla.VanillaFeature;
 import io.github.moonlightmaya.script.vanilla.VanillaRenderer;
 import io.github.moonlightmaya.util.RenderUtils;
@@ -21,6 +22,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.Iterator;
@@ -121,7 +123,10 @@ public abstract class LivingEntityRendererMixin {
         featureRenderer.render(matrixStack, vertexConsumerProvider, light, entity, v0, v1, v2, v3, v4, v5);
     }
 
-
+    @Inject(method = "addFeature", at = @At(value = "HEAD"))
+    public void completeFeatureRenderer(FeatureRenderer<?, ?> feature, CallbackInfoReturnable<Boolean> cir) {
+        EntityRendererMaps.completeFeatureRenderer(feature);
+    }
 
 
 }
