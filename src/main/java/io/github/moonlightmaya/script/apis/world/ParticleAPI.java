@@ -17,13 +17,6 @@ import petpet.lang.run.PetPetClass;
 @PetPetWhitelist
 public class ParticleAPI {
 
-    public static final PetPetClass PARTICLE_CLASS;
-
-    //Custom methods, inside the WorldAPI class
-    static {
-        PARTICLE_CLASS = PetPetReflector.reflect(ParticleAPI.class, "Particle");
-    }
-
     @PetPetWhitelist
     public static Particle pos_1(Particle particle, Vector3d pos) {
         particle.setPos(pos.x, pos.y, pos.z);

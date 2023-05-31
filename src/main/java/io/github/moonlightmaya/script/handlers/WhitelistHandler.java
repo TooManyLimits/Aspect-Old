@@ -29,6 +29,7 @@ import io.github.moonlightmaya.script.vanilla.VanillaPart;
 import io.github.moonlightmaya.script.vanilla.VanillaRenderer;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.particle.Particle;
+import net.minecraft.client.render.DimensionEffects;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
@@ -107,9 +108,10 @@ public class WhitelistHandler {
         registerDirect(ClientWorld.class, WorldAPI.WORLD_CLASS, ALWAYS, null);
         registerDirect(BlockState.class, BlockStateAPI.BLOCK_STATE_CLASS, ALWAYS, null);
         registerDirect(ItemStack.class, ItemStackAPI.ITEMSTACK_CLASS, ALWAYS, null);
-        registerDirect(DimensionType.class, DimensionAPI.DIMENSION_CLASS, ALWAYS, null);
+        registerDirect(DimensionType.class, PetPetReflector.reflect(DimensionAPI.class, "Dimension"), ALWAYS, null);
+        registerDirect(DimensionEffects.class, PetPetReflector.reflect(DimensionEffectsAPI.class, "DimensionEffects"), ALWAYS, null);
         registerDirect(Biome.class, BiomeAPI.BIOME_CLASS, ALWAYS, null);
-        registerDirect(Particle.class, ParticleAPI.PARTICLE_CLASS, ALWAYS, null);
+        registerDirect(Particle.class, PetPetReflector.reflect(ParticleAPI.class, "Particle"), ALWAYS, null);
 
         //Entities
         registerDirect(Entity.class, PetPetReflector.reflect(EntityAPI.class, "Entity"), ALWAYS, null, EntityAPI::addGetAspectMethod);

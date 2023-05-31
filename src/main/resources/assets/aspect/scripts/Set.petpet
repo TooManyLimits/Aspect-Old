@@ -1,0 +1,15 @@
+global Set = class("Set", $[
+    __init = fn(list) {
+        list.each(fn(v) this[v] = true)
+        this
+    },
+    add = fn(val) this[val] = true,
+    has = fn(val) if this[val] true else false
+]
+
+//Examples
+//q = Set(!["hello", 3, "dirt"])
+//q.has(5) //false
+//q[5] //null
+//q[3] //true
+//q.has("hello") //true

@@ -98,7 +98,7 @@ public class AspectScriptHandler {
         return instance.runScript(name, code);
     }
 
-    PetPetTable<String, Object> modelsTable = new PetPetTable<>();
+
 
     /**
      * When the user of the Aspect this script handler is for
@@ -106,7 +106,7 @@ public class AspectScriptHandler {
      */
     public void onEntityFirstLoad() {
         instance.setGlobal("vanilla", aspect.vanillaRenderer);
-        modelsTable.put("entity", aspect.entityRoot);
+
         callEvent(EventHandler.USER_INIT);
     }
 
@@ -141,9 +141,6 @@ public class AspectScriptHandler {
         requireFunction = setupRequire();
         setGlobal("require", requireFunction);
 
-        //Models
-        setGlobal("models", modelsTable);
-
         //Textures
         PetPetTable<String, AspectTexture> texturesTable = new PetPetTable<>();
         for (AspectTexture tex : aspect.textures)
@@ -156,12 +153,15 @@ public class AspectScriptHandler {
             animationsTable.put(anim.name, anim);
         setGlobal("animations", animationsTable);
 
-        //World roots in models
+        //Part roots in models table
+        PetPetTable<String, Object> modelsTable = new PetPetTable<>();
         PetPetTable<String, WorldRootModelPart> worldRoots = new PetPetTable<>(aspect.worldRoots.size());
         for (WorldRootModelPart worldRootModelPart : aspect.worldRoots)
             worldRoots.put(worldRootModelPart.name, worldRootModelPart);
         modelsTable.put("world", worldRoots);
         modelsTable.put("hud", aspect.hudRoot);
+        modelsTable.put("entity", aspect.entityRoot);
+        setGlobal("models", modelsTable);
 
         //Events
         //Code for events is all inside EventHandler, which
@@ -202,6 +202,7 @@ public class AspectScriptHandler {
         //Run aspect's util scripts for helpful
         //code defined in PetPet rather than Java
         runUtil("AspectInternalUtils"); //Random stuff, should sort later
+        runUtil("Set");
         runUtil("JsonText"); //Class for json text
         runUtil("PrettyPrint"); //Functions for pretty printing things
 
