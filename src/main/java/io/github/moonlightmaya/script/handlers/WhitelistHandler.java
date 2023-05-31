@@ -107,7 +107,7 @@ public class WhitelistHandler {
         //Minecraft interaction
         registerDirect(ClientWorld.class, WorldAPI.WORLD_CLASS, ALWAYS, null);
         registerDirect(BlockState.class, BlockStateAPI.BLOCK_STATE_CLASS, ALWAYS, null);
-        registerDirect(ItemStack.class, ItemStackAPI.ITEMSTACK_CLASS, ALWAYS, null);
+        registerDirect(ItemStack.class, PetPetReflector.reflect(ItemStackAPI.class, "ItemStack"), ALWAYS, null);
         registerDirect(DimensionType.class, PetPetReflector.reflect(DimensionAPI.class, "Dimension"), ALWAYS, null);
         registerDirect(DimensionEffects.class, PetPetReflector.reflect(DimensionEffectsAPI.class, "DimensionEffects"), ALWAYS, null);
         registerDirect(Biome.class, BiomeAPI.BIOME_CLASS, ALWAYS, null);

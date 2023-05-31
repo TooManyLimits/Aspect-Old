@@ -107,8 +107,28 @@ public class DimensionAPI {
         return DimensionEffects.byDimensionType(dimension);
     }
 
+    @PetPetWhitelist
+    public static float ambientLight(DimensionType dimension) {
+        return dimension.ambientLight();
+    }
 
+    @PetPetWhitelist
+    public static boolean piglinSafe(DimensionType dimension) {
+        return dimension.monsterSettings().piglinSafe();
+    }
 
+    @PetPetWhitelist
+    public static boolean hasRaids(DimensionType dimension) {
+        return dimension.monsterSettings().hasRaids();
+    }
 
+    /**
+     * The maximum light level at which mobs can spawn in this
+     * dimension
+     */
+    @PetPetWhitelist
+    public static boolean maxMobLight(DimensionType dimension) {
+        return dimension.monsterSettings().piglinSafe();
+    }
 
 }
