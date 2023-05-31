@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4d;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import petpet.external.PetPetWhitelist;
 import petpet.types.PetPetTable;
 import petpet.types.immutable.PetPetTableView;
@@ -125,6 +126,8 @@ public class VanillaPart extends Transformable implements Transformable.Transfor
     /**
      * The transform applied _by vanilla_ to this part, which
      * we save and can then later query from code.
+     * Transforms from
+     * Part Space -> (Entity space if this is a root, or the space of the parent if this is a child)
      */
     public final Matrix4d savedTransform = new Matrix4d();
 
@@ -146,7 +149,8 @@ public class VanillaPart extends Transformable implements Transformable.Transfor
      * Optifine’s CEM does not obey this rule, but it’s the only sensible way to have this work, I believe.
      *
      */
-    public final Matrix4f inverseDefaultTransform = new Matrix4f();
+    private final Quaternionf inverseDefaultRot = new Quaternionf();
+    private final Vector3f inverseDefaultPivot = new Vector3f();
 
     public VanillaPart(String name, ModelPart part) {
         this.name = name;
@@ -177,9 +181,12 @@ public class VanillaPart extends Transformable implements Transformable.Transfor
     }
 
     /**
-     * Read the default transform, calculate its inverse, and store.
+     * Read the default transform, calculate its inverse operations, and store.
      * Some conversions are done because Minecraft's axes are a bit different
      * from Blockbench's.
+     * This stores the pivot and rot separately, because these two operations
+     * need to be done on the Left and Right sides of the savedTransform,
+     * respectively. It turns out it should not be one unified matrix.
      */
     private void readDefaultTransform() {
         //If there is no referenced part, the default transform is just identity
@@ -187,19 +194,17 @@ public class VanillaPart extends Transformable implements Transformable.Transfor
             return;
 
         ModelTransform defaultTransform = referencedPart.getDefaultTransform();
-        float pitch = -defaultTransform.pitch;
-        float yaw = -defaultTransform.yaw;
-        float roll = defaultTransform.roll;
 
-        float pivotX = -defaultTransform.pivotX;
-        float pivotY = -defaultTransform.pivotY;
-        float pivotZ = defaultTransform.pivotZ;
-
-        inverseDefaultTransform.translation(pivotX / 16.0f, pivotY / 16.0f, pivotZ / 16.0f);
-        if (pitch != 0.0f || yaw != 0.0f || roll != 0.0f) {
-            inverseDefaultTransform.rotate(new Quaternionf().rotationZYX(roll, yaw, pitch));
-        }
-        inverseDefaultTransform.invert();
+        inverseDefaultPivot.set(
+                defaultTransform.pivotX / 16,
+                defaultTransform.pivotY / 16,
+                -defaultTransform.pivotZ / 16
+        );
+        inverseDefaultRot.rotationZYX(
+                defaultTransform.roll,
+                -defaultTransform.yaw,
+                -defaultTransform.pitch
+        ).invert();
     }
 
     @PetPetWhitelist
@@ -250,9 +255,10 @@ public class VanillaPart extends Transformable implements Transformable.Transfor
      */
     @Override
     public boolean affectMatrix(Matrix4f matrix) {
-        matrix.mul(inverseDefaultTransform);
+        matrix.translate(inverseDefaultPivot);
         tempMatrixSavedTransform.set(savedTransform);
         matrix.mul(tempMatrixSavedTransform);
+        matrix.rotate(inverseDefaultRot);
         return false;
     }
 }

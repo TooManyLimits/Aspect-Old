@@ -24,8 +24,6 @@ public abstract class ModelPartMixin {
     @Shadow public float pivotY;
     @Shadow public boolean visible;
 
-    @Shadow public abstract void setAngles(float pitch, float yaw, float roll);
-
     //reuse variables to not allocate more than necessary
     private static final Matrix3f aspect$tempMatrix = new Matrix3f();
     private static final Matrix4f aspect$tempMatrix2 = new Matrix4f();
@@ -109,7 +107,7 @@ public abstract class ModelPartMixin {
                         .mul(aspect$helperStack.peek().getPositionMatrix());
 
                 //correctedTotalTransform now contains the transformation of this specific model part
-                //relative to the entire entity's transform, so we'll save that
+                //relative to the previous part (or entire entity)'s transform, so we'll save that
                 //in the corresponding vanilla part
                 vanillaPart.savedTransform.set(correctedTotalTransform);
 

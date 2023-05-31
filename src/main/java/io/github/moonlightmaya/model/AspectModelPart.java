@@ -494,7 +494,7 @@ public class AspectModelPart extends Transformable {
             super.setRot(x, y, z);
         else {
             float s = (float) (Math.PI / 180);
-            partRot.identity().rotationZYX(z * s, y * s, x * s);
+            partRot.identity().rotationXYZ(x * s, y * s, z * s);
             needsMatrixRecalculation = true;
         }
     }

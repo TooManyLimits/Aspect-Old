@@ -132,7 +132,7 @@ public abstract class Transformable {
 
     public void setRot(float x, float y, float z) {
         float s = (float) (Math.PI / 180);
-        partRot.identity().rotationXYZ(x * s, y * s, z * s);
+        partRot.identity().rotationZYX(z * s, y * s, x * s);
         needsMatrixRecalculation = true;
     }
 
