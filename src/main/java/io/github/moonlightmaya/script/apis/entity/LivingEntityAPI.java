@@ -12,12 +12,6 @@ import petpet.lang.run.PetPetClass;
 @PetPetWhitelist
 public class LivingEntityAPI {
 
-    public static final PetPetClass LIVING_ENTITY_CLASS;
-
-    static {
-        LIVING_ENTITY_CLASS = PetPetReflector.reflect(LivingEntityAPI.class, "LivingEntity");
-    }
-
     /**
      * boolean
      */

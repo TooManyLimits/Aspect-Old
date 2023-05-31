@@ -5,6 +5,7 @@ import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.AspectMod;
 import io.github.moonlightmaya.manage.data.BaseStructures;
 import io.github.moonlightmaya.mixin.render.TextureManagerAccessor;
+import io.github.moonlightmaya.script.handlers.AspectScriptHandler;
 import io.github.moonlightmaya.util.ColorUtils;
 import io.github.moonlightmaya.util.RenderUtils;
 import net.minecraft.client.MinecraftClient;
@@ -17,14 +18,18 @@ import org.joml.Matrix4d;
 import org.joml.Vector4d;
 import org.lwjgl.BufferUtils;
 import petpet.external.PetPetWhitelist;
+import petpet.lang.run.Interpreter;
+import petpet.lang.run.JavaFunction;
+import petpet.lang.run.PetPetClass;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.function.ToIntFunction;
 
 @PetPetWhitelist
 public class AspectTexture extends ResourceTexture {
 
-    private String name;
+    private final String name;
     private final NativeImage image;
 
     /**
@@ -164,6 +169,21 @@ public class AspectTexture extends ResourceTexture {
             }
     }
 
+    /**
+     * Transform the selected region using the given matrix. Instead of multiplying
+     * by (r, g, b, 1) and storing the rgb, multiplies by (r, g, b, a) and stores all 4.
+     */
+    @PetPetWhitelist
+    public void transformWithAlpha(int x, int y, int width, int height, Matrix4d matrix) {
+        Vector4d vec = new Vector4d();
+        for (int curX = 0; curX < width; curX++)
+            for (int curY = 0; curY < height; curY++) {
+                ColorUtils.intABGRToVec(image.getColor(curX, curY), vec);
+                vec.mul(matrix);
+                setPixel_6(curX, curY, vec.x, vec.y, vec.z, vec.w);
+            }
+    }
+
     @PetPetWhitelist
     public void color(int x, int y, int width, int height, Vector4d colorMultiplier) {
         Vector4d vec = new Vector4d();
@@ -189,5 +209,23 @@ public class AspectTexture extends ResourceTexture {
         this.dirty = true;
     }
 
+
+    /**
+     * Add the penalties to the large transform operations, since they have
+     * a matrix multiplication per pixel.
+     * Returns the class for chaining.
+     */
+    public static PetPetClass addPenalties(AspectScriptHandler unused, PetPetClass clazz) {
+        try {
+            JavaFunction transform = (JavaFunction) clazz.getMethod("transform");
+            JavaFunction transformWithAlpha = (JavaFunction) clazz.getMethod("transformWithAlpha");
+            //Cost penalty equal to width times height
+            ToIntFunction<Interpreter> widthTimesHeightCostPenalizer = i -> ((int) i.peek(2) * (int) i.peek(1));
+            transform.costPenalizer = transformWithAlpha.costPenalizer = widthTimesHeightCostPenalizer;
+            return clazz;
+        } catch (Throwable t) {
+            throw new IllegalStateException("Failed to add penalty for AspectTexture method", t);
+        }
+    }
 
 }

@@ -1,49 +1,20 @@
-package io.github.moonlightmaya.script;
+package io.github.moonlightmaya.script.handlers;
 
 import io.github.moonlightmaya.Aspect;
-import io.github.moonlightmaya.manage.AspectMetadata;
-import io.github.moonlightmaya.AspectMod;
-import io.github.moonlightmaya.model.AspectModelPart;
-import io.github.moonlightmaya.model.Transformable;
 import io.github.moonlightmaya.model.WorldRootModelPart;
 import io.github.moonlightmaya.model.animation.Animation;
-import io.github.moonlightmaya.model.animation.Animator;
-import io.github.moonlightmaya.model.rendertasks.BlockTask;
-import io.github.moonlightmaya.model.rendertasks.ItemTask;
-import io.github.moonlightmaya.model.rendertasks.TextTask;
 import io.github.moonlightmaya.script.apis.*;
-import io.github.moonlightmaya.script.apis.entity.EntityAPI;
-import io.github.moonlightmaya.script.apis.entity.LivingEntityAPI;
-import io.github.moonlightmaya.script.apis.entity.PlayerAPI;
 import io.github.moonlightmaya.script.apis.gui.ManagerAPI;
 import io.github.moonlightmaya.script.apis.math.Quaternions;
-import io.github.moonlightmaya.script.apis.world.*;
 import io.github.moonlightmaya.script.apis.math.Matrices;
 import io.github.moonlightmaya.script.apis.math.Vectors;
-import io.github.moonlightmaya.script.events.AspectEvent;
 import io.github.moonlightmaya.script.events.EventHandler;
 import io.github.moonlightmaya.model.AspectTexture;
-import io.github.moonlightmaya.script.vanilla.VanillaFeature;
 import io.github.moonlightmaya.util.DisplayUtils;
-import io.github.moonlightmaya.script.vanilla.VanillaPart;
-import io.github.moonlightmaya.script.vanilla.VanillaRenderer;
 import io.github.moonlightmaya.util.IOUtils;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.particle.Particle;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.particle.ParticleEffect;
 import net.minecraft.text.Text;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.dimension.DimensionType;
 import org.jetbrains.annotations.Nullable;
-import org.joml.*;
 import petpet.external.PetPetInstance;
-import petpet.external.PetPetReflector;
 import petpet.lang.compile.Compiler;
 import petpet.lang.lex.Lexer;
 import petpet.lang.parse.Parser;
@@ -64,8 +35,8 @@ import java.util.Set;
  */
 public class AspectScriptHandler {
 
-    private final Aspect aspect;
-    private final PetPetInstance instance;
+    public final Aspect aspect;
+    public final PetPetInstance instance;
 
     private final Map<String, PetPetClosure> compiledScripts;
 
@@ -98,10 +69,14 @@ public class AspectScriptHandler {
         compileScripts();
 
         //Register the types
-        registerTypes();
-
-        //Set up the globals
+        WhitelistHandler.setupInstance(this);
+        //Set up basic globals
         setupGlobals();
+        //Run utils
+        runUtils();
+
+        //Set up extra (from other mods) globals
+        ExtraGlobalHandler.setupInstance(this);
     }
 
     /**
@@ -136,72 +111,6 @@ public class AspectScriptHandler {
     }
 
     /**
-     * Register the different types which are allowed
-     */
-    private void registerTypes() {
-        //Math
-        instance.registerClass(Vector2d.class, Vectors.VEC_2.copy().makeEditable());
-        instance.registerClass(Vector3d.class, Vectors.VEC_3.copy().makeEditable());
-        instance.registerClass(Vector4d.class, Vectors.VEC_4.copy().makeEditable());
-        instance.registerClass(Matrix2d.class, Matrices.MAT_2.copy().makeEditable());
-        instance.registerClass(Matrix3d.class, Matrices.MAT_3.copy().makeEditable());
-        instance.registerClass(Matrix4d.class, Matrices.MAT_4.copy().makeEditable());
-        instance.registerClass(Quaterniond.class, Quaternions.QUATERNION_CLASS.copy().makeEditable());
-
-        //Misc
-        instance.registerClass(AspectEvent.class, PetPetReflector.reflect(AspectEvent.class, "Event").copy().makeEditable());
-        instance.registerClass(HostAPI.class, PetPetReflector.reflect(HostAPI.class, "Host").copy().makeEditable());
-        instance.registerClass(AspectAPI.class, PetPetReflector.reflect(AspectAPI.class, "Aspect").copy().makeEditable());
-        instance.registerClass(ClientAPI.class, PetPetReflector.reflect(ClientAPI.class, "Client").copy().makeEditable());
-        instance.registerClass(RendererAPI.class, PetPetReflector.reflect(RendererAPI.class, "Renderer").copy().makeEditable());
-        instance.registerClass(AspectTexture.class, PetPetReflector.reflect(AspectTexture.class, "Texture").copy().makeEditable());
-        instance.registerClass(Animation.class, PetPetReflector.reflect(Animation.class, "Animation").copy().makeEditable());
-
-        //no methods or anything, just registering these so they're legal objects to store as a variable
-        instance.registerClass(RenderLayer.class, new PetPetClass("RenderLayer").makeEditable());
-        instance.registerClass(ParticleEffect.class, new PetPetClass("ParticleEffect").makeEditable());
-        instance.registerClass(Animator.class, new PetPetClass("Animator").makeEditable());
-
-        //Gui-only whitelists
-        if (aspect.isGui) {
-            instance.registerClass(ManagerAPI.class, PetPetReflector.reflect(ManagerAPI.class, "Manager").copy().makeEditable());
-            instance.registerClass(AspectMetadata.class, PetPetReflector.reflect(AspectMetadata.class, "Metadata").copy().makeEditable());
-        }
-
-        //Model Parts and render tasks
-        PetPetClass transformableClass = PetPetReflector.reflect(Transformable.class, "Transformable").copy().makeEditable();
-        PetPetClass modelPartClass = PetPetReflector.reflect(AspectModelPart.class, "ModelPart").copy().makeEditable().setParent(transformableClass);
-        instance.registerClass(AspectModelPart.class, modelPartClass);
-        instance.registerClass(WorldRootModelPart.class, PetPetReflector.reflect(WorldRootModelPart.class, "WorldRootModelPart").copy().makeEditable().setParent(modelPartClass));
-        instance.registerClass(BlockTask.class, PetPetReflector.reflect(BlockTask.class, "BlockTask").copy().makeEditable().setParent(transformableClass));
-        instance.registerClass(ItemTask.class, PetPetReflector.reflect(ItemTask.class, "ItemTask").copy().makeEditable().setParent(transformableClass));
-        instance.registerClass(TextTask.class, PetPetReflector.reflect(TextTask.class, "TextTask").copy().makeEditable().setParent(transformableClass));
-
-        //Vanilla renderer
-        instance.registerClass(VanillaRenderer.class, PetPetReflector.reflect(VanillaRenderer.class, "VanillaRenderer").copy().makeEditable());
-        instance.registerClass(VanillaPart.class, PetPetReflector.reflect(VanillaPart.class, "VanillaPart").copy().makeEditable().setParent(transformableClass));
-        instance.registerClass(VanillaFeature.class, PetPetReflector.reflect(VanillaFeature.class, "VanillaFeature").copy().makeEditable().setParent(transformableClass));
-
-        //Minecraft ones
-        instance.registerClass(ClientWorld.class, WorldAPI.WORLD_CLASS.copy().makeEditable());
-        instance.registerClass(BlockState.class, BlockStateAPI.BLOCK_STATE_CLASS.copy().makeEditable());
-        instance.registerClass(ItemStack.class, ItemStackAPI.ITEMSTACK_CLASS.copy().makeEditable());
-        instance.registerClass(DimensionType.class, DimensionAPI.DIMENSION_CLASS.copy().makeEditable());
-        instance.registerClass(Biome.class, BiomeAPI.BIOME_CLASS.copy().makeEditable());
-        instance.registerClass(Particle.class, ParticleAPI.PARTICLE_CLASS.copy().makeEditable());
-
-        //Entity
-        PetPetClass entityClass = EntityAPI.ENTITY_CLASS.copy().makeEditable();
-        instance.registerClass(Entity.class, entityClass);
-        PetPetClass livingEntityClass = LivingEntityAPI.LIVING_ENTITY_CLASS.copy().makeEditable().setParent(entityClass);
-        instance.registerClass(LivingEntity.class, livingEntityClass);
-        instance.registerClass(PlayerEntity.class, PlayerAPI.PLAYER_CLASS.copy().makeEditable().setParent(livingEntityClass));
-
-        //Special permission methods for prior APIs
-        entityClass.addMethod("getAspect", EntityAPI.getGetAspectMethod(aspect));
-    }
-
-    /**
      * Set all the global variables that are needed
      */
     private void setupGlobals() {
@@ -213,7 +122,7 @@ public class AspectScriptHandler {
         setGlobal("print", printFunc);
         setGlobal("log", printFunc);
 
-        //Math structures
+        //Math constructors
         setGlobal("vec2", Vectors.VEC_2_CREATE);
         setGlobal("vec3", Vectors.VEC_3_CREATE);
         setGlobal("vec4", Vectors.VEC_4_CREATE);
@@ -226,7 +135,7 @@ public class AspectScriptHandler {
         PetPetTable<String, PetPetClass> classes = new PetPetTable<>();
         for (var clazz : instance.interpreter.classMap.values())
             classes.put(clazz.name, clazz);
-        setGlobal("classes", classes);
+        setGlobal("aspectClasses", classes);
 
         //Require
         requireFunction = setupRequire();
@@ -266,7 +175,7 @@ public class AspectScriptHandler {
         setGlobal("client", new ClientAPI());
         setGlobal("renderer", new RendererAPI());
 
-        //Host api
+        //Host api if host
         if (aspect.isHost) {
             hostAPI = new HostAPI(aspect);
             setGlobal("host", hostAPI);
@@ -279,20 +188,25 @@ public class AspectScriptHandler {
             setGlobal("manager", new ManagerAPI());
         }
 
-        //Run aspect's util scripts for helpful
-        //code defined in PetPet rather than Java
-        runUtil("AspectInternalUtils");
-        runUtil("JsonText");
-        runUtil("PrettyPrint");
-
-        runUtil("ParticleHelpers");
-        runUtil("VanillaHelper");
-
         //Other APIs not shown here:
 
         //world api: set during aspect.tick()
-        //user api: set during aspect.tick()
-        //vanilla api: set when the user's entity first loads in
+        //user api and vanilla api: set when the user's entity first loads in
+    }
+
+    /**
+     * Run the various PetPet util scripts
+     * that Aspect defines
+     */
+    private void runUtils() {
+        //Run aspect's util scripts for helpful
+        //code defined in PetPet rather than Java
+        runUtil("AspectInternalUtils"); //Random stuff, should sort later
+        runUtil("JsonText"); //Class for json text
+        runUtil("PrettyPrint"); //Functions for pretty printing things
+
+        runUtil("ParticleHelpers"); //Functions that help with particles, matrices, etc
+        runUtil("VanillaHelper"); //Functions that help set up vanilla parents and such
     }
 
     private void runUtil(String name) {

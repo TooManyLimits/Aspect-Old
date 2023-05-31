@@ -5,7 +5,7 @@ import io.github.moonlightmaya.manage.data.BaseStructures;
 import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.model.WorldRootModelPart;
 import io.github.moonlightmaya.model.animation.Animation;
-import io.github.moonlightmaya.script.AspectScriptHandler;
+import io.github.moonlightmaya.script.handlers.AspectScriptHandler;
 import io.github.moonlightmaya.script.events.EventHandler;
 import io.github.moonlightmaya.model.AspectTexture;
 import io.github.moonlightmaya.util.AspectMatrixStack;

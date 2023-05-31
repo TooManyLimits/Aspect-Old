@@ -2,6 +2,7 @@ package io.github.moonlightmaya.script.apis.entity;
 
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.manage.AspectManager;
+import io.github.moonlightmaya.script.handlers.AspectScriptHandler;
 import io.github.moonlightmaya.script.apis.AspectAPI;
 import io.github.moonlightmaya.script.apis.world.WorldAPI;
 import io.github.moonlightmaya.util.GroupUtils;
@@ -21,7 +22,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.dimension.DimensionType;
 import org.joml.Vector2d;
 import org.joml.Vector3d;
-import petpet.external.PetPetReflector;
 import petpet.external.PetPetWhitelist;
 import petpet.lang.run.JavaFunction;
 import petpet.lang.run.PetPetClass;
@@ -36,12 +36,6 @@ import java.util.Iterator;
  */
 @PetPetWhitelist
 public class EntityAPI {
-
-    public static final PetPetClass ENTITY_CLASS;
-
-    static {
-        ENTITY_CLASS = PetPetReflector.reflect(EntityAPI.class, "Entity");
-    }
 
     /**
      * boolean
@@ -232,11 +226,9 @@ public class EntityAPI {
         return WorldAPI.getDimension((ClientWorld) entity.getWorld());
     }
 
-    //@PetPetWhitelist
+    @PetPetWhitelist
     public static PetPetListView<Entity> getPassengers(Entity entity) {
-        //Wait for fix on allowing any list in a view
-        throw new UnsupportedOperationException("Cannot call getPassengers, unimplemented");
-//        return new PetPetListView<>(entity.getPassengerList());
+        return new PetPetListView<>(entity.getPassengerList());
     }
     //@PetPetWhitelist
     public static BlockState getTargetedBlock(Entity entity) {
@@ -296,17 +288,19 @@ public class EntityAPI {
      * Complex permissions like this require additional effort to set up,
      * so they are implemented as their own, more elaborate, methods.
      */
-    public static JavaFunction getGetAspectMethod(Aspect aspectOwnedByScript) {
-        return new JavaFunction(false, 1) {
+    public static PetPetClass addGetAspectMethod(AspectScriptHandler scriptHandler, PetPetClass myClass) {
+        JavaFunction func = new JavaFunction(false, 1) {
             @Override
             public Object invoke(Object arg0) {
                 if (arg0 instanceof Entity entity) {
                     Aspect foundAspect = AspectManager.getAspect(entity.getUuid());
                     if (foundAspect == null) return null;
-                    return new AspectAPI(foundAspect, foundAspect == aspectOwnedByScript);
+                    return new AspectAPI(foundAspect, foundAspect == scriptHandler.aspect);
                 } else throw new PetPetException("Cannot call Entity.getAspect() on non-entity?");
             }
         };
+        myClass.addMethod("getAspect", func);
+        return myClass;
     }
 
 }

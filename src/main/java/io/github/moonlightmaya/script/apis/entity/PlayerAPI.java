@@ -15,12 +15,6 @@ import petpet.types.PetPetTable;
 @PetPetWhitelist
 public class PlayerAPI {
 
-    public static final PetPetClass PLAYER_CLASS;
-
-    static {
-        PLAYER_CLASS = PetPetReflector.reflect(PlayerAPI.class, "Player");
-    }
-
     /**
      * booleans
      */
