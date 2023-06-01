@@ -92,6 +92,12 @@ public class BiomeAPI {
     public static ParticleEffect particleType(Biome biome) {
         return biome.getParticleConfig().map(BiomeParticleConfig::getParticle).orElse(null);
     }
+
+    /**
+     * Why would anyone ever use this lmao
+     * why did i spend an entire 5 minutes
+     * making the mixin for this method
+     */
     @PetPetWhitelist @Nullable
     public static Double particleChance(Biome biome) {
         return biome.getParticleConfig()

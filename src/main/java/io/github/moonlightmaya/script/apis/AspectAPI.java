@@ -72,7 +72,7 @@ public class AspectAPI {
     }
 
     @PetPetWhitelist
-    public PetPetList<String> getAuthors() {
+    public PetPetList<String> authors() {
         return hasWriteAccess ? aspect.metadata.authors : new PetPetListView<>(aspect.metadata.authors);
     }
 
@@ -83,12 +83,12 @@ public class AspectAPI {
     }
 
     @PetPetWhitelist
-    public String getUserUUID() {
+    public String userUUID() {
         return aspect.userUUID == null ? null : aspect.userUUID.toString();
     }
 
     public String toString() {
-        return "Aspect(user=" + getUserUUID() + ")";
+        return "Aspect(user=" + userUUID() + ")";
     }
 
 }

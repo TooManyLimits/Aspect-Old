@@ -26,6 +26,7 @@ import petpet.external.PetPetWhitelist;
 import petpet.lang.run.JavaFunction;
 import petpet.lang.run.PetPetClass;
 import petpet.lang.run.PetPetException;
+import petpet.types.PetPetList;
 import petpet.types.PetPetTable;
 import petpet.types.immutable.PetPetListView;
 
@@ -118,25 +119,25 @@ public class EntityAPI {
      * number
      */
     @PetPetWhitelist
-    public static int getPermissionLevel(Entity entity) {
+    public static int permissionLevel(Entity entity) {
         int i = 1;
         while (entity.hasPermissionLevel(i)) i++;
         return i - 1;
     }
     @PetPetWhitelist
-    public static double getFrozenTicks(Entity entity) {
+    public static double frozenTicks(Entity entity) {
         return entity.getFrozenTicks();
     }
     @PetPetWhitelist
-    public static double getMaxAir(Entity entity) {
+    public static double maxAir(Entity entity) {
         return entity.getMaxAir();
     }
     @PetPetWhitelist
-    public static double getEyeHeight(Entity entity) {
+    public static double eyeHeight(Entity entity) {
         return entity.getEyeHeight(entity.getPose());
     }
     @PetPetWhitelist
-    public static double getEyeY(Entity entity) {
+    public static double eyeY(Entity entity) {
         return entity.getEyeY();
     }
 
@@ -144,23 +145,23 @@ public class EntityAPI {
      * vector
      */
     @PetPetWhitelist
-    public static Vector3d getPos_0(Entity entity) {
+    public static Vector3d pos_0(Entity entity) {
         return MathUtils.fromVec3d(entity.getPos());
     }
     @PetPetWhitelist
-    public static Vector3d getPos_1(Entity entity, double delta) {
+    public static Vector3d pos_1(Entity entity, double delta) {
         return MathUtils.fromVec3d(entity.getLerpedPos((float) delta));
     }
     @PetPetWhitelist
-    public static Vector2d getRot_0(Entity entity) {
+    public static Vector2d rot_0(Entity entity) {
         return new Vector2d(entity.getPitch(), entity.getYaw());
     }
     @PetPetWhitelist
-    public static Vector2d getRot_1(Entity entity, double delta) {
+    public static Vector2d rot_1(Entity entity, double delta) {
         return new Vector2d(entity.getPitch((float) delta), entity.getYaw((float) delta));
     }
     @PetPetWhitelist
-    public static Vector3d getVelocity(Entity entity) {
+    public static Vector3d vel(Entity entity) {
         return new Vector3d(
                 entity.getX() - entity.prevX,
                 entity.getY() - entity.prevY,
@@ -168,11 +169,11 @@ public class EntityAPI {
         );
     }
     @PetPetWhitelist
-    public static Vector3d getLookDir(Entity entity) {
+    public static Vector3d lookDir(Entity entity) {
         return MathUtils.fromVec3d(entity.getRotationVector());
     }
     @PetPetWhitelist
-    public static Vector3d getBoundingBox(Entity entity) {
+    public static Vector3d boundingBox(Entity entity) {
         EntityDimensions dim = entity.getDimensions(entity.getPose());
         return new Vector3d(dim.width, dim.height, dim.width);
     }
@@ -183,59 +184,75 @@ public class EntityAPI {
      */
 
     @PetPetWhitelist
-    public static String getName(Entity entity) {
+    public static String name(Entity entity) {
         return entity.getName().getString();
     }
     @PetPetWhitelist
-    public static String getType(Entity entity) {
+    public static String type(Entity entity) {
         return Registries.ENTITY_TYPE.getId(entity.getType()).toString();
     }
     @PetPetWhitelist
-    public static String getPose(Entity entity) {
+    public static String pose(Entity entity) {
         return entity.getPose().name();
     }
     @PetPetWhitelist
-    public static String getUUID(Entity entity) {
+    public static String uuid(Entity entity) {
         return entity.getUuidAsString();
     }
     @PetPetWhitelist
-    public static String getDimensionName(Entity entity) {
-        return WorldAPI.getDimensionName((ClientWorld) entity.getWorld());
+    public static String dimensionName(Entity entity) {
+        return WorldAPI.dimensionName((ClientWorld) entity.getWorld());
     }
 
     /**
      * other
      */
     @PetPetWhitelist
-    public static ItemStack getItem(Entity entity, int index) {
+    public static ItemStack item(Entity entity, int index) {
         if (index < 0) return null;
         Iterator<ItemStack> iter = entity.getItemsEquipped().iterator();
         while (index-- > 0 && iter.hasNext()) iter.next();
         return index == -1 && iter.hasNext() ? iter.next() : null;
     }
     @PetPetWhitelist
-    public static PetPetTable<String, Object> getNbt(Entity entity) {
+    public static PetPetTable<String, Object> nbt_0(Entity entity) {
         return NbtUtils.toPetPet(entity.writeNbt(new NbtCompound()));
     }
     @PetPetWhitelist
-    public static Entity getVehicle(Entity entity) {
+    public static Object nbt_1(Entity entity, PetPetList<Object> path) {
+        return NbtUtils.getWithPath(entity.writeNbt(new NbtCompound()), path);
+    }
+    @PetPetWhitelist
+    public static Entity vehicle(Entity entity) {
         return entity.getVehicle();
     }
     @PetPetWhitelist
-    public static DimensionType getDimension(Entity entity) {
-        return WorldAPI.getDimension((ClientWorld) entity.getWorld());
+    public static DimensionType dimension(Entity entity) {
+        return WorldAPI.dimension((ClientWorld) entity.getWorld());
+    }
+
+    /**
+     * Get the aspect for this entity.
+     * Aspects obtained this way *do not*
+     * have write access.
+     */
+    @PetPetWhitelist
+    public static AspectAPI aspect(Entity entity) {
+        Aspect foundAspect = AspectManager.getAspect(entity.getUuid());
+        if (foundAspect == null) return null;
+        return new AspectAPI(foundAspect, false);
     }
 
     @PetPetWhitelist
-    public static PetPetListView<Entity> getPassengers(Entity entity) {
+    public static PetPetListView<Entity> passengers(Entity entity) {
         return new PetPetListView<>(entity.getPassengerList());
     }
     //@PetPetWhitelist
-    public static BlockState getTargetedBlock(Entity entity) {
+    public static BlockState targetedBlock(Entity entity) {
         throw new UnsupportedOperationException("Cannot call getTargetedBlock, unimplemented"); //advanced
     }
     //@PetPetWhitelist
-    public static Entity getTargetedEntity(Entity entity) {
+    public static Entity targetedEntity(Entity entity) {
         throw new UnsupportedOperationException("Cannot call getTargetedEntity, unimplemented"); //advanced
     }
 
@@ -245,7 +262,7 @@ public class EntityAPI {
 
     @PetPetWhitelist
     public static String __tostring(Entity entity) {
-        return (entity.hasCustomName() ? entity.getCustomName().getString() + "(" + getType(entity) + ")" : getType(entity)) + " (Entity)";
+        return (entity.hasCustomName() ? entity.getCustomName().getString() + "(" + type(entity) + ")" : type(entity)) + " (Entity)";
     }
     @PetPetWhitelist
     public static boolean isFox(Entity entity) {
@@ -274,33 +291,6 @@ public class EntityAPI {
     @PetPetWhitelist
     public static boolean isHamburger(Entity entity) {
         return GroupUtils.is(entity.getUuid(), "hamburger");
-    }
-
-    /**
-     * The function(s) below this point have certain special properties.
-     * What they do will be different depending on the interpreter that
-     * calls the method, as well as the parameter.
-     *
-     * The getAspect() method returns an AspectAPI. This API is editable
-     * if and only if the entity you are grabbing the aspect of is the same
-     * as the aspect in which the script is running.
-     *
-     * Complex permissions like this require additional effort to set up,
-     * so they are implemented as their own, more elaborate, methods.
-     */
-    public static PetPetClass addGetAspectMethod(AspectScriptHandler scriptHandler, PetPetClass myClass) {
-        JavaFunction func = new JavaFunction(false, 1) {
-            @Override
-            public Object invoke(Object arg0) {
-                if (arg0 instanceof Entity entity) {
-                    Aspect foundAspect = AspectManager.getAspect(entity.getUuid());
-                    if (foundAspect == null) return null;
-                    return new AspectAPI(foundAspect, foundAspect == scriptHandler.aspect);
-                } else throw new PetPetException("Cannot call Entity.getAspect() on non-entity?");
-            }
-        };
-        myClass.addMethod("getAspect", func);
-        return myClass;
     }
 
 }

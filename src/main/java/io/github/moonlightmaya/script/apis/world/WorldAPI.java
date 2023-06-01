@@ -69,86 +69,86 @@ public class WorldAPI {
     }
 
     @PetPetWhitelist
-    public static double getTime_0(ClientWorld world) {
+    public static double time_0(ClientWorld world) {
         return world.getTime();
     }
     @PetPetWhitelist
-    public static double getTime_1(ClientWorld world, double delta) {
+    public static double time_1(ClientWorld world, double delta) {
         return world.getTime() + delta;
     }
     @PetPetWhitelist
-    public static double getTime_2(ClientWorld world, double delta, double speed) {
+    public static double time_2(ClientWorld world, double delta, double speed) {
         return speed * (world.getTime() + delta);
     }
     @PetPetWhitelist
-    public static double getTimeOfDay_0(ClientWorld world) {
+    public static double timeOfDay_0(ClientWorld world) {
         return world.getTimeOfDay();
     }
     @PetPetWhitelist
-    public static double getTimeOfDay_1(ClientWorld world, double delta) {
+    public static double timeOfDay_1(ClientWorld world, double delta) {
         return world.getTimeOfDay() + delta;
     }
     @PetPetWhitelist
-    public static DimensionType getDimension(ClientWorld world) {
+    public static DimensionType dimension(ClientWorld world) {
         return world.getDimension();
     }
     @PetPetWhitelist
-    public static String getDimensionName(ClientWorld world) {
+    public static String dimensionName(ClientWorld world) {
         return world.getDimensionKey().getValue().toString();
     }
     @PetPetWhitelist
-    public static double getMoonPhase(ClientWorld world) {
+    public static double moonPhase(ClientWorld world) {
         return world.getMoonPhase();
     }
 
     @PetPetWhitelist
-    public static PetPetList<Entity> getEntities(ClientWorld world) {
+    public static PetPetList<Entity> entities(ClientWorld world) {
         PetPetList<Entity> entities = new PetPetList<>();
         world.getEntities().forEach(entities::add);
         return entities;
     }
     @PetPetWhitelist
-    public static Entity getEntity(ClientWorld world, String uuid) {
+    public static Entity entity(ClientWorld world, String uuid) {
         return EntityUtils.getEntityByUUID(world, UUID.fromString(uuid));
     }
     @PetPetWhitelist
-    public static double getStrongRedstone_1(ClientWorld world, Vector3d pos) {
+    public static double strongRedstone_1(ClientWorld world, Vector3d pos) {
         return acceptPosOrElse(world, pos.x, pos.y, pos.z, world::getReceivedStrongRedstonePower, 0);
     }
     @PetPetWhitelist
-    public static double getStrongRedstone_3(ClientWorld world, double x, double y, double z) {
+    public static double strongRedstone_3(ClientWorld world, double x, double y, double z) {
         return acceptPosOrElse(world, x, y, z, world::getReceivedStrongRedstonePower, 0);
     }
     @PetPetWhitelist
-    public static double getRedstone_1(ClientWorld world, Vector3d pos) {
+    public static double redstone_1(ClientWorld world, Vector3d pos) {
         return acceptPosOrElse(world, pos.x, pos.y, pos.z, world::getReceivedRedstonePower, 0);
     }
     @PetPetWhitelist
-    public static double getRedstone_3(ClientWorld world, double x, double y, double z) {
+    public static double redstone_3(ClientWorld world, double x, double y, double z) {
         return acceptPosOrElse(world, x, y, z, world::getReceivedRedstonePower, 0);
     }
     @PetPetWhitelist
-    public static Biome getBiome_1(ClientWorld world, Vector3d pos) {
+    public static Biome biome_1(ClientWorld world, Vector3d pos) {
         return world.getBiome(new BlockPos((int) pos.x, (int) pos.y, (int) pos.z)).value();
     }
     @PetPetWhitelist
-    public static Biome getBiome_3(ClientWorld world, double x, double y, double z) {
+    public static Biome biome_3(ClientWorld world, double x, double y, double z) {
         return world.getBiome(new BlockPos((int) x, (int) y, (int) z)).value();
     }
     @PetPetWhitelist
-    public static String getBiomeID_1(ClientWorld world, Vector3d pos) {
+    public static String biomeName_1(ClientWorld world, Vector3d pos) {
         return world.getBiome(new BlockPos((int) pos.x, (int) pos.y, (int) pos.z)).getKey().map(k -> k.getValue().toString()).orElse(null);
     }
     @PetPetWhitelist
-    public static String getBiomeID_3(ClientWorld world, double x, double y, double z) {
+    public static String biomeName_3(ClientWorld world, double x, double y, double z) {
         return world.getBiome(new BlockPos((int) x, (int) y, (int) z)).getKey().map(k -> k.getValue().toString()).orElse(null);
     }
     @PetPetWhitelist
-    public static BlockState getBlockState_1(ClientWorld world, Vector3d pos) {
+    public static BlockState blockState_1(ClientWorld world, Vector3d pos) {
         return acceptPosOrElse(world, pos.x, pos.y, pos.z, world::getBlockState, Blocks.AIR.getDefaultState());
     }
     @PetPetWhitelist
-    public static BlockState getBlockState_3(ClientWorld world, double x, double y, double z) {
+    public static BlockState blockState_3(ClientWorld world, double x, double y, double z) {
         return acceptPosOrElse(world, x, y, z, world::getBlockState, Blocks.AIR.getDefaultState());
     }
     @PetPetWhitelist
@@ -170,35 +170,35 @@ public class WorldAPI {
         return true;
     }
     @PetPetWhitelist
-    public static Integer getLight_1(ClientWorld world, Vector3d pos) {
+    public static Integer light_1(ClientWorld world, Vector3d pos) {
         return acceptPosOrElse(world, pos.x, pos.y, pos.z, world::getLightLevel, null);
     }
     @PetPetWhitelist
-    public static Integer getLight_3(ClientWorld world, double x, double y, double z) {
+    public static Integer light_3(ClientWorld world, double x, double y, double z) {
         return acceptPosOrElse(world, x, y, z, world::getLightLevel, null);
     }
     @PetPetWhitelist
-    public static Integer getBlockLight_1(ClientWorld world, Vector3d pos) {
+    public static Integer blockLight_1(ClientWorld world, Vector3d pos) {
         return acceptPosOrElse(world, pos.x, pos.y, pos.z, p -> world.getLightLevel(LightType.BLOCK, p), null);
     }
     @PetPetWhitelist
-    public static Integer getBlockLight_3(ClientWorld world, double x, double y, double z) {
+    public static Integer blockLight_3(ClientWorld world, double x, double y, double z) {
         return acceptPosOrElse(world, x, y, z, p -> world.getLightLevel(LightType.BLOCK, p), null);
     }
     @PetPetWhitelist
-    public static Integer getSkyLight_1(ClientWorld world, Vector3d pos) {
+    public static Integer skyLight_1(ClientWorld world, Vector3d pos) {
         return acceptPosOrElse(world, pos.x, pos.y, pos.z, p -> world.getLightLevel(LightType.SKY, p), null);
     }
     @PetPetWhitelist
-    public static Integer getSkyLight_3(ClientWorld world, double x, double y, double z) {
+    public static Integer skyLight_3(ClientWorld world, double x, double y, double z) {
         return acceptPosOrElse(world, x, y, z, p -> world.getLightLevel(LightType.SKY, p), null);
     }
     @PetPetWhitelist
-    public static double getRainGradient_0(ClientWorld world) {
+    public static double rainGradient_0(ClientWorld world) {
         return world.getRainGradient(1f);
     }
     @PetPetWhitelist
-    public static double getRainGradient_1(ClientWorld world, double delta) {
+    public static double rainGradient_1(ClientWorld world, double delta) {
         return world.getRainGradient((float) delta);
     }
     @PetPetWhitelist

@@ -37,26 +37,26 @@ public class BlockStateAPI {
         BLOCK_STATE_CLASS = PetPetReflector.reflect(BlockStateAPI.class, "BlockState");
 
         genWorldPosAcceptors("isTranslucent", BlockState::isTransparent);
-        genWorldPosAcceptors("getOpacity", BlockState::getOpacity);
+        genWorldPosAcceptors("opacity", BlockState::getOpacity);
         genWorldPosAcceptors("isSolidBlock", BlockState::isSolidBlock);
 
         genWorldPosAcceptors("isFullCube", BlockState::isFullCube);
         genWorldPosAcceptors("hasEmissiveLighting", BlockState::hasEmissiveLighting);
-        genWorldPosAcceptors("getHardness", BlockState::getHardness);
-        genWorldPosAcceptors("getComparatorOutput", BlockState::getComparatorOutput);
-        genWorldPosAcceptors("getOcclusion", BlockState::getAmbientOcclusionLightLevel);
+        genWorldPosAcceptors("hardness", BlockState::getHardness);
+        genWorldPosAcceptors("comparatorOutput", BlockState::getComparatorOutput);
+        genWorldPosAcceptors("occlusion", BlockState::getAmbientOcclusionLightLevel);
 
-        genWorldPosAcceptors("toStateString", (state, world, pos) -> {
+        genWorldPosAcceptors("stateString", (state, world, pos) -> {
             BlockEntity be = world.getBlockEntity(pos);
             return BlockArgumentParser.stringifyBlockState(state) + (be == null ? "{}" : be.createNbt().toString());
         });
-        genWorldPosAcceptors("getEntityData", (state, world, pos) -> {
+        genWorldPosAcceptors("nbt", (state, world, pos) -> {
             BlockEntity be = world.getBlockEntity(pos);
             return NbtUtils.toPetPet(be == null ? new NbtCompound() : be.createNbt());
         });
 
         genWorldPosAcceptorsWithTransformer("hasCollision", BlockState::getCollisionShape, shape -> !shape.isEmpty());
-        genWorldPosAcceptorsWithTransformer("getMapColor", BlockState::getMapColor, i -> ColorUtils.intARGBToVec(i.color));
+        genWorldPosAcceptorsWithTransformer("mapColor", BlockState::getMapColor, i -> ColorUtils.intARGBToVec(i.color));
     }
 
     // boolean

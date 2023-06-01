@@ -51,27 +51,27 @@ public class PlayerAPI {
      * numbers
      */
     @PetPetWhitelist
-    public static double getExperienceLevel(PlayerEntity player) {
+    public static double experienceLevel(PlayerEntity player) {
         return player.experienceLevel;
     }
     @PetPetWhitelist
-    public static double getExperienceProgress(PlayerEntity player) {
+    public static double experienceProgress(PlayerEntity player) {
         return player.experienceProgress;
     }
     @PetPetWhitelist
-    public static double getChargedAttackDelay(PlayerEntity player) {
+    public static double chargedAttackDelay(PlayerEntity player) {
         return player.getAttackCooldownProgressPerTick();
     }
     @PetPetWhitelist
-    public static double getFood(PlayerEntity player) {
+    public static double food(PlayerEntity player) {
         return player.getHungerManager().getFoodLevel();
     }
     @PetPetWhitelist
-    public static double getSaturation(PlayerEntity player) {
+    public static double saturation(PlayerEntity player) {
         return player.getHungerManager().getSaturationLevel();
     }
     @PetPetWhitelist
-    public static double getExhaustion(PlayerEntity player) {
+    public static double exhaustion(PlayerEntity player) {
         return player.getHungerManager().getExhaustion();
     }
 
@@ -79,17 +79,17 @@ public class PlayerAPI {
      * other
      */
     @PetPetWhitelist
-    public static String getModelType(PlayerEntity player) {
+    public static String modelType(PlayerEntity player) {
         PlayerListEntry entry = EntityUtils.getPlayerListEntry(player.getUuid());
         return (entry != null ? entry.getModel() : DefaultSkinHelper.getModel(player.getUuid())).toUpperCase();
     }
     @PetPetWhitelist
-    public static String getGamemode(PlayerEntity player) {
+    public static String gamemode(PlayerEntity player) {
         PlayerListEntry entry = EntityUtils.getPlayerListEntry(player.getUuid());
         return entry == null ? null : entry.getGameMode().name();
     }
     @PetPetWhitelist
-    public static PetPetTable<String, Object> getShoulderEntity(PlayerEntity player, boolean rightShoulder) {
+    public static PetPetTable<String, Object> shoulderEntity(PlayerEntity player, boolean rightShoulder) {
         return NbtUtils.toPetPet(rightShoulder ? player.getShoulderEntityRight() : player.getShoulderEntityLeft());
     }
 

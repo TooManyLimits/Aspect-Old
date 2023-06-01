@@ -8,9 +8,10 @@ public class NbtUtils {
 
     public static PetPetTable<String, Object> toPetPet(NbtCompound compound) {
         PetPetTable<String, Object> result = new PetPetTable<>();
-        for (String s : compound.getKeys()) {
-            result.put(s, toPetPet(compound.get(s)));
-        }
+        if (compound != null)
+            for (String s : compound.getKeys()) {
+                result.put(s, toPetPet(compound.get(s)));
+            }
         return result;
     }
 
@@ -28,6 +29,32 @@ public class NbtUtils {
             return result;
         }
         return null;
+    }
+
+    public static Object getWithPath(NbtCompound start, PetPetList<Object> path) {
+        Object nbt = start;
+        for (Object pathElement : path) {
+            if (nbt instanceof NbtCompound compound) {
+                if (pathElement instanceof String s) {
+                    nbt = compound.get(s);
+                } else {
+                    return null;
+                }
+            } else if (nbt instanceof NbtList list) {
+                if (pathElement instanceof Double d) {
+                    //Negative indexing allowed
+                    int i = d.intValue();
+                    if (i < 0)
+                        i = list.size() + i;
+                    nbt = list.get(i);
+                } else {
+                    return null;
+                }
+            } else {
+                return null;
+            }
+        }
+        return nbt;
     }
 
 }

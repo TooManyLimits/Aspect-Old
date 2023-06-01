@@ -114,7 +114,7 @@ public class WhitelistHandler {
         registerDirect(Particle.class, PetPetReflector.reflect(ParticleAPI.class, "Particle"), ALWAYS, null);
 
         //Entities
-        registerDirect(Entity.class, PetPetReflector.reflect(EntityAPI.class, "Entity"), ALWAYS, null, EntityAPI::addGetAspectMethod);
+        registerDirect(Entity.class, PetPetReflector.reflect(EntityAPI.class, "Entity"), ALWAYS, null);
         registerDirect(LivingEntity.class, PetPetReflector.reflect(LivingEntityAPI.class, "LivingEntity"), ALWAYS, Entity.class);
         registerDirect(PlayerEntity.class, PetPetReflector.reflect(PlayerAPI.class, "Player"), ALWAYS, LivingEntity.class);
 

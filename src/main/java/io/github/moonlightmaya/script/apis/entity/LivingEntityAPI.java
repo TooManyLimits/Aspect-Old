@@ -30,7 +30,7 @@ public class LivingEntityAPI {
     }
 
     @PetPetWhitelist
-    public static boolean riptideSpinning(LivingEntity livingEntity) {
+    public static boolean isUsingRiptide(LivingEntity livingEntity) {
         return livingEntity.isUsingRiptide();
     }
     @PetPetWhitelist
@@ -50,36 +50,44 @@ public class LivingEntityAPI {
      * number
      */
     @PetPetWhitelist
-    public static double getHealth(LivingEntity livingEntity) {
+    public static double health(LivingEntity livingEntity) {
         return livingEntity.getHealth();
     }
     @PetPetWhitelist
-    public static double getMaxHealth(LivingEntity livingEntity) {
+    public static double maxHealth(LivingEntity livingEntity) {
         return livingEntity.getMaxHealth();
     }
     @PetPetWhitelist
-    public static double getArmor(LivingEntity livingEntity) {
+    public static double armor(LivingEntity livingEntity) {
         return livingEntity.getArmor();
     }
     @PetPetWhitelist
-    public static double getAbsorptionAmount(LivingEntity livingEntity) {
+    public static double absorption(LivingEntity livingEntity) {
         return livingEntity.getAbsorptionAmount();
     }
     @PetPetWhitelist
-    public static double getDeathTime(LivingEntity livingEntity) {
+    public static double deathTime(LivingEntity livingEntity) {
         return livingEntity.deathTime;
     }
     @PetPetWhitelist
-    public static double getActiveItemTime(LivingEntity livingEntity) {
+    public static double activeItemTime(LivingEntity livingEntity) {
         return livingEntity.getItemUseTime();
     }
     @PetPetWhitelist
-    public static double getBodyYaw_0(LivingEntity livingEntity) {
+    public static double bodyYaw_0(LivingEntity livingEntity) {
         return livingEntity.getBodyYaw();
     }
     @PetPetWhitelist
-    public static double getBodyYaw_1(LivingEntity livingEntity, double delta) {
+    public static double bodyYaw_1(LivingEntity livingEntity, double delta) {
         return livingEntity.prevBodyYaw + (livingEntity.getBodyYaw() - livingEntity.prevBodyYaw) * delta;
+    }
+    @PetPetWhitelist
+    public static double armAngle_0(LivingEntity livingEntity) {
+        return livingEntity.limbAnimator.getPos();
+    }
+    @PetPetWhitelist
+    public static double armAngle_1(LivingEntity livingEntity, double delta) {
+        return livingEntity.limbAnimator.getPos((float) delta);
     }
 
     /**
@@ -90,23 +98,23 @@ public class LivingEntityAPI {
         return livingEntity.handSwinging;
     }
     @PetPetWhitelist
-    public static double getSwingDuration(LivingEntity livingEntity) {
+    public static double swingDuration(LivingEntity livingEntity) {
         throw new UnsupportedOperationException("Cannot call getSwingDuration"); //Needs mixin accessor
     }
     @PetPetWhitelist
-    public static String getSwingArm(LivingEntity livingEntity) {
+    public static String swingArm(LivingEntity livingEntity) {
         return livingEntity.handSwinging ? livingEntity.preferredHand.name() : null;
     }
     @PetPetWhitelist
-    public static boolean isLeftHanded(LivingEntity livingEntity) {
+    public static boolean leftHanded(LivingEntity livingEntity) {
         return livingEntity.getMainArm() == Arm.LEFT;
     }
     @PetPetWhitelist
-    public static int getSwingTime(LivingEntity livingEntity) {
+    public static int swingTime(LivingEntity livingEntity) {
         return livingEntity.handSwingTicks;
     }
     @PetPetWhitelist
-    public static String getActiveHand(LivingEntity livingEntity) {
+    public static String activeHand(LivingEntity livingEntity) {
         return livingEntity.getActiveHand().name();
     }
 
@@ -114,7 +122,7 @@ public class LivingEntityAPI {
      * string
      */
     @PetPetWhitelist
-    public static String getEntityCategory(LivingEntity livingEntity) {
+    public static String entityCategory(LivingEntity livingEntity) {
         if (livingEntity.getGroup() == EntityGroup.UNDEAD)
             return "UNDEAD";
         if (livingEntity.getGroup() == EntityGroup.ARTHROPOD)
@@ -131,15 +139,15 @@ public class LivingEntityAPI {
      */
 
     @PetPetWhitelist
-    public static ItemStack getHeldItem_0(LivingEntity livingEntity) {
+    public static ItemStack heldItem_0(LivingEntity livingEntity) {
         return livingEntity.getMainHandStack();
     }
     @PetPetWhitelist
-    public static ItemStack getHeldItem_1(LivingEntity livingEntity, boolean offhand) {
+    public static ItemStack heldItem_1(LivingEntity livingEntity, boolean offhand) {
         return offhand ? livingEntity.getOffHandStack() : livingEntity.getMainHandStack();
     }
     @PetPetWhitelist
-    public static ItemStack getActiveItem(LivingEntity livingEntity) {
+    public static ItemStack activeItem(LivingEntity livingEntity) {
         return ItemUtils.checkStack(livingEntity.getActiveItem());
     }
 
@@ -147,11 +155,11 @@ public class LivingEntityAPI {
      * almost useless
      */
     @PetPetWhitelist
-    public static double getArrowCount(LivingEntity livingEntity) {
+    public static double arrowCount(LivingEntity livingEntity) {
         return livingEntity.getStuckArrowCount();
     }
     @PetPetWhitelist
-    public static double getStingerCount(LivingEntity livingEntity) {
+    public static double stingerCount(LivingEntity livingEntity) {
         return livingEntity.getStingerCount();
     }
 
@@ -161,7 +169,7 @@ public class LivingEntityAPI {
 
     @PetPetWhitelist
     public String __tostring(LivingEntity livingEntity) {
-        return (livingEntity.hasCustomName() ? livingEntity.getCustomName().getString() + "(" + EntityAPI.getType(livingEntity) + ")" : EntityAPI.getType(livingEntity)) + " (LivingEntity)";
+        return (livingEntity.hasCustomName() ? livingEntity.getCustomName().getString() + "(" + EntityAPI.type(livingEntity) + ")" : EntityAPI.type(livingEntity)) + " (LivingEntity)";
     }
 
 }
