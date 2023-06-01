@@ -185,8 +185,7 @@ public class ItemStackAPI {
 
     @PetPetWhitelist
     public static String __tostring(ItemStack stack) {
-        return stack.toString();
+        return "ItemStack(" + stack.toString() + ")";
     }
-
 
 }

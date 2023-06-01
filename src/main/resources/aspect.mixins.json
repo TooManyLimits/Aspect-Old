@@ -25,7 +25,9 @@
     "render.vanilla.sort.EntityRenderersMixin",
     "render.world.ClientWorldInvoker",
     "render.world.WorldRendererAccessor",
-    "render.world.WorldRendererMixin"
+    "render.world.WorldRendererMixin",
+    "world.biome.BiomeAccessor",
+    "world.biome.BiomeParticleConfigAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -110,7 +110,7 @@ public class WhitelistHandler {
         registerDirect(ItemStack.class, PetPetReflector.reflect(ItemStackAPI.class, "ItemStack"), ALWAYS, null);
         registerDirect(DimensionType.class, PetPetReflector.reflect(DimensionAPI.class, "Dimension"), ALWAYS, null);
         registerDirect(DimensionEffects.class, PetPetReflector.reflect(DimensionEffectsAPI.class, "DimensionEffects"), ALWAYS, null);
-        registerDirect(Biome.class, BiomeAPI.BIOME_CLASS, ALWAYS, null);
+        registerDirect(Biome.class, PetPetReflector.reflect(BiomeAPI.class, "Biome"), ALWAYS, null);
         registerDirect(Particle.class, PetPetReflector.reflect(ParticleAPI.class, "Particle"), ALWAYS, null);
 
         //Entities

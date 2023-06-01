@@ -131,4 +131,9 @@ public class DimensionAPI {
         return dimension.monsterSettings().piglinSafe();
     }
 
+    @PetPetWhitelist
+    public static String __tostring(DimensionType dimension) {
+        return "Dimension(effects=" + dimension.effects() + ")";
+    }
+
 }

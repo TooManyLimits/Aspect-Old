@@ -5,7 +5,7 @@ global Set = class("Set", $[
     },
     add = fn(val) this[val] = true,
     has = fn(val) if this[val] true else false
-]
+])
 
 //Examples
 //q = Set(!["hello", 3, "dirt"])

@@ -99,4 +99,9 @@ public class DimensionEffectsAPI {
     }
 
 
+    @PetPetWhitelist
+    public static String __tostring(DimensionEffects effects) {
+        return "DimensionEffects";
+    }
+
 }

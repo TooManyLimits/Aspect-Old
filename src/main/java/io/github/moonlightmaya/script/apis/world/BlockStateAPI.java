@@ -7,6 +7,7 @@ import io.github.moonlightmaya.util.NbtUtils;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.DimensionEffects;
 import net.minecraft.command.argument.BlockArgumentParser;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
@@ -131,6 +132,11 @@ public class BlockStateAPI {
             result.put(property.getName(), list);
         }
         return result;
+    }
+
+    @PetPetWhitelist
+    public static String __tostring(BlockState state) {
+        return "BlockState(" + state.toString() + ")";
     }
 
 

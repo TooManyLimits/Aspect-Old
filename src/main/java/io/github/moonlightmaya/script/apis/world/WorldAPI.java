@@ -234,4 +234,9 @@ public class WorldAPI {
             throw new PetPetException("Failed to parse ItemStack from string: " + str);
         }
     }
+
+    @PetPetWhitelist
+    public static String __tostring(ClientWorld world) {
+        return "World";
+    }
 }

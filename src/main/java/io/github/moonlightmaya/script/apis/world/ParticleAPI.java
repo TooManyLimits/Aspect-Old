@@ -104,4 +104,9 @@ public class ParticleAPI {
         particle.markDead();
     }
 
+    @PetPetWhitelist
+    public static String __tostring(Particle particle) {
+        return particle.toString();
+    }
+
 }
