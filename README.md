@@ -6,4 +6,4 @@ and ease of use, while making sure not to compromise
 on players' creative freedom.
 
 ## License
-vibe license :)
+LGPL v2.1
