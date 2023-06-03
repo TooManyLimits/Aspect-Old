@@ -41,7 +41,7 @@ dependencies {
 
 	// modImplementation "net.fabricmc.fabric-api:fabric-api-deprecated:${project.fabric_version}"
 
-	include(implementation('com.github.Moonlight-Maya:PetPet:v0.4.6')) //PetPet
+	include(implementation('com.github.Moonlight-Maya:PetPet:v0.4.7')) //PetPet
 
 	modCompileOnly("maven.modrinth:sodium:mc1.19.4-0.4.10")
 }
