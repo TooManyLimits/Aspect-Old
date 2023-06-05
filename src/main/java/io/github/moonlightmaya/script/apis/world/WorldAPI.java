@@ -1,8 +1,6 @@
 package io.github.moonlightmaya.script.apis.world;
 
 import com.mojang.brigadier.StringReader;
-import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.context.CommandContextBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.github.moonlightmaya.util.EntityUtils;
 import io.github.moonlightmaya.util.MathUtils;
@@ -12,11 +10,8 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.BlockArgumentParser;
 import net.minecraft.command.argument.ItemStackArgumentType;
-import net.minecraft.command.argument.ParticleEffectArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.particle.DefaultParticleType;
-import net.minecraft.particle.ParticleEffect;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.LightType;
@@ -25,10 +20,12 @@ import net.minecraft.world.dimension.DimensionType;
 import org.joml.Vector3d;
 import petpet.external.PetPetReflector;
 import petpet.external.PetPetWhitelist;
-import petpet.lang.run.*;
+import petpet.lang.run.JavaFunction;
+import petpet.lang.run.PetPetCallable;
+import petpet.lang.run.PetPetClass;
+import petpet.lang.run.PetPetException;
 import petpet.types.PetPetList;
 
-import java.util.HashMap;
 import java.util.UUID;
 import java.util.function.Function;
 

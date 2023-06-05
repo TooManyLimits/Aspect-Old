@@ -7,16 +7,20 @@ import io.github.moonlightmaya.model.animation.Animation;
 import io.github.moonlightmaya.model.animation.Interpolation;
 import io.github.moonlightmaya.util.IOUtils;
 import io.github.moonlightmaya.util.MathUtils;
-import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.Nullable;
-import org.joml.*;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
+import org.joml.Vector4i;
 import petpet.types.PetPetList;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.lang.Math;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Contains the "base" structures in the data graph.

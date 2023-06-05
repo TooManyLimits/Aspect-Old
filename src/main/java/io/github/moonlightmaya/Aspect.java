@@ -3,16 +3,16 @@ package io.github.moonlightmaya;
 import io.github.moonlightmaya.manage.AspectMetadata;
 import io.github.moonlightmaya.manage.data.BaseStructures;
 import io.github.moonlightmaya.model.AspectModelPart;
+import io.github.moonlightmaya.model.AspectTexture;
 import io.github.moonlightmaya.model.WorldRootModelPart;
 import io.github.moonlightmaya.model.animation.Animation;
-import io.github.moonlightmaya.script.handlers.AspectScriptHandler;
-import io.github.moonlightmaya.script.events.EventHandler;
-import io.github.moonlightmaya.model.AspectTexture;
+import io.github.moonlightmaya.script.AspectScript;
+import io.github.moonlightmaya.script.events.Events;
+import io.github.moonlightmaya.script.vanilla.VanillaRenderer;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.EntityUtils;
 import io.github.moonlightmaya.util.RenderUtils;
-import io.github.moonlightmaya.script.vanilla.VanillaRenderer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.OverlayTexture;
@@ -59,7 +59,7 @@ public class Aspect {
 
     public final Map<String, String> scripts;
     public final VanillaRenderer vanillaRenderer;
-    public final AspectScriptHandler scriptHandler;
+    public final AspectScript script;
     public final LinkedHashMap<String, Animation> animations;
 
     /**
@@ -156,7 +156,7 @@ public class Aspect {
         for (BaseStructures.ScriptStructure script : materials.scripts())
             scripts.put(script.name(), script.source());
 
-        scriptHandler = new AspectScriptHandler(this);
+        script = new AspectScript(this);
 
         //Set the aspect to be ready, *after* all textures finish "uploadIfNeeded()" on the render thread
         RenderUtils.executeOnRenderThread(() -> isReady = true);
@@ -170,32 +170,32 @@ public class Aspect {
         vanillaRenderer.initVanillaParts(user);
 
         //Notify the script of the first entity load, triggering events
-        scriptHandler.onEntityFirstLoad();
+        script.onEntityFirstLoad();
     }
 
     public void renderEntity(VertexConsumerProvider vcp, float tickDelta, AspectMatrixStack matrixStack, int light, int overlay) {
         if (isErrored()) return;
-        scriptHandler.callEvent(EventHandler.RENDER, tickDelta, renderContext);
+        script.callEvent(Events.RENDER, tickDelta, renderContext);
         matrixStack.multiply(vanillaRenderer.aspectModelTransform);
         try {
             entityRoot.render(vcp, matrixStack, light, overlay);
         } catch (Throwable t) {
             error(t, ErrorLocation.RENDER_ENTITY);
         }
-        scriptHandler.callEvent(EventHandler.POST_RENDER, tickDelta, renderContext);
+        script.callEvent(Events.POST_RENDER, tickDelta, renderContext);
         //After rendering, reset the render context to "other"
         renderContext = RenderContexts.OTHER;
     }
 
     public void renderHud(VertexConsumerProvider vcp, float tickDelta, AspectMatrixStack matrixStack) {
         if (isErrored()) return;
-        scriptHandler.callEvent(EventHandler.HUD_RENDER, tickDelta);
+        script.callEvent(Events.HUD_RENDER, tickDelta);
         try {
             hudRoot.render(vcp, matrixStack, LightmapTextureManager.MAX_LIGHT_COORDINATE, OverlayTexture.DEFAULT_UV);
         } catch (Throwable t) {
             error(t, ErrorLocation.RENDER_HUD);
         }
-        scriptHandler.callEvent(EventHandler.POST_HUD_RENDER, tickDelta);
+        script.callEvent(Events.POST_HUD_RENDER, tickDelta);
     }
 
     public UUID getAspectUUID() {
@@ -218,8 +218,8 @@ public class Aspect {
                 anim.tick();
             //If the world changed, change the global var
             if (world != lastWorld) {
-                scriptHandler.setGlobal("world", world);
-                scriptHandler.callEvent(EventHandler.WORLD_CHANGE);
+                script.setGlobal("world", world);
+                script.callEvent(Events.WORLD_CHANGE);
                 lastWorld = world;
             }
             if (world != null) {
@@ -228,8 +228,8 @@ public class Aspect {
                     //Let's see if they've unloaded:
                     if (user.isRemoved() || user.world != world) {
                         //They've unloaded! Let's call the event, and set the user to null.
-                        scriptHandler.callEvent(EventHandler.USER_UNLOAD);
-                        scriptHandler.setGlobal("user", null);
+                        script.callEvent(Events.USER_UNLOAD);
+                        script.setGlobal("user", null);
                         user = null;
                     }
                 }
@@ -243,7 +243,7 @@ public class Aspect {
                     if (found != null) {
                         //Ok, we found them! Add them to the script environment
                         //And set the user to be this entity we found with the proper uuid
-                        scriptHandler.setGlobal("user", found);
+                        script.setGlobal("user", found);
                         user = found;
 
                         //If this is the first time the user loaded in, call the setup
@@ -253,16 +253,16 @@ public class Aspect {
                         }
 
                         //Either way, first time or not, let's call their user_load
-                        scriptHandler.callEvent(EventHandler.USER_LOAD);
+                        script.callEvent(Events.USER_LOAD);
                     }
                 }
                 if (user != null) {
                     //If the user is still here at the end of it all, let's tick() them
-                    scriptHandler.callEvent(EventHandler.TICK);
+                    script.callEvent(Events.TICK);
                 }
 
                 //Always call world tick, if a world exists
-                scriptHandler.callEvent(EventHandler.WORLD_TICK);
+                script.callEvent(Events.WORLD_TICK);
             }
         } catch (Throwable t) {
             error(t, ErrorLocation.TICK);
@@ -288,7 +288,7 @@ public class Aspect {
         }
 
         //Call events
-        scriptHandler.callEvent(EventHandler.WORLD_RENDER, tickDelta, renderContext);
+        script.callEvent(Events.WORLD_RENDER, tickDelta, renderContext);
         try {
             for (WorldRootModelPart worldRoot : worldRoots) {
                 worldRoot.render(vcp, matrixStack);
@@ -296,7 +296,7 @@ public class Aspect {
         } catch (Throwable t) {
             error(t, ErrorLocation.RENDER_WORLD);
         }
-        scriptHandler.callEvent(EventHandler.POST_WORLD_RENDER, tickDelta, renderContext);
+        script.callEvent(Events.POST_WORLD_RENDER, tickDelta, renderContext);
 
         //After rendering the world, reset my context to other
         this.renderContext = RenderContexts.OTHER;

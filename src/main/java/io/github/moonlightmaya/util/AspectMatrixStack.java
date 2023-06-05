@@ -1,7 +1,6 @@
 package io.github.moonlightmaya.util;
 
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.MathHelper;
 import org.joml.*;
 
 import java.lang.Math;

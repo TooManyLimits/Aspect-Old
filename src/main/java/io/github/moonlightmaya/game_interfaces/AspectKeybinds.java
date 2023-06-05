@@ -2,15 +2,10 @@ package io.github.moonlightmaya.game_interfaces;
 
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.manage.AspectManager;
-import io.github.moonlightmaya.script.events.EventHandler;
+import io.github.moonlightmaya.script.events.Events;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
-import net.minecraft.client.Keyboard;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.input.Input;
 import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -31,16 +26,15 @@ public class AspectKeybinds {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (MENU.wasPressed()) {
                 Aspect guiAspect = AspectManager.getGuiAspect();
-                if (guiAspect != null && guiAspect.scriptHandler != null) {
+                if (guiAspect != null && guiAspect.script != null) {
                     menuOpen = !menuOpen;
-                    guiAspect.scriptHandler.callEvent(menuOpen ? EventHandler.GUI_OPEN : EventHandler.GUI_CLOSE);
+                    guiAspect.script.callEvent(menuOpen ? Events.GUI_OPEN : Events.GUI_CLOSE);
                 }
             }
         });
     }
 
-    public static void registerKeybinds() {
-        //literally just load the class, activating static stuff
-    }
+    //literally just load the class, activating static stuff
+    public static void registerKeybinds() {}
 
 }

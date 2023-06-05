@@ -1,15 +1,22 @@
-package io.github.moonlightmaya.script.handlers;
+package io.github.moonlightmaya.script;
 
 import io.github.moonlightmaya.Aspect;
+import io.github.moonlightmaya.model.AspectTexture;
 import io.github.moonlightmaya.model.WorldRootModelPart;
 import io.github.moonlightmaya.model.animation.Animation;
-import io.github.moonlightmaya.script.apis.*;
+import io.github.moonlightmaya.script.apis.AspectAPI;
+import io.github.moonlightmaya.script.apis.ClientAPI;
+import io.github.moonlightmaya.script.apis.HostAPI;
+import io.github.moonlightmaya.script.apis.RendererAPI;
 import io.github.moonlightmaya.script.apis.gui.ManagerAPI;
-import io.github.moonlightmaya.script.apis.math.Quaternions;
 import io.github.moonlightmaya.script.apis.math.Matrices;
+import io.github.moonlightmaya.script.apis.math.Quaternions;
 import io.github.moonlightmaya.script.apis.math.Vectors;
-import io.github.moonlightmaya.script.events.EventHandler;
-import io.github.moonlightmaya.model.AspectTexture;
+import io.github.moonlightmaya.script.events.Event;
+import io.github.moonlightmaya.script.events.Events;
+import io.github.moonlightmaya.script.events.EventsAPI;
+import io.github.moonlightmaya.script.handlers.ExtraGlobalHandler;
+import io.github.moonlightmaya.script.handlers.WhitelistHandler;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.IOUtils;
 import net.minecraft.text.Text;
@@ -18,7 +25,10 @@ import petpet.external.PetPetInstance;
 import petpet.lang.compile.Compiler;
 import petpet.lang.lex.Lexer;
 import petpet.lang.parse.Parser;
-import petpet.lang.run.*;
+import petpet.lang.run.JavaFunction;
+import petpet.lang.run.PetPetClass;
+import petpet.lang.run.PetPetClosure;
+import petpet.lang.run.PetPetException;
 import petpet.types.PetPetTable;
 
 import java.io.InputStream;
@@ -33,7 +43,7 @@ import java.util.Set;
  * It provides a layer of abstraction over the actual
  * calling of events and running of scripts.
  */
-public class AspectScriptHandler {
+public class AspectScript {
 
     public final Aspect aspect;
     public final PetPetInstance instance;
@@ -47,8 +57,9 @@ public class AspectScriptHandler {
      * Saved important script variables
      */
     private JavaFunction requireFunction;
-    private EventHandler eventHandler;
+//    private EventHandler eventHandler;
     private @Nullable HostAPI hostAPI;
+    private EventsAPI eventsAPI;
 
 
     /**
@@ -56,7 +67,7 @@ public class AspectScriptHandler {
      * all the scripts, and potentially report errors.
      * Then, we run the "main" script.
      */
-    public AspectScriptHandler(Aspect aspect) {
+    public AspectScript(Aspect aspect) {
         this.aspect = aspect;
 
         //Create new instance
@@ -77,6 +88,11 @@ public class AspectScriptHandler {
 
         //Set up extra (from other mods) globals
         ExtraGlobalHandler.setupInstance(this);
+
+        //After all utils are run, set the max instructions
+        //Utils shouldn't count towards instructions
+        instance.interpreter.cost = 0;
+//        instance.interpreter.maxCost = AspectConfig.MAX_INSTRUCTIONS.get();
     }
 
     /**
@@ -98,8 +114,6 @@ public class AspectScriptHandler {
         return instance.runScript(name, code);
     }
 
-
-
     /**
      * When the user of the Aspect this script handler is for
      * first loads in, we add the related fields into the script environment.
@@ -107,7 +121,7 @@ public class AspectScriptHandler {
     public void onEntityFirstLoad() {
         instance.setGlobal("vanilla", aspect.vanillaRenderer);
 
-        callEvent(EventHandler.USER_INIT);
+        callEvent(Events.USER_INIT);
     }
 
     /**
@@ -164,11 +178,7 @@ public class AspectScriptHandler {
         setGlobal("models", modelsTable);
 
         //Events
-        //Code for events is all inside EventHandler, which
-        //deals with creating the events
-        //
-        //This constructor also adds the handler table as a global variable!
-        eventHandler = new EventHandler(instance);
+        setGlobal("events", eventsAPI = new EventsAPI());
 
         //Misc apis
         setGlobal("aspect", new AspectAPI(aspect, true));
@@ -296,40 +306,14 @@ public class AspectScriptHandler {
         return instance.interpreter.getString(o);
     }
 
-    public void callEvent(String eventName, Object... args) {
-        if (isErrored()) return;
+    public Object callEvent(Event event, Object... args) {
+        if (isErrored()) return event.piped ? args[0] : null;
         try {
-            eventHandler.callEvent(eventName, args);
+            return eventsAPI.callEvent(event, args);
         } catch (Throwable t) {
             error(t);
         }
-    }
-
-    /**
-     * Return true if should cancel
-     */
-    public boolean callEventCancellable(String eventName, Object... args) {
-        if (isErrored()) return false;
-        try {
-            return eventHandler.callEventCancellable(eventName, args);
-        } catch (Throwable t) {
-            error(t);
-            return false;
-        }
-    }
-
-    /**
-     * Calls the event in the "piped" format. If the aspect
-     * is errored, just returns the provided arg back.
-     */
-    public Object callEventPiped(String eventName, Object arg) {
-        if (isErrored()) return arg;
-        try {
-            return eventHandler.callEventPiped(eventName, arg);
-        } catch (Throwable t) {
-            error(t);
-        }
-        return arg;
+        return null;
     }
 
     public PetPetClosure compile(String name, String src) {

@@ -6,9 +6,7 @@ import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.render.entity.PlayerModelPart;
 import net.minecraft.client.util.DefaultSkinHelper;
 import net.minecraft.entity.player.PlayerEntity;
-import petpet.external.PetPetReflector;
 import petpet.external.PetPetWhitelist;
-import petpet.lang.run.PetPetClass;
 import petpet.lang.run.PetPetException;
 import petpet.types.PetPetTable;
 

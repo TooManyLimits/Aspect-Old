@@ -5,9 +5,7 @@ import net.minecraft.entity.EntityGroup;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Arm;
-import petpet.external.PetPetReflector;
 import petpet.external.PetPetWhitelist;
-import petpet.lang.run.PetPetClass;
 
 @PetPetWhitelist
 public class LivingEntityAPI {

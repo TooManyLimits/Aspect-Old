@@ -96,7 +96,7 @@ public abstract class Keyframe {
          */
         public Object checkValue(Animation anim, Object o, String axis) {
             String name = animName + ", keyframe at t=" + this.time + "," + axis + " value. CODE: [[" + o + "]]";
-            return o instanceof String src ? anim.aspect.scriptHandler.compile(name, src) : o;
+            return o instanceof String src ? anim.aspect.script.compile(name, src) : o;
         }
 
         @Override

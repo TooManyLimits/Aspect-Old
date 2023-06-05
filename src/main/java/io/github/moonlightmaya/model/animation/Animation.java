@@ -7,9 +7,6 @@ import petpet.lang.run.PetPetException;
 import petpet.types.PetPetList;
 import petpet.types.immutable.PetPetListView;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @PetPetWhitelist
 public class Animation {
 

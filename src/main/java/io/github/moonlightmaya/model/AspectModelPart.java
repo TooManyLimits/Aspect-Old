@@ -12,7 +12,9 @@ import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.util.RenderUtils;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.render.*;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import org.joml.*;
@@ -369,10 +371,10 @@ public class AspectModelPart extends Transformable {
         //Run the callback
         if (preRender != null) {
             try {
-                if (owningAspect.scriptHandler != null && !owningAspect.scriptHandler.isErrored())
+                if (owningAspect.script != null && !owningAspect.script.isErrored())
                     preRender.call(this, matrixStack.peekPosition(), matrixStack.peekNormal());
             } catch (Exception e) {
-                owningAspect.scriptHandler.error(e);
+                owningAspect.script.error(e);
             }
         }
 
@@ -385,10 +387,10 @@ public class AspectModelPart extends Transformable {
             //Call the post render if it exists
             if (postRender != null) {
                 try {
-                    if (owningAspect.scriptHandler != null && !owningAspect.scriptHandler.isErrored())
+                    if (owningAspect.script != null && !owningAspect.script.isErrored())
                         postRender.call(this, matrixStack.peekPosition(), matrixStack.peekNormal());
                 } catch (Exception e) {
-                    owningAspect.scriptHandler.error(e);
+                    owningAspect.script.error(e);
                 }
             }
             matrixStack.pop();
@@ -451,10 +453,10 @@ public class AspectModelPart extends Transformable {
 
         if (postRender != null) {
             try {
-                if (owningAspect.scriptHandler != null && !owningAspect.scriptHandler.isErrored())
+                if (owningAspect.script != null && !owningAspect.script.isErrored())
                     postRender.call(this, matrixStack.peekPosition(), matrixStack.peekNormal());
             } catch (Exception e) {
-                owningAspect.scriptHandler.error(e);
+                owningAspect.script.error(e);
             }
         }
 

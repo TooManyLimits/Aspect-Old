@@ -5,7 +5,7 @@ import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.AspectMod;
 import io.github.moonlightmaya.manage.data.BaseStructures;
 import io.github.moonlightmaya.mixin.render.TextureManagerAccessor;
-import io.github.moonlightmaya.script.handlers.AspectScriptHandler;
+import io.github.moonlightmaya.script.AspectScript;
 import io.github.moonlightmaya.util.ColorUtils;
 import io.github.moonlightmaya.util.RenderUtils;
 import net.minecraft.client.MinecraftClient;
@@ -215,7 +215,7 @@ public class AspectTexture extends ResourceTexture {
      * a matrix multiplication per pixel.
      * Returns the class for chaining.
      */
-    public static PetPetClass addPenalties(AspectScriptHandler unused, PetPetClass clazz) {
+    public static PetPetClass addPenalties(AspectScript unused, PetPetClass clazz) {
         try {
             JavaFunction transform = (JavaFunction) clazz.getMethod("transform");
             JavaFunction transformWithAlpha = (JavaFunction) clazz.getMethod("transformWithAlpha");

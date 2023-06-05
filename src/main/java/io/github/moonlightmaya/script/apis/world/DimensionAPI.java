@@ -3,20 +3,15 @@ package io.github.moonlightmaya.script.apis.world;
 import net.minecraft.block.Block;
 import net.minecraft.client.render.DimensionEffects;
 import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.registry.entry.RegistryEntryList;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.dimension.DimensionType;
 import org.jetbrains.annotations.Nullable;
-import petpet.external.PetPetReflector;
 import petpet.external.PetPetWhitelist;
-import petpet.lang.run.PetPetClass;
 import petpet.types.PetPetList;
 
-import java.util.List;
 import java.util.Optional;
 
 @PetPetWhitelist

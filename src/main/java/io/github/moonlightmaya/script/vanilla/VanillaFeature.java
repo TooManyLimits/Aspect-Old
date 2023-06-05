@@ -1,14 +1,11 @@
 package io.github.moonlightmaya.script.vanilla;
 
-import io.github.moonlightmaya.mixin.render.vanilla.part.ModelPartAccessor;
 import io.github.moonlightmaya.model.Transformable;
 import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.render.entity.feature.FeatureRenderer;
 import petpet.external.PetPetWhitelist;
 import petpet.types.PetPetTable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 

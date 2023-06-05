@@ -1,6 +1,5 @@
 package io.github.moonlightmaya.mixin.gui;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.util.AspectMatrixStack;

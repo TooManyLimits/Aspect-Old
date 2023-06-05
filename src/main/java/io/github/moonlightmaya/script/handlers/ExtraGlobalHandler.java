@@ -1,5 +1,7 @@
 package io.github.moonlightmaya.script.handlers;
 
+import io.github.moonlightmaya.script.AspectScript;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -14,17 +16,17 @@ public class ExtraGlobalHandler {
      * A list of things which will affect the global state somehow.
      * Mods which want to do things should add to this.
      */
-    private static final List<Consumer<AspectScriptHandler>> REGISTERED = new ArrayList<>();
+    private static final List<Consumer<AspectScript>> REGISTERED = new ArrayList<>();
 
-    public static void setupInstance(AspectScriptHandler scriptHandler) {
-        for (Consumer<AspectScriptHandler> handler : REGISTERED)
+    public static void setupInstance(AspectScript scriptHandler) {
+        for (Consumer<AspectScript> handler : REGISTERED)
             handler.accept(scriptHandler);
     }
 
     /**
      * Any mods who want to edit globals should call this!
      */
-    public static void register(Consumer<AspectScriptHandler> consumer) {
+    public static void register(Consumer<AspectScript> consumer) {
         REGISTERED.add(consumer);
     }
 

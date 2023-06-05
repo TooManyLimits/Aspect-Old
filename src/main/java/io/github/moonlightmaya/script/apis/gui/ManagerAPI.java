@@ -2,10 +2,10 @@ package io.github.moonlightmaya.script.apis.gui;
 
 import com.google.gson.Gson;
 import io.github.moonlightmaya.AspectMod;
+import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.manage.AspectMetadata;
 import io.github.moonlightmaya.manage.data.BaseStructures;
 import io.github.moonlightmaya.manage.data.importing.JsonStructures;
-import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.EntityUtils;
 import io.github.moonlightmaya.util.IOUtils;

@@ -5,8 +5,6 @@ import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.game_interfaces.AspectConfig;
 import io.github.moonlightmaya.manage.data.BaseStructures;
 import io.github.moonlightmaya.manage.data.importing.AspectImporter;
-import io.github.moonlightmaya.model.AspectTexture;
-import io.github.moonlightmaya.model.animation.Animation;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.IOUtils;
@@ -22,7 +20,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -160,7 +160,7 @@ public class AspectManager {
                     ASPECTS.put(entityUUID, aspect);
                 }
                 //Also run the main script if it exists
-                aspect.scriptHandler.runMain();
+                aspect.script.runMain();
             } else {
                 //Otherwise, try again next tick
                 setAspect(entityUUID, aspect);

@@ -7,7 +7,6 @@ import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.EntityUtils;
 import io.github.moonlightmaya.util.ItemUtils;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.Mouse;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.command.argument.ItemSlotArgumentType;
 import net.minecraft.entity.Entity;

@@ -100,16 +100,15 @@ public class AspectCommand {
         LiteralArgumentBuilder<FabricClientCommandSource> run = literal("run");
         RequiredArgumentBuilder<FabricClientCommandSource, String> code = RequiredArgumentBuilder.argument("code", StringArgumentType.greedyString());
         code.executes(context -> {
-            Entity player = MinecraftClient.getInstance().player;
+            Aspect localAspect = AspectManager.getAspect(EntityUtils.getLocalUUID());
             String theCode = StringArgumentType.getString(context, "code");
-            Aspect playerAspect = AspectManager.getAspect(player.getUuid());
-            if (playerAspect == null)
+            if (localAspect == null)
                 DisplayUtils.displayError("Failed to run code, no active environment", true);
             else {
                 try {
-                    Object result = playerAspect.scriptHandler.runCode("run", theCode);
+                    Object result = localAspect.script.runCode("run", theCode);
                     if (result != null)
-                        DisplayUtils.displayPetPetMessage(playerAspect.scriptHandler.getStringFor(result));
+                        DisplayUtils.displayPetPetMessage(localAspect.script.getStringFor(result));
                 } catch (PetPetException petpetError) {
                     DisplayUtils.displayError(petpetError.getMessage(), true); //don't put the exception itself, just the error
                 } catch (Throwable t) {

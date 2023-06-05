@@ -1,7 +1,6 @@
 package io.github.moonlightmaya.script.vanilla;
 
 import io.github.moonlightmaya.mixin.render.entity.LivingEntityRendererAccessor;
-import io.github.moonlightmaya.mixin.render.vanilla.part.ModelPartAccessor;
 import io.github.moonlightmaya.util.MathUtils;
 import io.github.moonlightmaya.util.RenderUtils;
 import net.minecraft.client.model.ModelPart;

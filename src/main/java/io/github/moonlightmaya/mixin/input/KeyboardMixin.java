@@ -3,7 +3,7 @@ package io.github.moonlightmaya.mixin.input;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.game_interfaces.AspectKeybinds;
 import io.github.moonlightmaya.manage.AspectManager;
-import io.github.moonlightmaya.script.events.EventHandler;
+import io.github.moonlightmaya.script.events.Events;
 import net.minecraft.client.Keyboard;
 import net.minecraft.client.MinecraftClient;
 import org.lwjgl.glfw.GLFW;
@@ -31,9 +31,9 @@ public class KeyboardMixin {
 
         if (key == GLFW.GLFW_KEY_ESCAPE && client.currentScreen == null && AspectKeybinds.menuOpen) {
             Aspect guiAspect = AspectManager.getGuiAspect();
-            if (guiAspect != null && guiAspect.scriptHandler != null) {
+            if (guiAspect != null && guiAspect.script != null) {
                 AspectKeybinds.menuOpen = false;
-                guiAspect.scriptHandler.callEvent(EventHandler.GUI_CLOSE);
+                guiAspect.script.callEvent(Events.GUI_CLOSE);
             }
             ci.cancel();
         }

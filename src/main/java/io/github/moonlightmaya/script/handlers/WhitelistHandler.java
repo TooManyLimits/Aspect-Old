@@ -11,6 +11,7 @@ import io.github.moonlightmaya.model.animation.Animator;
 import io.github.moonlightmaya.model.rendertasks.BlockTask;
 import io.github.moonlightmaya.model.rendertasks.ItemTask;
 import io.github.moonlightmaya.model.rendertasks.TextTask;
+import io.github.moonlightmaya.script.AspectScript;
 import io.github.moonlightmaya.script.apis.AspectAPI;
 import io.github.moonlightmaya.script.apis.ClientAPI;
 import io.github.moonlightmaya.script.apis.HostAPI;
@@ -23,7 +24,8 @@ import io.github.moonlightmaya.script.apis.math.Matrices;
 import io.github.moonlightmaya.script.apis.math.Quaternions;
 import io.github.moonlightmaya.script.apis.math.Vectors;
 import io.github.moonlightmaya.script.apis.world.*;
-import io.github.moonlightmaya.script.events.AspectEvent;
+import io.github.moonlightmaya.script.events.EventListener;
+import io.github.moonlightmaya.script.events.EventsAPI;
 import io.github.moonlightmaya.script.vanilla.VanillaFeature;
 import io.github.moonlightmaya.script.vanilla.VanillaPart;
 import io.github.moonlightmaya.script.vanilla.VanillaRenderer;
@@ -56,10 +58,10 @@ import java.util.function.Predicate;
  */
 public class WhitelistHandler {
 
-    private static final List<Consumer<AspectScriptHandler>> REGISTERED = new ArrayList<>();
+    private static final List<Consumer<AspectScript>> REGISTERED = new ArrayList<>();
 
-    public static void setupInstance(AspectScriptHandler scriptHandler) {
-        for (Consumer<AspectScriptHandler> handler : REGISTERED)
+    public static void setupInstance(AspectScript scriptHandler) {
+        for (Consumer<AspectScript> handler : REGISTERED)
             handler.accept(scriptHandler);
     }
 
@@ -93,7 +95,8 @@ public class WhitelistHandler {
         register(AspectTexture.class, "Texture", ALWAYS, AspectTexture::addPenalties);
 
         //Miscellaneous
-        register(AspectEvent.class, "Event", ALWAYS);
+        register(EventListener.class, "EventListener", ALWAYS);
+        register(EventsAPI.class, "EventsAPI", ALWAYS);
         register(AspectAPI.class, "Aspect", ALWAYS);
         register(ClientAPI.class, "Client", ALWAYS);
         register(RendererAPI.class, "Renderer", ALWAYS);
@@ -135,21 +138,21 @@ public class WhitelistHandler {
      * Register a class to be reflected with a given name, and modified according to the modifiers
      * in order.
      */
-    public static void register(Class<?> clazz, String name, Predicate<Aspect> shouldAdd, BiFunction<AspectScriptHandler, PetPetClass, PetPetClass>... modifiers) {
+    public static void register(Class<?> clazz, String name, Predicate<Aspect> shouldAdd, BiFunction<AspectScript, PetPetClass, PetPetClass>... modifiers) {
         registerWithParent(clazz, name, shouldAdd, null, modifiers);
     }
 
     /**
      * Reflect and register with a parent. The parent must be registered before this one is
      */
-    public static void registerWithParent(Class<?> clazz, String name, Predicate<Aspect> shouldAdd, Class<?> superClass, BiFunction<AspectScriptHandler, PetPetClass, PetPetClass>... modifiers) {
+    public static void registerWithParent(Class<?> clazz, String name, Predicate<Aspect> shouldAdd, Class<?> superClass, BiFunction<AspectScript, PetPetClass, PetPetClass>... modifiers) {
         registerDirect(clazz, PetPetReflector.reflect(clazz, name), shouldAdd, superClass, modifiers);
     }
 
     /**
      * Register a petpet class directly
      */
-    public static void registerDirect(Class<?> javaClass, PetPetClass petPetClass, Predicate<Aspect> shouldAdd, Class<?> superClass, BiFunction<AspectScriptHandler, PetPetClass, PetPetClass>... modifiers) {
+    public static void registerDirect(Class<?> javaClass, PetPetClass petPetClass, Predicate<Aspect> shouldAdd, Class<?> superClass, BiFunction<AspectScript, PetPetClass, PetPetClass>... modifiers) {
         REGISTERED.add(scriptHandler -> {
             //If this class doesn't want to be in the aspect, return early
             if (!shouldAdd.test(scriptHandler.aspect)) return;
@@ -167,7 +170,7 @@ public class WhitelistHandler {
             }
 
             //Apply all the modifiers
-            for (BiFunction<AspectScriptHandler, PetPetClass, PetPetClass> modifier : modifiers)
+            for (BiFunction<AspectScript, PetPetClass, PetPetClass> modifier : modifiers)
                 curClass = modifier.apply(scriptHandler, curClass);
 
             //Register

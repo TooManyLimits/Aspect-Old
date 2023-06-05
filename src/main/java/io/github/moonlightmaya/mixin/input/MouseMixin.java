@@ -3,7 +3,8 @@ package io.github.moonlightmaya.mixin.input;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.script.apis.HostAPI;
-import io.github.moonlightmaya.script.events.EventHandler;
+import io.github.moonlightmaya.script.events.Event;
+import io.github.moonlightmaya.script.events.Events;
 import io.github.moonlightmaya.util.EntityUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.Mouse;
@@ -32,16 +33,17 @@ public class MouseMixin {
         handleClickEventFor(AspectManager.getGuiAspect(), button, action, mods, ci);
     }
     private void handleClickEventFor(Aspect aspect, int button, int action, int mods, CallbackInfo ci) {
-        if (aspect != null && aspect.scriptHandler != null) {
-            String eventName = action == GLFW.GLFW_PRESS ? EventHandler.MOUSE_DOWN : EventHandler.MOUSE_UP;
+        if (aspect != null && aspect.script != null) {
+            Event event = action == GLFW.GLFW_PRESS ? Events.MOUSE_DOWN : Events.MOUSE_UP;
 
-            boolean wantsCancel = aspect.scriptHandler.callEventCancellable(eventName, x, y, button, mods);
+            boolean wantsCancel = false;
+            aspect.script.callEvent(event, x, y, button, mods);
             boolean inScreen = MinecraftClient.getInstance().currentScreen != null;
 
             if (wantsCancel && (!inScreen || cursorLocked))
                 ci.cancel();
 
-            HostAPI host = aspect.scriptHandler.getHostAPI();
+            HostAPI host = aspect.script.getHostAPI();
             if (host != null && action == GLFW.GLFW_PRESS && host.cursorUnlocked && !inScreen)
                 ci.cancel();
         }
@@ -56,15 +58,16 @@ public class MouseMixin {
     }
 
     private void handleScrollEventFor(Aspect aspect, double horizontal, double vertical, CallbackInfo ci) {
-        if (aspect != null && aspect.scriptHandler != null) {
+        if (aspect != null && aspect.script != null) {
 
-            boolean wantsCancel = aspect.scriptHandler.callEventCancellable(EventHandler.MOUSE_SCROLL, vertical);
+            boolean wantsCancel = false;
+            aspect.script.callEvent(Events.MOUSE_SCROLL, vertical);
             boolean inScreen = MinecraftClient.getInstance().currentScreen != null;
 
             if (wantsCancel && (!inScreen || cursorLocked))
                 ci.cancel();
 
-            HostAPI host = aspect.scriptHandler.getHostAPI();
+            HostAPI host = aspect.script.getHostAPI();
             if (host != null && host.cursorUnlocked && !inScreen)
                 ci.cancel();
         }
@@ -79,9 +82,10 @@ public class MouseMixin {
     }
 
     private void handleMouseMove(Aspect aspect, double x, double y, CallbackInfo ci) {
-        if (aspect != null && aspect.scriptHandler != null) {
+        if (aspect != null && aspect.script != null) {
 
-            boolean wantsCancel = aspect.scriptHandler.callEventCancellable(EventHandler.MOUSE_MOVE, x, y);
+            boolean wantsCancel = false;
+            aspect.script.callEvent(Events.MOUSE_MOVE, x, y);
             boolean inScreen = MinecraftClient.getInstance().currentScreen != null;
 
             if (wantsCancel && (!inScreen || cursorLocked)) {
@@ -103,8 +107,8 @@ public class MouseMixin {
     }
 
     private void handleLockCursorFor(Aspect aspect, CallbackInfo ci) {
-        if (aspect != null && aspect.scriptHandler != null) {
-            HostAPI host = aspect.scriptHandler.getHostAPI();
+        if (aspect != null && aspect.script != null) {
+            HostAPI host = aspect.script.getHostAPI();
             if (host != null && host.cursorUnlocked)
                 ci.cancel();
         }

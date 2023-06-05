@@ -3,7 +3,7 @@ package io.github.moonlightmaya.mixin.gui;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.script.apis.HostAPI;
-import io.github.moonlightmaya.script.events.EventHandler;
+import io.github.moonlightmaya.script.events.Events;
 import io.github.moonlightmaya.util.ColorUtils;
 import io.github.moonlightmaya.util.EntityUtils;
 import net.minecraft.client.gui.screen.ChatScreen;
@@ -27,8 +27,8 @@ public class ChatScreenMixin {
         //Potentially modify the sent message
         Aspect localAspect = AspectManager.getAspect(EntityUtils.getLocalUUID());
         if (localAspect != null && !message.isBlank()) {
-            Object result = localAspect.scriptHandler.callEventPiped(EventHandler.SEND_CHAT_MESSAGE, message);
-            message = localAspect.scriptHandler.getStringFor(result);
+            Object result = localAspect.script.callEvent(Events.SEND_CHAT_MESSAGE, message);
+            message = localAspect.script.getStringFor(result);
         }
         return message;
     }
@@ -40,8 +40,8 @@ public class ChatScreenMixin {
     }
 
     private void handleChatColorSetting(Aspect aspect) {
-        if (aspect != null && aspect.scriptHandler != null) {
-            HostAPI api = aspect.scriptHandler.getHostAPI();
+        if (aspect != null && aspect.script != null) {
+            HostAPI api = aspect.script.getHostAPI();
             if (api != null) {
                 Vector3d rgb = api.chatColor;
                 if (rgb != null)

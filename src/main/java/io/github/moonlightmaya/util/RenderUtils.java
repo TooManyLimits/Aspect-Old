@@ -4,8 +4,6 @@ import com.mojang.blaze3d.systems.RenderCall;
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.moonlightmaya.model.renderlayers.NewRenderLayerFunction;
 import io.github.moonlightmaya.util.compat.SodiumCompat;
-import me.jellysquid.mods.sodium.client.render.vertex.VertexBufferWriter;
-import me.jellysquid.mods.sodium.client.render.vertex.VertexFormatDescription;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderLayer;
@@ -17,7 +15,6 @@ import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.entity.Entity;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4d;
-import org.lwjgl.system.MemoryStack;
 
 public class RenderUtils {
 

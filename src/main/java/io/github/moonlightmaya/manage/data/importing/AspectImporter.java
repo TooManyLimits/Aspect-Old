@@ -4,8 +4,8 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.github.moonlightmaya.AspectMod;
-import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.manage.data.BaseStructures;
+import io.github.moonlightmaya.model.AspectModelPart;
 import io.github.moonlightmaya.util.DataStructureUtils;
 import io.github.moonlightmaya.util.IOUtils;
 import org.joml.Vector3f;
@@ -18,7 +18,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 /**

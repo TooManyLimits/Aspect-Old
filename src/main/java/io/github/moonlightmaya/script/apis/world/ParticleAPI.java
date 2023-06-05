@@ -7,9 +7,7 @@ import net.minecraft.client.particle.FishingParticle;
 import net.minecraft.client.particle.Particle;
 import org.joml.Vector3d;
 import org.joml.Vector4d;
-import petpet.external.PetPetReflector;
 import petpet.external.PetPetWhitelist;
-import petpet.lang.run.PetPetClass;
 
 /**
  * Methods to call on vanilla Particle objects

@@ -1,23 +1,18 @@
 package io.github.moonlightmaya.script.vanilla;
 
-import com.google.common.collect.ImmutableList;
 import io.github.moonlightmaya.mixin.render.entity.LivingEntityRendererAccessor;
 import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.client.render.entity.LivingEntityRenderer;
 import net.minecraft.client.render.entity.ZombieBaseEntityRenderer;
 import net.minecraft.client.render.entity.feature.FeatureRenderer;
-import net.minecraft.client.render.entity.feature.HeadFeatureRenderer;
 import net.minecraft.entity.EntityType;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.logging.log4j.util.TriConsumer;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * This class deals with the various global state of vanilla model parts

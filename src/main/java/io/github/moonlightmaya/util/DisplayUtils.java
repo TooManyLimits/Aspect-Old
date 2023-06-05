@@ -3,12 +3,8 @@ package io.github.moonlightmaya.util;
 import com.google.gson.JsonParser;
 import io.github.moonlightmaya.AspectMod;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import petpet.lang.run.Interpreter;
-import petpet.lang.run.JavaFunction;
-import petpet.types.PetPetString;
 
 public class DisplayUtils {
 

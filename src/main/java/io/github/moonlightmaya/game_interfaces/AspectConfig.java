@@ -1,15 +1,18 @@
 package io.github.moonlightmaya.game_interfaces;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import io.github.moonlightmaya.AspectMod;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Handles the Aspect configs
@@ -28,6 +31,12 @@ public class AspectConfig {
     //If empty, uses the default gui aspect included with the mod
     public static final Setting<String> GUI_PATH = new Setting<>("gui_path", "");
 
+    //The max instructions allowed for any aspect
+    //Eventually this will have more advanced options, but this is just here for now to prevent
+    //infinite loops from freezing the game entirely
+    public static final Setting<Map<String, Integer>> MAX_INSTRUCTIONS = new Setting<>("max_instructions", new HashMap<>() {{
+
+    }});
 
 
     /**

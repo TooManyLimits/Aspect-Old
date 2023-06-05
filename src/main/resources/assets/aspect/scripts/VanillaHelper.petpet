@@ -3,7 +3,7 @@
 fn runNowOrLater(func) {
 	if user func() else events.USER_INIT.add(fn() {
 		func()
-		events.USER_INIT.remove(this)
+		events.USER_INIT.del(this)
 	})
 }
 

@@ -9,8 +9,6 @@ import petpet.types.PetPetTable;
 import petpet.types.immutable.PetPetListView;
 import petpet.types.immutable.PetPetTableView;
 
-import java.util.UUID;
-
 /**
  * There is a good reason for this API to exist instead of supplying
  * the Aspect object directly. This is because of an issue of permission.
