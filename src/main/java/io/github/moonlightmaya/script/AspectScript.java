@@ -1,6 +1,7 @@
 package io.github.moonlightmaya.script;
 
 import io.github.moonlightmaya.Aspect;
+import io.github.moonlightmaya.game_interfaces.AspectConfig;
 import io.github.moonlightmaya.model.AspectTexture;
 import io.github.moonlightmaya.model.parts.WorldRootModelPart;
 import io.github.moonlightmaya.model.animation.Animation;
@@ -89,10 +90,8 @@ public class AspectScript {
         //Set up extra (from other mods) globals
         ExtraGlobalHandler.setupInstance(this);
 
-        //After all utils are run, set the max instructions
-        //Utils shouldn't count towards instructions
-        instance.interpreter.cost = 0;
-//        instance.interpreter.maxCost = AspectConfig.MAX_INSTRUCTIONS.get();
+        //Switch into init phase
+        switchPhase(Phase.INIT);
     }
 
     /**
@@ -314,6 +313,34 @@ public class AspectScript {
             error(t);
         }
         return null;
+    }
+
+    public enum Phase {
+        INIT, TICK, RENDER
+    }
+
+    /**
+     * Change the Phase of the script to the given
+     * new phase, reset the instructions, and set
+     * the instruction limit to the amount given
+     * for the new phase
+     *
+     * Eventually this will be torn out and replaced
+     * with permissions/trust settings
+     */
+    public void switchPhase(Phase newPhase) {
+        if (isErrored()) return;
+        instance.interpreter.maxCost = switch (newPhase) {
+            case INIT -> AspectConfig.INIT_INSTRUCTIONS.get();
+            case TICK -> AspectConfig.TICK_INSTRUCTIONS.get();
+            case RENDER -> AspectConfig.RENDER_INSTRUCTIONS.get();
+        };
+        //Notify which phase they ran out of instructions in
+        instance.interpreter.onHitMaxCost = () -> {
+            String message = "Hit the max allowed instructions of " + instance.interpreter.maxCost + " in phase " + newPhase + "!";
+            throw new PetPetException(message);
+        };
+        instance.interpreter.cost = 0;
     }
 
     public PetPetClosure compile(String name, String src) {

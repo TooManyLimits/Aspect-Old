@@ -31,13 +31,12 @@ public class AspectConfig {
     //If empty, uses the default gui aspect included with the mod
     public static final Setting<String> GUI_PATH = new Setting<>("gui_path", "");
 
-    //The max instructions allowed for any aspect
+    //The max instructions allowed for any aspect at various phases
     //Eventually this will have more advanced options, but this is just here for now to prevent
     //infinite loops from freezing the game entirely
-    public static final Setting<Map<String, Integer>> MAX_INSTRUCTIONS = new Setting<>("max_instructions", new HashMap<>() {{
-
-    }});
-
+    public static final Setting<Integer> INIT_INSTRUCTIONS = new Setting<>("init_instructions", 10_000_000);
+    public static final Setting<Integer> TICK_INSTRUCTIONS = new Setting<>("tick_instructions", 200_000);
+    public static final Setting<Integer> RENDER_INSTRUCTIONS = new Setting<>("render_instructions", 50_000);
 
     /**
      * Methods

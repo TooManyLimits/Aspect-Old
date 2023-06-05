@@ -214,6 +214,7 @@ public class Aspect {
     public void tick(ClientWorld world) {
         if (isErrored()) return;
         try {
+            script.switchPhase(AspectScript.Phase.TICK);
             for (Animation anim : this.animations.values())
                 anim.tick();
             //If the world changed, change the global var
@@ -274,6 +275,7 @@ public class Aspect {
      */
     public void renderWorld(VertexConsumerProvider vcp, float tickDelta, AspectMatrixStack matrixStack) {
         if (isErrored()) return;
+        script.switchPhase(AspectScript.Phase.RENDER);
 
         //Ensure textures are uploaded
         for (AspectTexture tex : textures)
