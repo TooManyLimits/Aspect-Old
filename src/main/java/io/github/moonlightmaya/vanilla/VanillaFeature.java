@@ -1,4 +1,4 @@
-package io.github.moonlightmaya.script.vanilla;
+package io.github.moonlightmaya.vanilla;
 
 import io.github.moonlightmaya.model.Transformable;
 import net.minecraft.client.model.ModelPart;

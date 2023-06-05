@@ -8,7 +8,7 @@ import io.github.moonlightmaya.model.WorldRootModelPart;
 import io.github.moonlightmaya.model.animation.Animation;
 import io.github.moonlightmaya.script.AspectScript;
 import io.github.moonlightmaya.script.events.Events;
-import io.github.moonlightmaya.script.vanilla.VanillaRenderer;
+import io.github.moonlightmaya.vanilla.VanillaRenderer;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.EntityUtils;
@@ -178,7 +178,7 @@ public class Aspect {
         script.callEvent(Events.RENDER, tickDelta, renderContext);
         matrixStack.multiply(vanillaRenderer.aspectModelTransform);
         try {
-            entityRoot.render(vcp, matrixStack, light, overlay);
+            entityRoot.render(vcp, matrixStack, tickDelta, light, overlay);
         } catch (Throwable t) {
             error(t, ErrorLocation.RENDER_ENTITY);
         }
@@ -191,7 +191,7 @@ public class Aspect {
         if (isErrored()) return;
         script.callEvent(Events.HUD_RENDER, tickDelta);
         try {
-            hudRoot.render(vcp, matrixStack, LightmapTextureManager.MAX_LIGHT_COORDINATE, OverlayTexture.DEFAULT_UV);
+            hudRoot.render(vcp, matrixStack, tickDelta, LightmapTextureManager.MAX_LIGHT_COORDINATE, OverlayTexture.DEFAULT_UV);
         } catch (Throwable t) {
             error(t, ErrorLocation.RENDER_HUD);
         }
@@ -291,7 +291,7 @@ public class Aspect {
         script.callEvent(Events.WORLD_RENDER, tickDelta, renderContext);
         try {
             for (WorldRootModelPart worldRoot : worldRoots) {
-                worldRoot.render(vcp, matrixStack);
+                worldRoot.render(vcp, matrixStack, tickDelta);
             }
         } catch (Throwable t) {
             error(t, ErrorLocation.RENDER_WORLD);

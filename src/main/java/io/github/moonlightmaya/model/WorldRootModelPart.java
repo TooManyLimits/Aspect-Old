@@ -52,7 +52,7 @@ public class WorldRootModelPart extends AspectModelPart {
     }
 
 
-    public void render(VertexConsumerProvider vcp, AspectMatrixStack matrixStack) {
+    public void render(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, float tickDelta) {
         ClientWorld world = MinecraftClient.getInstance().world;
         if (world == null) return; //you have bigger problems, dont render
 
@@ -70,12 +70,12 @@ public class WorldRootModelPart extends AspectModelPart {
                 world.getLightLevel(LightType.SKY, lightChoosePos)
         );
 
-        super.render(vcp, matrixStack, light, OverlayTexture.DEFAULT_UV);
+        super.render(vcp, matrixStack, tickDelta, light, OverlayTexture.DEFAULT_UV);
         matrixStack.pop();
     }
 
     @Override
-    public void render(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, int light, int overlay) {
+    public void render(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, float tickDelta, int light, int overlay) {
         //Shouldn't render this with a light level, as the light level is calculated by the world part's
         //world pos instead of the entity's light level!
         throw new UnsupportedOperationException("This render method should not work on world root types, if this happens it's a mistake by the mod devs!");

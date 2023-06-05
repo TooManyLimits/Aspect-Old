@@ -2,8 +2,8 @@ package io.github.moonlightmaya.mixin.render.entity;
 
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.manage.AspectManager;
-import io.github.moonlightmaya.script.vanilla.EntityRendererMaps;
-import io.github.moonlightmaya.script.vanilla.VanillaRenderer;
+import io.github.moonlightmaya.vanilla.EntityRendererMaps;
+import io.github.moonlightmaya.vanilla.VanillaRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.client.render.entity.EntityRenderer;

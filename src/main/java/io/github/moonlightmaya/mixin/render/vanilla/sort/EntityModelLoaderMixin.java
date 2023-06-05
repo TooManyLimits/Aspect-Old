@@ -1,6 +1,6 @@
 package io.github.moonlightmaya.mixin.render.vanilla.sort;
 
-import io.github.moonlightmaya.script.vanilla.EntityRendererMaps;
+import io.github.moonlightmaya.vanilla.EntityRendererMaps;
 import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.render.entity.model.EntityModelLayer;
 import net.minecraft.client.render.entity.model.EntityModelLoader;

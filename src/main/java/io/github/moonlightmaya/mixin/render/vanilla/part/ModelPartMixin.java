@@ -1,7 +1,7 @@
 package io.github.moonlightmaya.mixin.render.vanilla.part;
 
-import io.github.moonlightmaya.script.vanilla.VanillaPart;
-import io.github.moonlightmaya.script.vanilla.VanillaRenderer;
+import io.github.moonlightmaya.vanilla.VanillaPart;
+import io.github.moonlightmaya.vanilla.VanillaRenderer;
 import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;

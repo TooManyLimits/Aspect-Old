@@ -1,4 +1,4 @@
-package io.github.moonlightmaya.script.vanilla;
+package io.github.moonlightmaya.vanilla;
 
 import io.github.moonlightmaya.mixin.render.entity.LivingEntityRendererAccessor;
 import io.github.moonlightmaya.util.MathUtils;

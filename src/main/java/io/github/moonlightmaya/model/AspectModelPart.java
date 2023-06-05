@@ -15,6 +15,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import org.joml.*;
@@ -45,7 +46,7 @@ public class AspectModelPart extends Transformable {
     //The only case where double precision is necessary is for world model parts.
     public PetPetList<AspectModelPart> children; //null if no children
     public final Matrix3f uvMatrix = new Matrix3f();
-    private PetPetCallable preRender, postRender;
+    private PetPetCallable preRender, midRender, postRender;
     private final PetPetList<RenderTask> renderTasks = new PetPetList<>();
 
 
@@ -345,9 +346,9 @@ public class AspectModelPart extends Transformable {
      * The light level is the default light level to render the model part "root" at.
      * In the future, this may be overridden by specific model part customizations.
      */
-    public void render(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, int light, int overlay) {
+    public void render(VertexConsumerProvider vcp, AspectMatrixStack matrixStack, float tickDelta, int light, int overlay) {
         List<RenderLayer> defaultLayers = DEFAULT_LAYERS;
-        renderInternal(vcp, defaultLayers, matrixStack, light, overlay);
+        renderInternal(vcp, defaultLayers, matrixStack, tickDelta, light, overlay);
     }
 
     /**
@@ -362,21 +363,15 @@ public class AspectModelPart extends Transformable {
             VertexConsumerProvider vcp, //The VCP used for this rendering call, where we will fetch buffers from using the render layers.
             List<RenderLayer> currentRenderLayers, //The current set of render layers for the part. Inherited from the parent if this.renderLayers is null.
             AspectMatrixStack matrixStack, //The current matrix stack.
+            float tickDelta, //The tick delta this is rendered at
             int light, //The light level of the entity wearing the aspect. Inherited from the parent always (for the time being)
             int overlay
     ) {
         //Push the matrix stack
         matrixStack.push();
 
-        //Run the callback
-        if (preRender != null) {
-            try {
-                if (owningAspect.script != null && !owningAspect.script.isErrored())
-                    preRender.call(this, matrixStack.peekPosition(), matrixStack.peekNormal());
-            } catch (Exception e) {
-                owningAspect.script.error(e);
-            }
-        }
+        //Run the pre render callback
+        runRenderCallback(preRender, matrixStack, tickDelta);
 
         //If this model part's layers are not null, then set the current ones to our overrides. Otherwise, keep the parent's render layers.
         if (this.renderLayers != null)
@@ -384,15 +379,9 @@ public class AspectModelPart extends Transformable {
 
         //If we're not visible, then return.
         if (!this.visible) {
-            //Call the post render if it exists
-            if (postRender != null) {
-                try {
-                    if (owningAspect.script != null && !owningAspect.script.isErrored())
-                        postRender.call(this, matrixStack.peekPosition(), matrixStack.peekNormal());
-                } catch (Exception e) {
-                    owningAspect.script.error(e);
-                }
-            }
+            //Call the mid and post render if they exist
+            runRenderCallback(midRender, matrixStack, tickDelta);
+            runRenderCallback(postRender, matrixStack, tickDelta);
             matrixStack.pop();
             return;
         }
@@ -412,6 +401,9 @@ public class AspectModelPart extends Transformable {
             this.partToWorldMatrix.scale(1.0/16);
             this.partToWorldMatrix.translate(this.partPivot);
         }
+
+        //Call the mid-render callback if it exists, after we've calculated the part to world matrix
+        runRenderCallback(midRender, matrixStack, tickDelta);
 
         for (RenderTask task : renderTasks)
             task.render(matrixStack, vcp, light, overlay);
@@ -447,23 +439,26 @@ public class AspectModelPart extends Transformable {
         //If there are children, render them all too
         if (hasChildren()) {
             for (AspectModelPart child : children) {
-                child.renderInternal(vcp, currentRenderLayers, matrixStack, light, overlay);
+                child.renderInternal(vcp, currentRenderLayers, matrixStack, tickDelta, light, overlay);
             }
         }
 
-        if (postRender != null) {
-            try {
-                if (owningAspect.script != null && !owningAspect.script.isErrored())
-                    postRender.call(this, matrixStack.peekPosition(), matrixStack.peekNormal());
-            } catch (Exception e) {
-                owningAspect.script.error(e);
-            }
-        }
-
+        runRenderCallback(postRender, matrixStack, tickDelta);
 
         //Remove the matrix we pushed earlier
         if (hasVertexData() || hasChildren()) {
             matrixStack.pop();
+        }
+    }
+
+    private void runRenderCallback(PetPetCallable callback, AspectMatrixStack matrixStack, float delta) {
+        if (callback != null) {
+            try {
+                if (owningAspect.script != null && !owningAspect.script.isErrored())
+                    callback.call(this, (double) delta, owningAspect.renderContext, matrixStack.peekPosition(), matrixStack.peekNormal());
+            } catch (Exception e) {
+                owningAspect.script.error(e);
+            }
         }
     }
 
@@ -563,8 +558,25 @@ public class AspectModelPart extends Transformable {
             return this;
         }
         if (callable.paramCount() != 3)
-            throw new PetPetException("preRender callback expects 3 args: part, posMatrix, normalMatrix");
+            throw new PetPetException("preRender callback expects 5 args: part, delta, context, posMatrix, normalMatrix");
         preRender = callable;
+        return this;
+    }
+
+    @PetPetWhitelist
+    public PetPetCallable midRender_0() {
+        return midRender;
+    }
+
+    @PetPetWhitelist
+    public AspectModelPart midRender_1(PetPetCallable callable) {
+        if (callable == null) {
+            this.midRender = null;
+            return this;
+        }
+        if (callable.paramCount() != 3)
+            throw new PetPetException("midRender callback expects 5 args: part, delta, context, posMatrix, normalMatrix");
+        midRender = callable;
         return this;
     }
 
@@ -580,7 +592,7 @@ public class AspectModelPart extends Transformable {
             return this;
         }
         if (callable.paramCount() != 3)
-            throw new PetPetException("postRender callback expects 3 args: part, posMatrix, normalMatrix");
+            throw new PetPetException("postRender callback expects 5 args: part, delta, context, posMatrix, normalMatrix");
         postRender = callable;
         return this;
     }

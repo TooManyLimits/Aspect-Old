@@ -1,4 +1,4 @@
-package io.github.moonlightmaya.script.vanilla;
+package io.github.moonlightmaya.vanilla;
 
 import io.github.moonlightmaya.mixin.render.vanilla.part.ModelPartAccessor;
 import io.github.moonlightmaya.model.Transformable;
