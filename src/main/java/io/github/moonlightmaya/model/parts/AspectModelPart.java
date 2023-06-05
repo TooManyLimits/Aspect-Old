@@ -1,8 +1,10 @@
-package io.github.moonlightmaya.model;
+package io.github.moonlightmaya.model.parts;
 
 import com.google.common.collect.ImmutableList;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.manage.data.BaseStructures;
+import io.github.moonlightmaya.model.AspectTexture;
+import io.github.moonlightmaya.model.Transformable;
 import io.github.moonlightmaya.model.animation.Animator;
 import io.github.moonlightmaya.model.rendertasks.BlockTask;
 import io.github.moonlightmaya.model.rendertasks.ItemTask;
@@ -15,7 +17,6 @@ import net.minecraft.block.BlockState;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import org.joml.*;
@@ -557,7 +558,7 @@ public class AspectModelPart extends Transformable {
             this.preRender = null;
             return this;
         }
-        if (callable.paramCount() != 3)
+        if (callable.paramCount() != 5)
             throw new PetPetException("preRender callback expects 5 args: part, delta, context, posMatrix, normalMatrix");
         preRender = callable;
         return this;
@@ -574,7 +575,7 @@ public class AspectModelPart extends Transformable {
             this.midRender = null;
             return this;
         }
-        if (callable.paramCount() != 3)
+        if (callable.paramCount() != 5)
             throw new PetPetException("midRender callback expects 5 args: part, delta, context, posMatrix, normalMatrix");
         midRender = callable;
         return this;
@@ -591,7 +592,7 @@ public class AspectModelPart extends Transformable {
             this.postRender = null;
             return this;
         }
-        if (callable.paramCount() != 3)
+        if (callable.paramCount() != 5)
             throw new PetPetException("postRender callback expects 5 args: part, delta, context, posMatrix, normalMatrix");
         postRender = callable;
         return this;
@@ -654,8 +655,8 @@ public class AspectModelPart extends Transformable {
     }
 
     /**
-     * Unlike figura, returns the actual part to world matrix,
-     * not a copy. If you want a copy then copy it.
+     * Unlike Figura, returns the actual part to world matrix,
+     * not a copy. If you want a copy, then copy it.
      */
     @PetPetWhitelist
     public Matrix4d partToWorldMatrix() {
@@ -681,6 +682,17 @@ public class AspectModelPart extends Transformable {
     @PetPetWhitelist
     public AspectModelPart copy_3(String name, boolean deepCopyChildList, boolean deepCopyVertices) {
         return new AspectModelPart(this, name, deepCopyChildList, deepCopyVertices);
+    }
+
+    /**
+     * Vertices
+     */
+    @PetPetWhitelist
+    public PetPetList<VertexAPI> vertices() {
+        PetPetList<VertexAPI> result = new PetPetList<>();
+        for (int i = 0; i < vertexData.length; i += 8)
+            result.add(new VertexAPI(vertexData, i, 8));
+        return result;
     }
 
     /**

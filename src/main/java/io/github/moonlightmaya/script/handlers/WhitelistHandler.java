@@ -2,10 +2,11 @@ package io.github.moonlightmaya.script.handlers;
 
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.manage.AspectMetadata;
-import io.github.moonlightmaya.model.AspectModelPart;
+import io.github.moonlightmaya.model.parts.AspectModelPart;
 import io.github.moonlightmaya.model.AspectTexture;
 import io.github.moonlightmaya.model.Transformable;
-import io.github.moonlightmaya.model.WorldRootModelPart;
+import io.github.moonlightmaya.model.parts.VertexAPI;
+import io.github.moonlightmaya.model.parts.WorldRootModelPart;
 import io.github.moonlightmaya.model.animation.Animation;
 import io.github.moonlightmaya.model.animation.Animator;
 import io.github.moonlightmaya.model.rendertasks.BlockTask;
@@ -88,6 +89,7 @@ public class WhitelistHandler {
         register(Transformable.class, "Transformable", ALWAYS);
         registerWithParent(AspectModelPart.class, "ModelPart", ALWAYS, Transformable.class);
         registerWithParent(WorldRootModelPart.class, "WorldRootModelPart", ALWAYS, AspectModelPart.class);
+        register(VertexAPI.class, "Vertex", ALWAYS);
 
         registerWithParent(BlockTask.class, "BlockTask", ALWAYS, Transformable.class);
         registerWithParent(ItemTask.class, "ItemTask", ALWAYS, Transformable.class);

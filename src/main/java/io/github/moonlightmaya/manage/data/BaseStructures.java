@@ -2,7 +2,7 @@ package io.github.moonlightmaya.manage.data;
 
 import io.github.moonlightmaya.manage.data.importing.AspectImporter;
 import io.github.moonlightmaya.manage.data.importing.JsonStructures;
-import io.github.moonlightmaya.model.AspectModelPart;
+import io.github.moonlightmaya.model.parts.AspectModelPart;
 import io.github.moonlightmaya.model.animation.Animation;
 import io.github.moonlightmaya.model.animation.Interpolation;
 import io.github.moonlightmaya.util.IOUtils;

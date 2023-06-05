@@ -5,7 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.github.moonlightmaya.AspectMod;
 import io.github.moonlightmaya.manage.data.BaseStructures;
-import io.github.moonlightmaya.model.AspectModelPart;
+import io.github.moonlightmaya.model.parts.AspectModelPart;
 import io.github.moonlightmaya.util.DataStructureUtils;
 import io.github.moonlightmaya.util.IOUtils;
 import org.joml.Vector3f;

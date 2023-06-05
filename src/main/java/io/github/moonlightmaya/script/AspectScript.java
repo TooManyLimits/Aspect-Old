@@ -2,7 +2,7 @@ package io.github.moonlightmaya.script;
 
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.model.AspectTexture;
-import io.github.moonlightmaya.model.WorldRootModelPart;
+import io.github.moonlightmaya.model.parts.WorldRootModelPart;
 import io.github.moonlightmaya.model.animation.Animation;
 import io.github.moonlightmaya.script.apis.AspectAPI;
 import io.github.moonlightmaya.script.apis.ClientAPI;

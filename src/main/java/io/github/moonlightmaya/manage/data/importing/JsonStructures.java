@@ -3,7 +3,7 @@ package io.github.moonlightmaya.manage.data.importing;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.*;
 import io.github.moonlightmaya.manage.data.BaseStructures;
-import io.github.moonlightmaya.model.AspectModelPart;
+import io.github.moonlightmaya.model.parts.AspectModelPart;
 import io.github.moonlightmaya.model.animation.Animation;
 import io.github.moonlightmaya.model.animation.Interpolation;
 import io.github.moonlightmaya.util.ColorUtils;

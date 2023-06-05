@@ -1,4 +1,4 @@
-package io.github.moonlightmaya.model;
+package io.github.moonlightmaya.model.parts;
 
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.manage.data.BaseStructures;
