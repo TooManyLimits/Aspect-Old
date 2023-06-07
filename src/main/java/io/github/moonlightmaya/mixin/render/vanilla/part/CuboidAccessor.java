@@ -4,13 +4,8 @@ import net.minecraft.client.model.ModelPart;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-import java.util.List;
-import java.util.Map;
-
-@Mixin(ModelPart.class)
-public interface ModelPartAccessor {
+@Mixin(ModelPart.Cuboid.class)
+public interface CuboidAccessor {
     @Accessor
-    Map<String, ModelPart> getChildren();
-    @Accessor
-    List<ModelPart.Cuboid> getCuboids();
+    ModelPart.Quad[] getSides();
 }

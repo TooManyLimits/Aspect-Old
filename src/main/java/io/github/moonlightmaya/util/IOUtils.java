@@ -24,41 +24,32 @@ public class IOUtils {
             try {
                 AspectMod.LOGGER.info("Did not find mod folder at " + path + ". Creating...");
                 Files.createDirectory(path);
-                Files.createDirectory(path.resolve("aspects"));
-                Files.createDirectory(path.resolve("guis"));
+                tryCreateInnerDir(path, "aspects");
+                tryCreateInnerDir(path, "guis");
+                tryCreateInnerDir(path, "exported");
                 AspectMod.LOGGER.info("Successfully created mod folder at " + path);
             } catch (IOException e) {
-                AspectMod.LOGGER.error("Failed to create mod folder at " + path + ". Reason: ", e);
-                return null;
+                throw new IllegalStateException("Failed to create mod folder at " + path + ".", e);
             }
         } else {
+            tryCreateInnerDir(path, "aspects");
+            tryCreateInnerDir(path, "guis");
+            tryCreateInnerDir(path, "exported");
+        }
+        return path;
+    }
 
-            Path aspectsPath = path.resolve("aspects");
-            if (Files.notExists(aspectsPath)) {
-                try {
-                    AspectMod.LOGGER.info("Did not find aspects folder at " + aspectsPath + ". Creating...");
-                    Files.createDirectory(aspectsPath);
-                    AspectMod.LOGGER.info("Successfully created aspects folder at " + aspectsPath);
-                } catch (IOException e) {
-                    AspectMod.LOGGER.error("Failed to create aspects folder at " + aspectsPath + ". Reason: ", e);
-                    return null;
-                }
-            }
-
-            Path guisPath = path.resolve("guis");
-            if (Files.notExists(guisPath)) {
-                try {
-                    AspectMod.LOGGER.info("Did not find guis folder at " + guisPath + ". Creating...");
-                    Files.createDirectory(guisPath);
-                    AspectMod.LOGGER.info("Successfully created guis folder at " + guisPath);
-                } catch (IOException e) {
-                    AspectMod.LOGGER.error("Failed to create guis folder at " + guisPath + ". Reason: ", e);
-                    return null;
-                }
+    private static void tryCreateInnerDir(Path root, String name) {
+        Path innerPath = root.resolve(name);
+        if (Files.notExists(innerPath)) {
+            try {
+                AspectMod.LOGGER.info("Did not find " + name + " folder at " + innerPath + ". Creating...");
+                Files.createDirectory(innerPath);
+                AspectMod.LOGGER.info("Successfully created " + name + " folder at " + innerPath);
+            } catch (IOException e) {
+                throw new IllegalStateException("Failed to create " + name + " folder at " + innerPath + ". Exiting.", e);
             }
         }
-//        AspectMod.LOGGER.info("Located mod folder at " + path); //no need to spam this lol
-        return path;
     }
 
     public static InputStream getAsset(String name) {

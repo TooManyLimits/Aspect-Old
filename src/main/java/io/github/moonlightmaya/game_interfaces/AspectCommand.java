@@ -1,20 +1,32 @@
 package io.github.moonlightmaya.game_interfaces;
 
+import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
 import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.manage.AspectManager;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.EntityUtils;
 import io.github.moonlightmaya.util.IOUtils;
+import io.github.moonlightmaya.vanilla.BBModelExporter;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.command.CommandRegistryAccess;
+import net.minecraft.command.argument.RegistryEntryArgumentType;
+import net.minecraft.command.suggestion.SuggestionProviders;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.text.Text;
 import petpet.lang.run.PetPetException;
 
+import java.io.IOException;
 import java.nio.file.Path;
 
 import static com.mojang.brigadier.builder.LiteralArgumentBuilder.literal;
@@ -33,6 +45,7 @@ public class AspectCommand {
             aspect.then(clearCommand());
             aspect.then(runCommand());
             aspect.then(guiCommand());
+            aspect.then(exportCommand(registryAccess));
             dispatcher.register(aspect);
         });
     }
@@ -139,6 +152,56 @@ public class AspectCommand {
         });
         gui.then(arg4);
         return gui;
+    }
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> exportCommand(CommandRegistryAccess registryAccess) {
+        LiteralArgumentBuilder<FabricClientCommandSource> export = literal("export");
+
+        // /export player <slim? true/false>
+        LiteralArgumentBuilder<FabricClientCommandSource> player = literal("player");
+        RequiredArgumentBuilder<FabricClientCommandSource, Boolean> slim = RequiredArgumentBuilder.argument("slim", BoolArgumentType.bool());
+        slim.executes(context -> {
+            boolean isSlim = BoolArgumentType.getBool(context, "slim");
+            context.getSource().sendFeedback(Text.literal("Generating " + (isSlim ? "slim" : "default") + " player model..."));
+            BBModelExporter exporter = BBModelExporter.player(isSlim);
+            context.getSource().sendFeedback(Text.literal("Generated model. Saving..."));
+            try {
+                String fileName = isSlim ? "player_slim.bbmodel" : "player_default.bbmodel";
+                Path p = IOUtils.getOrCreateModFolder().resolve("exported").resolve(fileName);
+                exporter.save(p);
+            } catch (IOException e) {
+                context.getSource().sendError(Text.literal("An error occurred. Check Minecraft logs for details."));
+                e.printStackTrace();
+            }
+            return 1;
+        });
+        player.then(slim);
+        export.then(player);
+
+        // /export entity <entity type>
+        LiteralArgumentBuilder<FabricClientCommandSource> entity = literal("entity");
+        RequiredArgumentBuilder<FabricClientCommandSource, RegistryEntry.Reference<EntityType<?>>> type =
+                RequiredArgumentBuilder.argument("entity_type", RegistryEntryArgumentType.registryEntry(registryAccess, RegistryKeys.ENTITY_TYPE));
+        type.executes(context -> {
+            //Horrible cursed cast
+            EntityType<?> entityType = (EntityType<?>) RegistryEntryArgumentType.getSummonableEntityType((CommandContext) context, "entity_type").value();
+            context.getSource().sendFeedback(Text.literal("Generating entity model..."));
+            BBModelExporter exporter = BBModelExporter.entity(entityType);
+            context.getSource().sendFeedback(Text.literal("Generated model. Saving..."));
+            try {
+                String fileName = "generated_" + Registries.ENTITY_TYPE.getId(entityType).getPath() + ".bbmodel";
+                Path p = IOUtils.getOrCreateModFolder().resolve("exported").resolve(fileName);
+                exporter.save(p);
+            } catch (IOException e) {
+                context.getSource().sendError(Text.literal("An error occurred. Check Minecraft logs for details."));
+                e.printStackTrace();
+            }
+            return 1;
+        });
+        entity.then(type);
+        export.then(entity);
+
+        return export;
     }
 
 }

@@ -191,7 +191,11 @@ public class AspectManager {
      * Submits a task to clear all aspects from storage, but not the GUI aspect.
      */
     public static void clearAllAspects() {
-        forEachAspect(Aspect::destroy);
+        TASKS.add(() -> {
+            for (Aspect aspect : ASPECTS.values())
+                aspect.destroy();
+            ASPECTS.clear();
+        });
     }
 
     /**
