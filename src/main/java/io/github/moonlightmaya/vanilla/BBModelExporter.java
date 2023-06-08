@@ -140,16 +140,16 @@ public class BBModelExporter {
             faces.add(key, face);
         }
 
-//        float temp = minY;
-//        minY = 24 - maxY;
-//        maxY = 24 - temp;
-
-        minX -= parent.getAsJsonArray("origin").get(0).getAsFloat();
+        minX = parent.getAsJsonArray("origin").get(0).getAsFloat() - minX;
         minY = parent.getAsJsonArray("origin").get(1).getAsFloat() - minY;
-        minZ += parent.getAsJsonArray("origin").get(2).getAsFloat();
-        maxX -= parent.getAsJsonArray("origin").get(0).getAsFloat();
+        minZ = parent.getAsJsonArray("origin").get(2).getAsFloat() + minZ;
+        maxX = parent.getAsJsonArray("origin").get(0).getAsFloat() - maxX;
         maxY = parent.getAsJsonArray("origin").get(1).getAsFloat() - maxY;
-        maxZ += parent.getAsJsonArray("origin").get(2).getAsFloat();
+        maxZ = parent.getAsJsonArray("origin").get(2).getAsFloat() + maxZ;
+
+        //swap min and max x and y
+        float temp = minX; minX = maxX; maxX = temp;
+        temp = minY; minY = maxY; maxY = temp;
 
         part.add("from", arr(minX, minY, minZ));
         part.add("to", arr(maxX, maxY, maxZ));

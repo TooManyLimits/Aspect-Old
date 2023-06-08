@@ -153,15 +153,19 @@ public class VanillaPart extends Transformable implements Transformable.Transfor
     private final Vector3f inverseDefaultPivot = new Vector3f();
 
     public VanillaPart(String name, ModelPart part) {
+        this(name, part, null);
+    }
+
+    public VanillaPart(String name, ModelPart part, @Nullable VanillaPart parent) {
         this.name = name;
         this.referencedPart = part;
 
         for (Map.Entry<String, ModelPart> child : ((ModelPartAccessor) (Object) part).getChildren().entrySet()) {
-            childrenBacking.put(child.getKey(), new VanillaPart(child.getKey(), child.getValue()));
+            childrenBacking.put(child.getKey(), new VanillaPart(child.getKey(), child.getValue(), this));
         }
 
         //Read the default transform and store its inverse for later
-        readDefaultTransform();
+        readDefaultTransform(parent);
 
         //Store the petpet field
         children = new PetPetTableView<>(childrenBacking);
@@ -188,7 +192,7 @@ public class VanillaPart extends Transformable implements Transformable.Transfor
      * need to be done on the Left and Right sides of the savedTransform,
      * respectively. It turns out it should not be one unified matrix.
      */
-    private void readDefaultTransform() {
+    private void readDefaultTransform(@Nullable VanillaPart parent) {
         //If there is no referenced part, the default transform is just identity
         if (referencedPart == null)
             return;
@@ -205,6 +209,9 @@ public class VanillaPart extends Transformable implements Transformable.Transfor
                 -defaultTransform.yaw,
                 -defaultTransform.pitch
         ).invert();
+
+        if (parent != null)
+            inverseDefaultPivot.sub(parent.inverseDefaultPivot);
     }
 
     @PetPetWhitelist

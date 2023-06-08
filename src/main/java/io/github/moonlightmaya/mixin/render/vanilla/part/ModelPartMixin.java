@@ -27,6 +27,7 @@ public abstract class ModelPartMixin {
     //reuse variables to not allocate more than necessary
     private static final Matrix3f aspect$tempMatrix = new Matrix3f();
     private static final Matrix4f aspect$tempMatrix2 = new Matrix4f();
+    private static final Matrix4f aspect$tempMatrix3 = new Matrix4f();
     private static final MatrixStack aspect$helperStack = new MatrixStack();
     private boolean aspect$savedVisibility;
 
@@ -99,19 +100,19 @@ public abstract class ModelPartMixin {
                 //Load the current transformation into the helper stack :P
                 loadCurrentTransformToHelperStack();
 
+                //Set temp matrix 3 to the current total matrix stack, from part -> view space
+                aspect$tempMatrix3.set(midRenderTotal).mul(aspect$helperStack.peek().getPositionMatrix());
+
                 //Cancel out the pre-render matrix with the current one to calculate
-                //the matrix applied to this part specifically
+                //the matrix applied to this part specifically, getting a matrix in part -> entity (or part -> parent) space
                 Matrix4f correctedTotalTransform = aspect$tempMatrix2
                         .invert()
-                        .mul(midRenderTotal)
-                        .mul(aspect$helperStack.peek().getPositionMatrix());
+                        .mul(aspect$tempMatrix3);
 
                 //correctedTotalTransform now contains the transformation of this specific model part
                 //relative to the previous part (or entire entity)'s transform, so we'll save that
                 //in the corresponding vanilla part
                 vanillaPart.savedTransform.set(correctedTotalTransform);
-
-                topRenderer.modelPartsChildrenHelper.push(correctedTotalTransform);
             }
         }
     }
@@ -139,6 +140,9 @@ public abstract class ModelPartMixin {
                 aspect$tempMatrix.set(aspect$tempMatrix2).normal();
                 matrices.peek().getNormalMatrix().mul(aspect$tempMatrix);
             }
+
+            //Save the current part -> view space on the children helper stack for the next render
+            topRenderer.modelPartsChildrenHelper.push(matrices.peek().getPositionMatrix());
         }
     }
 
