@@ -41,12 +41,12 @@ public class VanillaFeature extends Transformable {
      * inside of a feature renderer, but it should still be able to find the VanillaPart
      * that corresponds.
      */
-    public VanillaFeature(FeatureRenderer<?, ?> featureRenderer, Map<ModelPart, VanillaPart> vanillaPartInverse) {
+    public VanillaFeature(VanillaRenderer renderer, FeatureRenderer<?, ?> featureRenderer, Map<ModelPart, VanillaPart> vanillaPartInverse) {
         this.featureRenderer = featureRenderer;
         this.vanillaPartInverse = vanillaPartInverse;
 
         List<ModelPart> featureRoots = EntityRendererMaps.getFeatureRoots(featureRenderer);
-        this.backingParts = VanillaPart.createTreeFromRoots(featureRoots, vanillaPartInverse);
+        this.backingParts = VanillaPart.createTreeFromRoots(renderer, featureRoots, vanillaPartInverse);
         this.parts.putAll(backingParts);
     }
 

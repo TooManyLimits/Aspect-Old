@@ -24,6 +24,8 @@ public abstract class ModelPartMixin {
     @Shadow public float pivotY;
     @Shadow public boolean visible;
 
+    @Shadow public float pivotZ;
+    @Shadow public float roll;
     //reuse variables to not allocate more than necessary
     private static final Matrix3f aspect$tempMatrix = new Matrix3f();
     private static final Matrix4f aspect$tempMatrix2 = new Matrix4f();
@@ -98,7 +100,7 @@ public abstract class ModelPartMixin {
                 Matrix4f midRenderTotal = matrices.peek().getPositionMatrix();
 
                 //Load the current transformation into the helper stack :P
-                loadCurrentTransformToHelperStack();
+                loadCurrentTransformToHelperStack(topRenderer);
 
                 //Set temp matrix 3 to the current total matrix stack, from part -> view space
                 aspect$tempMatrix3.set(midRenderTotal).mul(aspect$helperStack.peek().getPositionMatrix());
@@ -139,10 +141,10 @@ public abstract class ModelPartMixin {
                 matrices.multiplyPositionMatrix(aspect$tempMatrix2);
                 aspect$tempMatrix.set(aspect$tempMatrix2).normal();
                 matrices.peek().getNormalMatrix().mul(aspect$tempMatrix);
-            }
 
-            //Save the current part -> view space on the children helper stack for the next render
-            topRenderer.modelPartsChildrenHelper.push(matrices.peek().getPositionMatrix());
+                //Save the current part -> view space on the children helper stack for the next render
+                topRenderer.modelPartsChildrenHelper.push(matrices.peek().getPositionMatrix());
+            }
         }
     }
 
@@ -184,21 +186,25 @@ public abstract class ModelPartMixin {
     }
 
     /**
-     * Loads the current transform into the helper stack, but with
-     * the pitch and yaw inverted, and x and y pivot negated,
-     * because yeah
+     * Loads the current transform into the helper stack, but
+     * perhaps with the pitch and yaw inverted, and x and y
+     * pivot negated, because LivingEntityRenderer shenanigans
      */
-    private void loadCurrentTransformToHelperStack() {
+    private void loadCurrentTransformToHelperStack(VanillaRenderer topRenderer) {
         aspect$helperStack.loadIdentity();
-        yaw = -yaw;
-        pitch = -pitch;
-        pivotX = -pivotX;
-        pivotY = -pivotY;
-        rotate(aspect$helperStack);
-        pivotY = -pivotY;
-        pivotX = -pivotX;
-        pitch = -pitch;
-        yaw = -yaw;
+        if (topRenderer.isLivingEntityRenderer) {
+            yaw = -yaw;
+            pitch = -pitch;
+            pivotX = -pivotX;
+            pivotY = -pivotY;
+            rotate(aspect$helperStack);
+            pivotY = -pivotY;
+            pivotX = -pivotX;
+            pitch = -pitch;
+            yaw = -yaw;
+        } else {
+            rotate(aspect$helperStack);
+        }
     }
 
 }

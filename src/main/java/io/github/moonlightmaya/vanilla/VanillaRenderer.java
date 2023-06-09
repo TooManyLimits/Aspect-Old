@@ -30,6 +30,10 @@ public class VanillaRenderer {
     public boolean needsUpdate = false;
     public boolean initialized = false; //Set to true once this is initialized
 
+    //Whether this corresponds to an instance of LivingEntityRenderer.
+    //If it does, then model parts need special behavior.
+    public boolean isLivingEntityRenderer = false;
+
     /**
      * Mixins will modify values in the top value of CURRENT_RENDERER.
      * The current renderer pushed when we begin rendering an entity,
@@ -105,15 +109,16 @@ public class VanillaRenderer {
 
         //Get the renderer and root model part of this entity
         EntityRenderer<?> renderer = RenderUtils.getRenderer(user);
+        isLivingEntityRenderer = renderer instanceof LivingEntityRenderer;
         List<ModelPart> roots = EntityRendererMaps.getEntityRoots(renderer);
-        vanillaParts = VanillaPart.createTreeFromRoots(roots, vanillaPartInverse);
+        vanillaParts = VanillaPart.createTreeFromRoots(this, roots, vanillaPartInverse);
 
         //If it's a LivingEntityRenderer, wrap all the features and add them to the features list
         if (renderer instanceof LivingEntityRenderer<?,?>) {
             List<FeatureRenderer<?, ?>> featureRenderers = ((LivingEntityRendererAccessor) renderer).getFeatures();
             for (int i = 0; i < featureRenderers.size(); i++) {
                 FeatureRenderer<?, ?> featureRenderer = featureRenderers.get(i);
-                VanillaFeature vanillaFeature = new VanillaFeature(featureRenderer, vanillaPartInverse);
+                VanillaFeature vanillaFeature = new VanillaFeature(this, featureRenderer, vanillaPartInverse);
                 this.featureRenderers.put((double) i, vanillaFeature);
                 this.featureRendererInverse.put(featureRenderer, vanillaFeature);
             }

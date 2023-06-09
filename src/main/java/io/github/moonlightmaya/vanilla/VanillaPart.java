@@ -27,7 +27,7 @@ public class VanillaPart extends Transformable implements Transformable.Transfor
 
     public @Nullable ModelPart referencedPart;
     public final String name;
-    public VanillaRenderer renderer;
+    public final VanillaRenderer renderer;
 
     //backing map for the children
     //Don't want the actual children map accessible by scripts, because
@@ -57,7 +57,7 @@ public class VanillaPart extends Transformable implements Transformable.Transfor
      * root and has its children as the children of that root, and returns
      * a map containing those root VanillaPart instances.
      */
-    public static Map<String, VanillaPart> createTreeFromRoots(List<ModelPart> roots, Map<ModelPart, VanillaPart> inverseMap) {
+    public static Map<String, VanillaPart> createTreeFromRoots(VanillaRenderer renderer, List<ModelPart> roots, Map<ModelPart, VanillaPart> inverseMap) {
         List<VanillaPart> parts = new ArrayList<>(roots.size());
         for (int i = 0; i < roots.size(); i++) {
             ModelPart root = roots.get(i);
@@ -69,12 +69,12 @@ public class VanillaPart extends Transformable implements Transformable.Transfor
                 String partName = entry.getKey();
                 ModelPart part = entry.getValue();
                 //Create the new part and add it to the name->part table
-                VanillaPart newPart = new VanillaPart(partName, part);
+                VanillaPart newPart = new VanillaPart(renderer, partName, part);
                 partsForThisRoot.put(partName, newPart);
                 //Populate the inverse vanilla part map
                 newPart.traverse().forEach(p -> inverseMap.put(p.referencedPart, p));
             }
-            parts.add(new VanillaPart("root" + (i + 1), partsForThisRoot));
+            parts.add(new VanillaPart(renderer, "root" + (i + 1), partsForThisRoot));
         }
 
         //If there's only 1 root, (vast, vast majority of cases) then just return
@@ -152,16 +152,17 @@ public class VanillaPart extends Transformable implements Transformable.Transfor
     private final Quaternionf inverseDefaultRot = new Quaternionf();
     private final Vector3f inverseDefaultPivot = new Vector3f();
 
-    public VanillaPart(String name, ModelPart part) {
-        this(name, part, null);
+    public VanillaPart(VanillaRenderer renderer, String name, ModelPart part) {
+        this(renderer, name, part, null);
     }
 
-    public VanillaPart(String name, ModelPart part, @Nullable VanillaPart parent) {
+    public VanillaPart(VanillaRenderer renderer, String name, ModelPart part, @Nullable VanillaPart parent) {
+        this.renderer = renderer;
         this.name = name;
         this.referencedPart = part;
 
         for (Map.Entry<String, ModelPart> child : ((ModelPartAccessor) (Object) part).getChildren().entrySet()) {
-            childrenBacking.put(child.getKey(), new VanillaPart(child.getKey(), child.getValue(), this));
+            childrenBacking.put(child.getKey(), new VanillaPart(renderer, child.getKey(), child.getValue(), this));
         }
 
         //Read the default transform and store its inverse for later
@@ -171,7 +172,8 @@ public class VanillaPart extends Transformable implements Transformable.Transfor
         children = new PetPetTableView<>(childrenBacking);
     }
 
-    private VanillaPart(String name, Map<String, VanillaPart> realChildren) {
+    private VanillaPart(VanillaRenderer renderer, String name, Map<String, VanillaPart> realChildren) {
+        this.renderer = renderer;
         this.name = name;
         this.childrenBacking.putAll(realChildren);
         this.referencedPart = null;
@@ -200,10 +202,13 @@ public class VanillaPart extends Transformable implements Transformable.Transfor
         ModelTransform defaultTransform = referencedPart.getDefaultTransform();
 
         inverseDefaultPivot.set(
-                defaultTransform.pivotX / 16,
-                defaultTransform.pivotY / 16,
+                -defaultTransform.pivotX / 16,
+                -defaultTransform.pivotY / 16,
                 -defaultTransform.pivotZ / 16
         );
+        if (renderer.isLivingEntityRenderer)
+            inverseDefaultPivot.mul(-1, -1, 1);
+
         inverseDefaultRot.rotationZYX(
                 defaultTransform.roll,
                 -defaultTransform.yaw,

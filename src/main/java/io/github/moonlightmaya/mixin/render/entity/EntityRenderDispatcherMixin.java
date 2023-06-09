@@ -7,6 +7,7 @@ import io.github.moonlightmaya.vanilla.VanillaRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.client.render.entity.EntityRenderer;
+import net.minecraft.client.render.entity.LivingEntityRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -28,7 +29,7 @@ public class EntityRenderDispatcherMixin {
     public void beforeRenderEntity(Entity entity, double x, double y, double z, float yaw,
                                    float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers,
                                    int light, CallbackInfo ci,
-                                   EntityRenderer unused, Vec3d offset,
+                                   EntityRenderer renderer, Vec3d offset,
                                    double unused2, double unused3, double unused4) {
         Aspect aspect = AspectManager.getAspect(entity.getUuid());
         if (aspect != null) {
@@ -41,7 +42,7 @@ public class EntityRenderDispatcherMixin {
             // This matrix is also calculated in LivingEntityRendererMixin, but
             // if this isn't a living entity, that will never be called, so
             // we need to do it here instead, before the render occurs.
-            if (!(entity instanceof LivingEntity))
+            if (!(renderer instanceof LivingEntityRenderer<?,?>))
                 aspect.vanillaRenderer.savedVanillaModelTransform.set(matrices.peek().getPositionMatrix());
             //Just saving this render offset in case someone wants to access it, even though it's not used in rendering
             aspect.vanillaRenderer.renderOffset.set(offset.x, offset.y, offset.z);

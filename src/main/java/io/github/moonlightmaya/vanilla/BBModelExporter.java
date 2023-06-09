@@ -40,6 +40,8 @@ public class BBModelExporter {
     private final String modelName;
     private int width = -1, height = -1;
 
+    private boolean isLiving = false; //Living entities are offset upwards by 1.5 blocks!
+
     public BBModelExporter(String modelName) {
         this.modelName = modelName;
         initialize();
@@ -140,16 +142,18 @@ public class BBModelExporter {
             faces.add(key, face);
         }
 
-        minX = parent.getAsJsonArray("origin").get(0).getAsFloat() - minX;
-        minY = parent.getAsJsonArray("origin").get(1).getAsFloat() - minY;
+        minX = parent.getAsJsonArray("origin").get(0).getAsFloat() + (isLiving ? -1 : 1) * minX;
+        minY = parent.getAsJsonArray("origin").get(1).getAsFloat() + (isLiving ? -1 : 1) * minY;
         minZ = parent.getAsJsonArray("origin").get(2).getAsFloat() + minZ;
-        maxX = parent.getAsJsonArray("origin").get(0).getAsFloat() - maxX;
-        maxY = parent.getAsJsonArray("origin").get(1).getAsFloat() - maxY;
+        maxX = parent.getAsJsonArray("origin").get(0).getAsFloat() + (isLiving ? -1 : 1) * maxX;
+        maxY = parent.getAsJsonArray("origin").get(1).getAsFloat() + (isLiving ? -1 : 1) * maxY;
         maxZ = parent.getAsJsonArray("origin").get(2).getAsFloat() + maxZ;
 
-        //swap min and max x and y
-        float temp = minX; minX = maxX; maxX = temp;
-        temp = minY; minY = maxY; maxY = temp;
+        //swap x and y if living
+        if (isLiving) {
+            float temp = minX; minX = maxX; maxX = temp;
+            temp = minY; minY = maxY; maxY = temp;
+        }
 
         part.add("from", arr(minX, minY, minZ));
         part.add("to", arr(maxX, maxY, maxZ));
@@ -165,18 +169,32 @@ public class BBModelExporter {
         //Create basic values
         JsonObject part = new JsonObject();
         part.addProperty("name", name);
-        if (parent == null)
+        if (parent == null) {
+            float y = modelPart.getDefaultTransform().pivotY;
+            float x = modelPart.getDefaultTransform().pivotX;
+            if (isLiving) {
+                x = -x;
+                y = 24 - y;
+            }
             part.add("origin", arr(
-                    -modelPart.getDefaultTransform().pivotX,
-                    24 - modelPart.getDefaultTransform().pivotY,
+                    x,
+                    y,
                     modelPart.getDefaultTransform().pivotZ
             ));
-        else
+        } else {
+            float xOffset = modelPart.getDefaultTransform().pivotX;
+            float yOffset = modelPart.getDefaultTransform().pivotY;
+            if (isLiving) {
+                xOffset = -xOffset;
+                yOffset = -yOffset;
+            }
             part.add("origin", arr(
-                    parent.getAsJsonArray("origin").get(0).getAsFloat() - modelPart.getDefaultTransform().pivotX,
-                    parent.getAsJsonArray("origin").get(1).getAsFloat() - modelPart.getDefaultTransform().pivotY,
+                    parent.getAsJsonArray("origin").get(0).getAsFloat() + xOffset,
+                    parent.getAsJsonArray("origin").get(1).getAsFloat() + yOffset,
                     parent.getAsJsonArray("origin").get(2).getAsFloat() + modelPart.getDefaultTransform().pivotZ
             ));
+        }
+
         part.add("rotation", arr(
                 -modelPart.getDefaultTransform().pitch * 180 / MathHelper.PI,
                 modelPart.getDefaultTransform().yaw * 180 / MathHelper.PI,
@@ -222,6 +240,8 @@ public class BBModelExporter {
 
     public static BBModelExporter fromEntityRenderer(String fileName, EntityRenderer<?> renderer) {
         BBModelExporter exporter = new BBModelExporter(fileName);
+        exporter.isLiving = renderer instanceof LivingEntityRenderer<?, ?>;
+
         //Get all the roots
         List<ModelPart> roots = EntityRendererMaps.getEntityRoots(renderer);
         int i = 0;
