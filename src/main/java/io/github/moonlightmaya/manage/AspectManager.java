@@ -5,12 +5,17 @@ import io.github.moonlightmaya.Aspect;
 import io.github.moonlightmaya.game_interfaces.AspectConfig;
 import io.github.moonlightmaya.manage.data.BaseStructures;
 import io.github.moonlightmaya.manage.data.importing.AspectImporter;
+import io.github.moonlightmaya.script.apis.entity.EntityAPI;
 import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.IOUtils;
 import io.github.moonlightmaya.util.RenderUtils;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.registry.Registries;
+import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 import petpet.lang.run.PetPetException;
 
@@ -20,9 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -56,6 +59,16 @@ public class AspectManager {
      * This is a recipe for synchronization issues.
      */
     private static final ConcurrentLinkedQueue<Runnable> TASKS = new ConcurrentLinkedQueue<>();
+
+    /**
+     * The list of entity types which don't have a CEM currently
+     * associated with them.
+     * This prevents searching the filesystem for the proper aspect
+     * every frame if it doesn't exist.
+     * This set is cleared when `/aspect clear` is run.
+     */
+    private static final Set<EntityType<?>> ENTITY_TYPES_WITHOUT_CEM = new HashSet<>();
+
 
     /**
      * Global tick method for the aspect manager. Called each client tick.
@@ -112,6 +125,42 @@ public class AspectManager {
     @Nullable
     public static Aspect getAspect(UUID uuid) {
         return ASPECTS.get(uuid);
+    }
+
+    @Nullable
+    public static Aspect getAspect(Entity entity) {
+        if (ASPECTS.containsKey(entity.getUuid()))
+            return ASPECTS.get(entity.getUuid());
+
+        if (ENTITY_TYPES_WITHOUT_CEM.contains(entity.getType()))
+            return null;
+
+        Identifier entityIdentifier = Registries.ENTITY_TYPE.getId(entity.getType());
+        Path cemPath = IOUtils.getOrCreateModFolder().resolve("cem");
+        cemPath = cemPath.resolve(entityIdentifier.getNamespace());
+        Path folderPath = cemPath.resolve(entityIdentifier.getPath());
+        Path aspectFilePath = cemPath.resolve(entityIdentifier.getPath() + ".aspect");
+
+        //If there's an error loading, add the entity to the WITHOUT_CEM list.
+        //Otherwise it keeps attempting to reload the aspect every frame, for every
+        //entity visible. Don't ask how I know.
+        Consumer<Throwable> errorCallback = t -> {
+            //Without this if-check, error may display multiple times
+            if (!ENTITY_TYPES_WITHOUT_CEM.contains(entity.getType()))
+                DisplayUtils.displayError("Failed to load CEM for entity " + entityIdentifier, t, true);
+            ENTITY_TYPES_WITHOUT_CEM.add(entity.getType());
+        };
+
+        if (!loadAspectFromPath(entity.getUuid(), folderPath, errorCallback, false, false)) {
+            //If the file doesn't exist, try again with `.aspect` at the end
+            if (!loadAspectFromPath(entity.getUuid(), aspectFilePath, errorCallback, false, false)) {
+                //If file doesn't exist in either location, then add this entity to the WITHOUT_CEM list and return null
+                ENTITY_TYPES_WITHOUT_CEM.add(entity.getType());
+            }
+        }
+
+        //Aspect isn't ready yet, but the task to load it may have begun
+        return null;
     }
 
     @Nullable
@@ -195,6 +244,7 @@ public class AspectManager {
             for (Aspect aspect : ASPECTS.values())
                 aspect.destroy();
             ASPECTS.clear();
+            ENTITY_TYPES_WITHOUT_CEM.clear();
         });
     }
 
@@ -259,11 +309,11 @@ public class AspectManager {
 
     /**
      * Load an aspect from a local file system path
-     * If the path is a `.aspect` file, then load it from the data
-     * If the path is a folder, treat it as a folder
+     * If the path is a `.aspect` file, then load it from the data, and return true
+     * If the path is a folder, treat it as a folder, and return true
+     * If the path doesn't exist, return false
      */
-    public static void loadAspectFromPath(@Nullable UUID userUUID, Path folder, Consumer<Throwable> errorCallback, boolean isHost, boolean isGui) {
-        //Save my id.
+    public static boolean loadAspectFromPath(@Nullable UUID userUUID, Path folder, Consumer<Throwable> errorCallback, boolean isHost, boolean isGui) {
         assert !isGui || isHost && userUUID == null;
 
         if (folder.toFile().isDirectory()) {
@@ -272,15 +322,17 @@ public class AspectManager {
                     .doImport() //doImport is asynchronous, so the following steps will be as well
                     .thenApply(mats -> new Aspect(userUUID, mats, isHost, isGui))
                     .whenComplete((aspect, error) -> finishLoadingTask(userUUID, myId, aspect, error, errorCallback));
+            return true;
         } else if (folder.toFile().exists() && folder.toFile().getName().endsWith(".aspect")) {
             try {
                 byte[] bytes = Files.readAllBytes(folder);
                 loadAspectFromData(userUUID, bytes, errorCallback, isHost, isGui);
+                return true;
             } catch (Exception e) {
                 throw new PetPetException("Failed to read bytes at " + folder, e);
             }
         } else {
-            throw new PetPetException("Path " + folder + " does not exist or is not a valid aspect path");
+            return false;
         }
     }
 

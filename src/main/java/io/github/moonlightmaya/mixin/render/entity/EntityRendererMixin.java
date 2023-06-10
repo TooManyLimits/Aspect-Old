@@ -24,7 +24,7 @@ public class EntityRendererMixin {
         //TRANSLATED relative to the player's feet!
         //**This matrix will transform from that space into camera space.** Keep this fact in mind when writing math and render code.
 
-        Aspect aspect = AspectManager.getAspect(entity.getUuid());
+        Aspect aspect = AspectManager.getAspect(entity);
         if (aspect != null) {
             //Calculate overlay
             int overlay = OverlayTexture.DEFAULT_UV;

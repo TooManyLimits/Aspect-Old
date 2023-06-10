@@ -26,7 +26,7 @@ public class InGameHudMixin {
 
         //Draw aspect's hud parts if it exists
         if (cameraEntity != null) {
-            Aspect cameraEntityAspect = AspectManager.getAspect(cameraEntity.getUuid());
+            Aspect cameraEntityAspect = AspectManager.getAspect(cameraEntity);
             if (cameraEntityAspect != null)
                 drawAspect(cameraEntityAspect, tickDelta, matrixStack);
         }

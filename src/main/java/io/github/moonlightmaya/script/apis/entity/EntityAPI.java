@@ -70,7 +70,7 @@ public class EntityAPI {
     }
     @PetPetWhitelist
     public static boolean hasAspect(Entity entity) {
-        return AspectManager.getAspect(entity.getUuid()) != null;
+        return AspectManager.getAspect(entity) != null;
     }
     @PetPetWhitelist
     public static boolean isInvisible(Entity entity) {
@@ -237,7 +237,7 @@ public class EntityAPI {
      */
     @PetPetWhitelist
     public static AspectAPI aspect(Entity entity) {
-        Aspect foundAspect = AspectManager.getAspect(entity.getUuid());
+        Aspect foundAspect = AspectManager.getAspect(entity);
         if (foundAspect == null) return null;
         return new AspectAPI(foundAspect, false);
     }

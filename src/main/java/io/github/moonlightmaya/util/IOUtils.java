@@ -27,6 +27,7 @@ public class IOUtils {
                 tryCreateInnerDir(path, "aspects");
                 tryCreateInnerDir(path, "guis");
                 tryCreateInnerDir(path, "exported");
+                tryCreateInnerDir(path, "cem");
                 AspectMod.LOGGER.info("Successfully created mod folder at " + path);
             } catch (IOException e) {
                 throw new IllegalStateException("Failed to create mod folder at " + path + ".", e);
@@ -35,6 +36,7 @@ public class IOUtils {
             tryCreateInnerDir(path, "aspects");
             tryCreateInnerDir(path, "guis");
             tryCreateInnerDir(path, "exported");
+            tryCreateInnerDir(path, "cem");
         }
         return path;
     }
@@ -58,7 +60,6 @@ public class IOUtils {
 
     public static String trimPathStringToModFolder(Path p) {
         Path modFolder = getOrCreateModFolder();
-        if (modFolder == null) return "<Error finding/creating mod folder>";
         return modFolder.relativize(p).toString();
     }
 

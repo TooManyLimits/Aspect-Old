@@ -31,7 +31,7 @@ public class EntityRenderDispatcherMixin {
                                    int light, CallbackInfo ci,
                                    EntityRenderer renderer, Vec3d offset,
                                    double unused2, double unused3, double unused4) {
-        Aspect aspect = AspectManager.getAspect(entity.getUuid());
+        Aspect aspect = AspectManager.getAspect(entity);
         if (aspect != null) {
             VanillaRenderer.CURRENT_RENDERER.push(aspect.vanillaRenderer);
             //Update the vanilla renderer if needed
@@ -53,7 +53,7 @@ public class EntityRenderDispatcherMixin {
     @Inject(method = "render", at = @At(value = "INVOKE", shift = At.Shift.AFTER,
             target = "Lnet/minecraft/client/render/entity/EntityRenderer;render(Lnet/minecraft/entity/Entity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V"))
     public void afterRenderEntity(Entity entity, double x, double y, double z, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
-        Aspect aspect = AspectManager.getAspect(entity.getUuid());
+        Aspect aspect = AspectManager.getAspect(entity);
         if (aspect != null)
             VanillaRenderer.CURRENT_RENDERER.pop();
     }

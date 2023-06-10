@@ -56,7 +56,7 @@ public class WorldRendererMixin {
      */
     @ModifyArg(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/WorldRenderer;renderEntity(Lnet/minecraft/entity/Entity;DDDFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;)V"))
     private Entity onRenderEntity(Entity entity) {
-        Aspect aspect = AspectManager.getAspect(entity.getUuid());
+        Aspect aspect = AspectManager.getAspect(entity);
         if (aspect != null)
             aspect.renderContext = Aspect.RenderContexts.WORLD;
         return entity;
