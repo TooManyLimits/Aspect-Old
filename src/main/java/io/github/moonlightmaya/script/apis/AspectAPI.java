@@ -15,11 +15,9 @@ import petpet.types.immutable.PetPetTableView;
  *
  * Some script runtimes should be able to edit variables of an aspect,
  * while others should not be able to. This requirement has led to a couple
- * of workarounds being used - namely, the existence of this class (which wraps
+ * of workarounds being used - particularly, the existence of this class (which wraps
  * together an Aspect instance, as well as whether this API should have write
- * access), as well as the workaround for the EntityAPI getAspect() method, which
- * is not reflectively generated and is instead created dynamically for each
- * Aspect's script runtime.
+ * access).
  */
 @PetPetWhitelist
 public class AspectAPI {
@@ -30,6 +28,12 @@ public class AspectAPI {
         this.hasWriteAccess = hasWriteAccess;
     }
 
+    /**
+     * Whether this AspectAPI can edit the underlying aspect.
+     * This is currently only true for the global variable
+     * created at the beginning of the script runtime, and not
+     * for any created through the `entity.aspect()` method.
+     */
     @PetPetWhitelist
     public boolean canEdit() {
         return hasWriteAccess;
@@ -67,6 +71,17 @@ public class AspectAPI {
     @PetPetWhitelist
     public boolean isHost() {
         return aspect.isHost;
+    }
+
+    /**
+     * Should only be true inside the GUI aspect itself.
+     * I don't believe it's currently possible to obtain
+     * a reference to a GUI aspect from the outside; if
+     * anyone finds a way to do this please let me know.
+     */
+    @PetPetWhitelist
+    public boolean isGui() {
+        return aspect.isGui;
     }
 
     @PetPetWhitelist

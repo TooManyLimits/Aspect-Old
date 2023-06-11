@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * The manager API is used for management of the Aspect mod itself.
@@ -98,9 +99,14 @@ public class ManagerAPI {
      * If argument is null, then it will clear your aspect.
      */
     @PetPetWhitelist
-    public void equipAspect(PetPetList<String> path) {
+    public void equipAspect_1(PetPetList<String> path) {
+        equipAspect_2(EntityUtils.getLocalUUID(), path);
+    }
+
+    @PetPetWhitelist
+    public void equipAspect_2(UUID targetUUID, PetPetList<String> path) {
         if (path == null || path.isEmpty()) {
-            AspectManager.clearAspect(EntityUtils.getLocalUUID());
+            AspectManager.clearAspect(targetUUID);
             return;
         }
 
@@ -115,9 +121,9 @@ public class ManagerAPI {
             throw new PetPetException("Cannot use mod_folder/aspects as an aspect folder");
 
         AspectManager.loadAspectFromPath(
-            EntityUtils.getLocalUUID(), cur,
-            err -> DisplayUtils.displayError("Failed to load aspect", err, true),
-            true, false
+                targetUUID, cur,
+                err -> DisplayUtils.displayError("Failed to load aspect", err, true),
+                true, false
         );
     }
 

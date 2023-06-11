@@ -129,9 +129,12 @@ public class AspectManager {
 
     @Nullable
     public static Aspect getAspect(Entity entity) {
+        //If the entity has a specific aspect saved, get it
         if (ASPECTS.containsKey(entity.getUuid()))
             return ASPECTS.get(entity.getUuid());
 
+        //If the entity type is marked as not having an aspect, return null
+        //This is to avoid having to search the filesystem multiple times per frame while rendering the entity
         if (ENTITY_TYPES_WITHOUT_CEM.contains(entity.getType()))
             return null;
 
