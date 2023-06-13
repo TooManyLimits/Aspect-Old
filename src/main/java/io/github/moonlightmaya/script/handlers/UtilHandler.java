@@ -69,14 +69,15 @@ public class UtilHandler {
         registerAspectUtil("PrettyPrinter");
         registerAspectUtil("Set");
 
-        //Functions
-        registerAspectUtil("pprint");
+        //Functions or table of functions
+        registerAspectUtil("timer");
 
         //No returns
         registerAspectUtil("keywords");
         registerAspectUtil("overloads");
         registerAspectUtil("featureAliases");
         registerAspectUtil("partHelpers");
+        registerAspectUtil("pprint");
     }
 
 

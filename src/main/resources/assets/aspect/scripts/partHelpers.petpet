@@ -23,23 +23,168 @@ fn m:particle_1(particleString)
 
 // aimAt method, to make a part point towards a given world coord
 
+//localAim and localUp are assumed to be (0, 0, 1) and (0, 1, 0).
 fn m:aimAt_1(worldPos) {
 	//get the world to part matrix
 	mat = this.partToWorldMatrix().c.inv()
 	//now modify this rotation to aim towards the relative pos,
 	//and mark as dirty
 	this.dirty().quat().mul(quat().lookAt(mat.apply(worldPos), mat.applyDir(0, 1, 0)).inv())
+	this
 }
 
-fn m:aimAt_3(worldPos, alongVec, upVec) {
+//Provide your own localAim and localUp
+fn m:aimAt_3(worldPos, localAim, localUp) {
 	//get the world to part matrix
 	mat = this.partToWorldMatrix().c.inv()
 	//now modify this rotation to aim towards the relative pos,
 	//and mark as dirty
-	this.dirty().quat().mul(quat().lookAt(mat.apply(worldPos), mat.applyDir(0, 1, 0)).inv().lookAt(alongVec, upVec))
+	this.dirty().quat().mul(quat().lookAt(mat.apply(worldPos), mat.applyDir(0, 1, 0)).inv().lookAt(localAim, localUp))
+	//return this for chaining
+	this
 }
-
-// smoothRot, to make a part always smoothly attempt to have a certain rotation
 
 // smoothAim, to make a part always smoothly attempt to aim at a given world coord
 
+fn m:smoothAim_2(worldPosProvider, easingFactor) {
+	this.smoothAim_3(worldPosProvider, easingFactor, false)
+}
+
+fn m:smoothAim_3(worldPosProvider, easingFactor, useWorldRender) {
+	thisPtw = this.partToWorldMatrix()
+	thisQuat = this.quat()
+	cur = thisQuat.c
+	last = cur.c
+	worldToPart = mat4()
+	target = quat()
+	tempQuat = quat()
+
+	renderEvent = if useWorldRender events.world_render else events.render
+
+	t = fn events.tick() {
+		//get the world to part matrix
+		worldToPart.set(thisPtw).inv()
+		//calculate target
+		target.set(thisQuat).mul(tempQuat.reset().lookAt(worldToPart.apply(worldPosProvider()), worldToPart.applyDir(0, 1, 0)).inv())
+
+		//set last to cur, and slerp cur towards the target by the easing factor
+		cur.set(thisQuat)
+		last.set(cur)
+		cur.slerp(target, easingFactor)
+	}
+	thisBound = this
+	r = renderEvent.add(fn(d, _) {
+		thisQuat.set(last).slerp(cur, d)
+		thisBound.dirty()
+	})
+
+	fn() {
+		events.tick.del(t)
+		renderEvent.del(r)
+	}
+}
+
+fn m:smoothAim_4(worldPosProvider, localAim, localUp, easingFactor) {
+	this.smoothAim_5(worldPos, localAim, localUp, easingFactor, false)
+}
+
+fn m:smoothAim_5(worldPosProvider, localAim, localUp, easingFactor, useWorldRender) {
+	thisPtw = this.partToWorldMatrix()
+	thisQuat = this.quat()
+	cur = thisQuat.c
+	last = cur.c
+	worldToPart = mat4()
+	target = quat()
+	tempQuat = quat()
+
+	renderEvent = if useWorldRender events.world_render else events.render
+
+	t = fn events.tick() {
+		//get the world to part matrix
+		worldToPart.set(thisPtw).inv()
+		//calculate target
+		target.set(thisQuat).mul(tempQuat.reset().lookAt(worldToPart.apply(worldPosProvider()), worldToPart.applyDir(0, 1, 0)).inv().lookAt(localAim, localUp))
+
+		//set last to cur, and slerp cur towards the target by the easing factor
+		cur.set(thisQuat)
+		last.set(cur)
+		cur.slerp(target, easingFactor)
+	}
+	thisBound = this
+	r = renderEvent.add(fn(d, _) {
+		thisQuat.set(last).slerp(cur, d)
+		thisBound.dirty()
+	})
+
+	fn() {
+		events.tick.del(t)
+		renderEvent.del(r)
+	}
+}
+
+
+
+// smoothRot, to make a part always smoothly attempt to have a certain rotation using slerp
+// returns a function which, when called, cancels this
+// Assumes that rotProvider has 0 args
+fn m:smoothRot_2(rotProvider, easingFactor) {
+	this.smoothRot(rotProvider, easingFactor, false)
+}
+
+fn m:smoothRot_3(rotProvider, easingFactor, useWorldRender) {
+	thisQuat = this.quat()
+	cur = thisQuat.c
+	last = cur.c
+	target = quat()
+	
+	//Add the tick and render events
+	t = fn events.tick() {
+		cur.set(thisQuat)
+		last.set(cur)
+		target.reset().rotZYX(rotProvider())
+		cur.slerp(target, easingFactor)
+	}
+	renderEvent = if useWorldRender events.world_render else events.render
+	thisBound = this
+	r = renderEvent.add(fn(d, _) {
+		thisQuat.set(last).slerp(cur, d)
+		thisBound.dirty()
+	})
+
+	//Return a function that can be called to cancel the rotating
+	fn() {
+		events.tick().del(t)
+		renderEvent.del(r)
+	}
+}
+
+// smoothQuat, same thing but with a function that returns a quat
+
+fn m:smoothQuat_2(quatProvider, easingFactor) {
+	this.smoothRot(quatProvider, easingFactor, false)
+}
+
+fn m:smoothQuat_3(quatProvider, easingFactor, useWorldRender) {
+	thisQuat = this.quat()
+	cur = thisQuat.c
+	last = cur.c
+	target = quat()
+	
+	//Add the tick and render events
+	t = fn events.tick() {
+		last.set(cur)
+		cur.slerp(quatProvider(), easingFactor)
+	}
+	renderEvent = if useWorldRender events.world_render else events.render
+	thisBound = this
+	r = renderEvent.add(fn(d, _) {
+		thisQuat.set(last).slerp(cur, d)
+		thisBound.dirty()
+	})
+
+	//Return a function that can be called to cancel the rotating
+	fn() {
+		events.tick().del(t)
+		renderEvent.del(r)
+	}
+}

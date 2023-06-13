@@ -1,0 +1,52 @@
+//Return this table of all the functions
+
+$[
+
+	//Note: The event must have 0 args
+	//Returns a function that when called, cancels the waiting
+	waitOnEvent = fn waitOnEvent(event, activations, func) {
+		t = activations
+		f = event.add(fn() {
+			if (t = t - 1) < 0 {
+				func()
+				event.del(this)
+			}
+		})
+		fn() event.del(f)
+	},
+	wait = fn wait(ticks, func) waitOnEvent(events.tick, ticks, func),
+	worldWait = fn worldWait(ticks, func) waitOnEvent(events.world_tick, ticks, func),
+
+	//Note: the event must have 0 args
+	periodicOnEvent = fn periodicOnEvent(event, activation, func) {
+		t = 0
+		f = event.add(fn() {
+			if (t = t + 1) % ticks == 0
+				func()
+		})
+		//return deleter function
+		fn() event.del(f)
+	},
+
+	//Call the function periodically every `ticks` ticks
+	//Returns a function that when called, cancels this
+	periodic = fn periodic(ticks, func) periodicOnEvent(events.tick, ticks, func),
+	worldPeriodic = fn worldPeriodic(ticks, func) periodicOnEvent(events.world_tick, ticks, func),
+
+	//Wait until the given predicate returns true, then call the function and remove
+	//Returns a function that when called, cancels the waiting
+	//Note the event must have 0 args
+	awaitOnEvent = fn awaitOnEvent(event, predicate, func) {
+		f = event.add(fn() {
+			if predicate() {
+				func()
+				event.del(this)
+			}
+		})
+		fn() event.del(f)
+	},
+	await = fn await(predicate, func) awaitOnEvent(events.tick, predicate, func),
+	worldAwait = fn worldAwait(predicate, func) awaitOnEvent(events.world_tick, predicate, func)
+
+]
+

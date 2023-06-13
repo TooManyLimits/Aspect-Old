@@ -54,6 +54,37 @@ public class Quaternions {
         return new Quaterniond();
     }
 
+    @PetPetWhitelist
+    public static Quaterniond rotXYZ_3(Quaterniond quat, double x, double y, double z) {
+        return quat.rotateXYZ(x, y, z);
+    }
+
+    @PetPetWhitelist
+    public static Quaterniond rotZYX_3(Quaterniond quat, double x, double y, double z) {
+        return quat.rotateZYX(z, y, x);
+    }
+
+    @PetPetWhitelist
+    public static Quaterniond rotYXZ_3(Quaterniond quat, double x, double y, double z) {
+        return quat.rotateYXZ(y, x, z);
+    }
+
+    @PetPetWhitelist
+    public static Quaterniond rotXYZ_1(Quaterniond quat, Vector3d xyz) {
+        return quat.rotateXYZ(xyz.x, xyz.y, xyz.z);
+    }
+
+    @PetPetWhitelist
+    public static Quaterniond rotZYX_1(Quaterniond quat, Vector3d xyz) {
+        return quat.rotateZYX(xyz.z, xyz.y, xyz.x);
+    }
+
+    @PetPetWhitelist
+    public static Quaterniond rotYXZ_1(Quaterniond quat, Vector3d xyz) {
+        return quat.rotateYXZ(xyz.y, xyz.x, xyz.z);
+    }
+
+
     /**
      * Getters and setters
      */

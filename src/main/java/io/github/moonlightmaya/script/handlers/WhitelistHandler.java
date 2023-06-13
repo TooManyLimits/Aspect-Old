@@ -134,6 +134,16 @@ public class WhitelistHandler {
         registerDirect(RenderLayer.class, new PetPetClass("RenderLayer"), ALWAYS, null);
         registerDirect(ParticleEffect.class, new PetPetClass("ParticleEffect"), ALWAYS, null);
         registerDirect(Animator.class, new PetPetClass("Animator"), ALWAYS, null);
+
+
+        //Registering these for error message class translation purposes, certain math functions expect a "c" variant instead
+        registerDirect(Vector2dc.class, new PetPetClass(Vectors.VEC_2.name), ALWAYS, null);
+        registerDirect(Vector3dc.class, new PetPetClass(Vectors.VEC_3.name), ALWAYS, null);
+        registerDirect(Vector4dc.class, new PetPetClass(Vectors.VEC_4.name), ALWAYS, null);
+        registerDirect(Matrix2dc.class, new PetPetClass(Matrices.MAT_2.name), ALWAYS, null);
+        registerDirect(Matrix3dc.class, new PetPetClass(Matrices.MAT_3.name), ALWAYS, null);
+        registerDirect(Matrix4dc.class, new PetPetClass(Matrices.MAT_4.name), ALWAYS, null);
+        registerDirect(Quaterniondc.class, new PetPetClass(Quaternions.QUATERNION_CLASS.name), ALWAYS, null);
     }
 
     /**

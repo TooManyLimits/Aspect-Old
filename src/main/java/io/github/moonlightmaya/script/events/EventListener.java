@@ -51,18 +51,16 @@ public class EventListener implements Iterable<PetPetCallable> {
     /**
      * Add this function to the event listener.
      * It will be called each time the event listener activates.
-     * Returns true if the function was added to the event successfully.
-     *
-     * You cannot add the same function to the event multiple times,
-     * Attempting to do so will cause a false return.
+     * Returns the function you passed in.
      */
     @PetPetWhitelist
-    public void add(PetPetCallable callable) {
+    public PetPetCallable add(PetPetCallable callable) {
         if (callable.paramCount() != event.paramCount)
             throw new PetPetException("Event " + event.name + " expects " + event.paramCount + " args, but provided function has only " + callable.paramCount());
         if (!(callable instanceof PetPetClosure))
             throw new PetPetException("Only PetPet functions may be added to events. Java functions cannot!");
         queuedForAdd.add(callable);
+        return callable;
     }
 
     /**
