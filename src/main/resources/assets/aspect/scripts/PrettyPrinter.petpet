@@ -1,0 +1,120 @@
+JsonText = util("JsonText") //For json text, ofc
+util("overloads") //for string * number
+
+
+//Collect some useful class objects
+tableClass = $[].class()
+tableViewClass = $[].view().class()
+listClass = ![].class()
+listViewClass = ![].view().class()
+stringClass = "".class()
+
+PrettyPrinter = class("PrettyPrinter", $[
+	__init = fn() {
+		this.depth = this.maxDepth = 0
+		this.spacerColor = "#AAAAAA"
+		this.spaces = 2
+		this.nullColor = "#FF3333"
+		this.recursionColor = "#00F0FF"
+		this.colorTable = $[
+			[tableClass] = "#FF5555",
+			[tableViewClass] = "#FF5555",
+			[listClass] = "#AA55FF",
+			[listViewClass] = "#AA55FF",
+			[stringClass] = "#FFFF55",
+			[true.class()] = "#55FFFF",
+			[0.class()] = "#55FF55",
+			[(fn(){}).class()] = "#5555FF"
+		]
+		this
+	},
+	colorOf = fn(object)
+		if object == null
+			this.nullColor
+		else
+			this.colorTable[object.class()],
+	printEndpoint = fn printEndpoint(json, object, isKey, allowHover) {
+		//If it's not a key and is a string, surround with quotes
+		//If it's false, null, or 0, no quotes needed
+		q = if not isKey and object and object.class() == stringClass "\\\"" else ""
+		json.next(q + object + q)
+		if (not isKey and (c = colorOf(object)))
+			json.color(c)
+
+		//Hover text, if needed
+		if allowHover and (object.class() == tableClass or object.class() == listClass) {
+			//No hovers within hovers, infinite stack overflow
+			hoverText = this.pformat(object, 1, false) 
+			json.hover(hoverText)
+		}
+		null
+	},
+	printRecursive = fn(json, object, depthLeft, indent, allowHover, alreadyPrinted) {
+		//No depth left, just print the endpoint and quit
+		//Also, if object is false, null, or 0, then it's an endpoint and just print it
+		if depthLeft == 0 or not object {
+			this.printEndpoint(json, object, false, allowHover)
+			return null
+		}
+
+		//Create spacing string
+		spacerPart = "|" + " " * (this.spaces - 1)
+		spacing = spacerPart * indent
+
+		//If this object is a table or list, but we already printed it, then instead print it without recurse
+		if alreadyPrinted[object] {
+			hoverText = JsonText("Duplicate of earlier object:\n").color("gold").concat(this.pformat(object, 1, false))
+			json.next("[RECURSION]").hover(hoverText).color(this.recursionColor)
+			return null
+		}
+
+		//Print out the object, doing different things depending on the type
+		if object.class() == tableClass or object.class() == tableViewClass {
+			//This is a table, recurse it
+			name = if object.class() == tableClass "table" else "TableView"
+			json.next(name + ": $[\n").color(this.colorTable[tableClass])
+			this.depth = this.depth + 1
+			alreadyPrinted[object] = true
+			object.each(fn(k, v) {
+				json.next(spacing + spacerPart).color(PPRINT_SPACER_COLOR)
+				if (k.class() != stringClass)
+					json.next("[")
+				this.printEndpoint(json, k, true, allowHover)
+				if (k.class() != stringClass)
+					json.next("]")
+				json.next(" = ")
+				this.printRecursive(json, v, depthLeft - 1, indent + 1, allowHover, alreadyPrinted)
+				json.next("\n")
+			})
+			this.depth = this.depth - 1
+			json.next(spacing).color(this.spacerColor).next("]").color(this.colorTable[tableClass])
+		} else if object.class() == listClass or object.class() == listViewClass {
+			//This is a list, recurse
+			name = if object.class() == listClass "list" else "ListView"
+			json.next(name + ": ![\n").color(this.colorTable[listClass])
+			this.depth = this.depth + 1
+			alreadyPrinted[object] = true
+			object.each(fn(elem) {
+				json.next(spacing + spacerPart).color(this.spacerColor)
+				this.printRecursive(json, elem, depthLeft - 1, indent + 1, allowHover, alreadyPrinted)
+				json.next("\n")
+			})
+			this.depth = this.depth - 1
+			json.next(spacing).color(this.spacerColor).next("]").color(this.colorTable[listClass])
+		} else {
+			this.printEndpoint(json, object, false, allowHover)
+		}
+		null
+	},
+	//Format the object and returns a json text object
+	pformat = fn(object, maxDepth, allowHover) {
+		if maxDepth < 0 maxDepth = 0
+		this.maxDepth = maxDepth
+		this.depth = 0
+		json = JsonText("")
+		this.printRecursive(json, object, maxDepth, 0, allowHover, $[])
+		json
+	}
+])
+
+PrettyPrinter

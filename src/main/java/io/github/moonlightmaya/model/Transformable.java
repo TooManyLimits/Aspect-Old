@@ -18,10 +18,10 @@ public abstract class Transformable {
 
     public final Matrix4f positionMatrix = new Matrix4f();
     public final Matrix3f normalMatrix = new Matrix3f();
-    public final Vector3f partPivot = new Vector3f();
-    public final Vector3f partPos = new Vector3f();
-    public final Quaternionf partRot = new Quaternionf();
-    public final Vector3f partScale = new Vector3f(1, 1, 1);
+    public final Vector3d partPivot = new Vector3d();
+    public final Vector3d partPos = new Vector3d();
+    public final Quaterniond partRot = new Quaterniond();
+    public final Vector3d partScale = new Vector3d(1, 1, 1);
     public boolean visible = true;
 
     /**
@@ -46,7 +46,11 @@ public abstract class Transformable {
         transformers = other.transformers;
     }
 
-    public void recalculateMatrixIfNeeded() {
+    //Avoid unneeded allocations
+    private final Quaternionf tempRot = new Quaternionf();
+
+    //Synchronize to avoid multiple simultaneous accesses to tempRot
+    public synchronized void recalculateMatrixIfNeeded() {
         //If needsMatrixRecalculation, or any of the transformers
         //demand it, we should recalculate
         boolean shouldRecalculate = needsMatrixRecalculation;
@@ -61,7 +65,7 @@ public abstract class Transformable {
         //If we should recalculate, then... do it
         if (shouldRecalculate) {
             //Scale down the pivot value, it's in "block" units
-            positionMatrix.translation(partPivot.mul(1f/16));
+            positionMatrix.translation((float) partPivot.x / 16, (float) partPivot.y / 16, (float) partPivot.z / 16);
 
             //Arbitrarily decide that other transformers should happen
             //before the ones imposed by the pos, rot, scale etc of this
@@ -77,14 +81,13 @@ public abstract class Transformable {
                 }
             }
 
+            tempRot.set(partRot);
             positionMatrix
-                    .rotate(partRot)
-                    .scale(partScale)
-                    .translate(partPos)
-                    .translate(-partPivot.x, -partPivot.y, -partPivot.z);
+                    .rotate(tempRot)
+                    .scale((float) partScale.x, (float) partScale.y, (float) partScale.z)
+                    .translate((float) partPos.x / 16, (float) partPos.y / 16, (float) partPos.z / 16)
+                    .translate((float) -partPivot.x / 16, (float) -partPivot.y / 16, (float) -partPivot.z / 16);
 
-            //Scale the pivot value back up again
-            partPivot.mul(16f);
             //Compute the normal matrix as well and store it
             positionMatrix.normal(normalMatrix);
             //Matrices are now calculated, don't need to be recalculated anymore for this object
@@ -100,7 +103,7 @@ public abstract class Transformable {
     }
 
     public void setPos(float x, float y, float z) {
-        partPos.set(x / 16f, y / 16f, z / 16f);
+        partPos.set(x, y, z);
         needsMatrixRecalculation = true;
     }
 
@@ -152,7 +155,7 @@ public abstract class Transformable {
     }
     @PetPetWhitelist
     public Vector3d pos_0() {
-        return new Vector3d(partPos).mul(16d);
+        return partPos;
     }
 
     @PetPetWhitelist
@@ -167,7 +170,7 @@ public abstract class Transformable {
 
     @PetPetWhitelist
     public Vector3d rot_0() {
-        return new Vector3d(partRot.getEulerAnglesXYZ(new Vector3f()));
+        return partRot.getEulerAnglesXYZ(new Vector3d());
     }
 
     @PetPetWhitelist
@@ -177,7 +180,7 @@ public abstract class Transformable {
     }
     @PetPetWhitelist
     public Quaterniond quat_0() {
-        return new Quaterniond(partRot);
+        return partRot;
     }
 
     @PetPetWhitelist
@@ -191,7 +194,7 @@ public abstract class Transformable {
     }
     @PetPetWhitelist
     public Vector3d scale_0() {
-        return new Vector3d(partScale);
+        return partScale;
     }
     @PetPetWhitelist
     public Transformable piv_3(double x, double y, double z) {
@@ -204,7 +207,7 @@ public abstract class Transformable {
     }
     @PetPetWhitelist
     public Vector3d piv_0() {
-        return new Vector3d(partPivot);
+        return partPivot;
     }
 
     @PetPetWhitelist
@@ -223,6 +226,19 @@ public abstract class Transformable {
     public Matrix4d matrix_0() {
         recalculateMatrixIfNeeded(); //recalculate before
         return rawMatrix();
+    }
+
+    /**
+     * Mark the matrix as dirty, so it needs
+     * to be recalculated
+     * This may happen if you directly modify
+     * a vector or quaternion involved in the
+     * matrix calculation.
+     */
+    @PetPetWhitelist
+    public Transformable dirty() {
+        this.needsMatrixRecalculation = true;
+        return this;
     }
 
     @PetPetWhitelist

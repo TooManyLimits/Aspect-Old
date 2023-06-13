@@ -1,0 +1,85 @@
+//util("pprint")
+
+//Run the function now if the user exists, 
+//or register it to the init event if they don't
+fn runNowOrLater(func) {
+	if user func() else events.USER_INIT.add(fn() {
+		func()
+		events.USER_INIT.del(this)
+	})
+}
+
+//Find the vanilla model part which matches the given name, if it exists, or else null
+fn findPart(name, partsTable) {
+	found = null
+	//Set found to null, iterate the parts table to find the correct vanilla part
+	partsTable.each(fn(partName, part) {
+		if found //already found, skip. Will become useless once that commit is merged
+			return true
+		if name.starts(partName) {
+			found = part
+			return true
+		}
+	})
+	//return the found part, or null if we found nothing
+	found
+}
+
+fn setupKeywordsRecursive(modelPart, partsTable) {
+	//Only set keywords for groups
+	if modelPart.bbType() == "GROUP" {
+		//If we find a part, then add it to the transformers list if possible
+		if (vanillaPart = findPart(modelPart.name().lower(), partsTable)) {
+			//If it's a table, don't set the transformer, instead just recurse
+			//This handles the case described below, of features with nested parts
+			if (vanillaPart.class() == $[].class()) {
+				modelPart.children().each(fn(child) {
+					setupKeywordsRecursive(child, vanillaPart)
+				})
+			} else {
+				modelPart.transformers().push(vanillaPart)
+				//Recurse on the children with the vanilla part's children
+				modelPart.children().each(fn(child) {
+					setupKeywordsRecursive(child, vanillaPart.children())
+				})
+			}
+		} else {
+			//Recurse on all the children
+			modelPart.children().each(fn(child) {
+				setupKeywordsRecursive(child, partsTable)
+			})
+		}
+	}
+}
+
+//Run this function and your part names will be scanned for keywords,
+//and the vanilla parents will be added accordingly
+fn setupKeywords() {
+	//Vanilla model only exists once the user is loaded in,
+	//so register this to the event
+	runNowOrLater(fn() {
+
+		//Generate a copy of the vanilla parts
+		partsTable = vanilla.parts().copy()
+
+		//Set up the feature part names as well
+		//This way will insert a table instead of a part object,
+		//so we handle that up above
+		vanilla.features().each(fn(index, feature) {
+			partsTable["feature" + index] = feature.parts()
+		})
+
+		//pprint(partsTable, 10)
+
+		//Recursively setup keywords for parts
+		setupKeywordsRecursive(models.entity, partsTable)
+		setupKeywordsRecursive(models.hud, partsTable)
+		models.world.eachV(fn(v) setupKeywordsRecursive(v, partsTable))
+	})
+}
+
+//Call the function
+setupKeywords()
+
+//Return nothing
+null

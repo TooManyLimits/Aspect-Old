@@ -1,6 +1,6 @@
 Component = class("Component", $[
 	__init = fn(string) {
-		this.text = str(string) //convert to string
+		this.text = "" + string //convert to string
 		this.bold = this.italic = this.underlined = this.strikethrough = this.obfuscated = false
 		this.color = this.hover = null
 		this.extras = ![]
@@ -25,7 +25,7 @@ Component = class("Component", $[
 	}
 ])
 
-global JsonText = class("JsonText", $[
+JsonText = class("JsonText", $[
 	__init = fn(string) {
 		this.components = ![Component(string)]
 		this.current = this.components[-1]
@@ -98,3 +98,6 @@ global JsonText = class("JsonText", $[
 		res.sub(0, -1) + "]"
 	}
 ])
+
+//Return the JsonText class
+JsonText

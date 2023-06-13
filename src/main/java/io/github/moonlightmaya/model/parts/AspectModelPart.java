@@ -294,9 +294,9 @@ public class AspectModelPart extends Transformable {
     }
 
     private void addVertex(FloatArrayList floats, Vector3f pos, Vector2f uv, Vector3f normal) {
-        floats.add((pos.x + this.partPivot.x) / 16);
-        floats.add((pos.y + this.partPivot.y) / 16);
-        floats.add((pos.z + this.partPivot.z) / 16);
+        floats.add((pos.x + (float) this.partPivot.x) / 16);
+        floats.add((pos.y + (float) this.partPivot.y) / 16);
+        floats.add((pos.z + (float) this.partPivot.z) / 16);
         floats.add(uv.x);
         floats.add(uv.y);
         floats.add(normal.x);
@@ -502,7 +502,7 @@ public class AspectModelPart extends Transformable {
         if (type != ModelPartType.MESH)
             return super.rot_0();
         else {
-            return new Vector3d(this.partRot.getEulerAnglesZYX(new Vector3f()));
+            return this.partRot.getEulerAnglesZYX(new Vector3d());
         }
     }
 

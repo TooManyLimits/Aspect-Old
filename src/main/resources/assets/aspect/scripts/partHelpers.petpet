@@ -1,0 +1,45 @@
+m = aspectClasses.ModelPart.methods()
+
+//.particle() method, for convenience of adding particles on a model part in part space
+
+fn m:particle_7(particleString, x, y, z, vx, vy, vz) {
+	mat = this.partToWorldMatrix()
+	client.particle(particleString, mat.apply(x, y, z), mat.applyDir(vx, vy, vz))
+}
+
+fn m:particle_4(particleString, x, y, z)
+	client.particle(particleString, this.partToWorldMatrix().apply(x, y, z))
+
+fn m:particle_3(particleString, pos, vel) {
+	mat = this.partToWorldMatrix()
+	client.particle(particleString, mat.apply(pos), mat.applyDir(vel))
+}
+
+fn m:particle_2(particleString, pos)
+	client.particle(particleString, this.partToWorldMatrix().apply(pos))
+
+fn m:particle_1(particleString)
+	client.particle(particleString, this.partToWorldMatrix().apply())
+
+// aimAt method, to make a part point towards a given world coord
+
+fn m:aimAt_1(worldPos) {
+	//get the world to part matrix
+	mat = this.partToWorldMatrix().c.inv()
+	//now modify this rotation to aim towards the relative pos,
+	//and mark as dirty
+	this.dirty().quat().mul(quat().lookAt(mat.apply(worldPos), mat.applyDir(0, 1, 0)).inv())
+}
+
+fn m:aimAt_3(worldPos, alongVec, upVec) {
+	//get the world to part matrix
+	mat = this.partToWorldMatrix().c.inv()
+	//now modify this rotation to aim towards the relative pos,
+	//and mark as dirty
+	this.dirty().quat().mul(quat().lookAt(mat.apply(worldPos), mat.applyDir(0, 1, 0)).inv().lookAt(alongVec, upVec))
+}
+
+// smoothRot, to make a part always smoothly attempt to have a certain rotation
+
+// smoothAim, to make a part always smoothly attempt to aim at a given world coord
+

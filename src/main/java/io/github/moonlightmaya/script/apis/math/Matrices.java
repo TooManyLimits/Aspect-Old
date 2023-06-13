@@ -38,9 +38,10 @@ public class Matrices {
     }
 
     private static void registerHelperOverload(String petpetName, String type, String javaNameWithoutNumber) {
-        MAT_2.addMethod(petpetName + "_" + type + (type.equals("num") ? "" : "2"), new JavaFunction(Matrices.class, javaNameWithoutNumber + "2", false));
-        MAT_3.addMethod(petpetName + "_" + type + (type.equals("num") ? "" : "3"), new JavaFunction(Matrices.class, javaNameWithoutNumber + "3", false));
-        MAT_4.addMethod(petpetName + "_" + type + (type.equals("num") ? "" : "4"), new JavaFunction(Matrices.class, javaNameWithoutNumber + "4", false));
+        boolean isBase = type.equals("num") || type.equals("str");
+        MAT_2.addMethod(petpetName + "_" + type + (isBase ? "" : "2"), new JavaFunction(Matrices.class, javaNameWithoutNumber + "2", false));
+        MAT_3.addMethod(petpetName + "_" + type + (isBase ? "" : "3"), new JavaFunction(Matrices.class, javaNameWithoutNumber + "3", false));
+        MAT_4.addMethod(petpetName + "_" + type + (isBase ? "" : "4"), new JavaFunction(Matrices.class, javaNameWithoutNumber + "4", false));
     }
 
     static {
@@ -99,6 +100,14 @@ public class Matrices {
             MAT_4.addMethod("pos_3", new JavaFunction(Matrix4d.class, "translate", true, double.class, double.class, double.class));
             MAT_4.addMethod("posR_1", new JavaFunction(Matrix4d.class, "translateLocal", true, Vector3dc.class));
             MAT_4.addMethod("posR_3", new JavaFunction(Matrix4d.class, "translateLocal", true, double.class, double.class, double.class));
+
+            //Mat4 apply
+            MAT_4.addMethod("apply_0", new JavaFunction(Matrices.class, "apply_0", false));
+            MAT_4.addMethod("apply_1", new JavaFunction(Matrices.class, "apply_1", false));
+            MAT_4.addMethod("apply_3", new JavaFunction(Matrices.class, "apply_3", false));
+            MAT_4.addMethod("applyDir_0", new JavaFunction(Matrices.class, "applyDir_0", false));
+            MAT_4.addMethod("applyDir_1", new JavaFunction(Matrices.class, "applyDir_1", false));
+            MAT_4.addMethod("applyDir_3", new JavaFunction(Matrices.class, "applyDir_3", false));
 
             //Operator overloads
             registerHelperOverload("__add", "mat", "add");
@@ -284,5 +293,31 @@ public class Matrices {
     public static Matrix3d rotZYX3(Matrix3d mat, Vector3d vec) {
         return mat.rotateZYX(vec.x, vec.y, vec.z);
     }
+
+    public static Vector3d apply_3(Matrix4d mat, double x, double y, double z) {
+        Vector4d v = mat.transform(x, y, z, 1, new Vector4d());
+        return new Vector3d(v.x, v.y, v.z);
+    }
+
+    public static Vector3d apply_1(Matrix4d mat, Vector3d vec) {
+        return apply_3(mat, vec.x, vec.y, vec.z);
+    }
+
+    public static Vector3d apply_0(Matrix4d mat) {
+        return apply_3(mat, 0,0,0);
+    }
+
+    public static Vector3d applyDir_3(Matrix4d mat, double x, double y, double z) {
+        return new Vector3d(x, y, z).mulDirection(mat);
+    }
+
+    public static Vector3d applyDir_1(Matrix4d mat, Vector3d vec) {
+        return new Vector3d(vec).mulDirection(mat);
+    }
+
+    public static Vector3d applyDir_0(Matrix4d mat) {
+        return applyDir_3(mat, 0,0,0);
+    }
+
 
 }

@@ -1,0 +1,21 @@
+//This file defines some useful overload operations on types
+
+
+//Multiplying string with number
+//"this" variable refers to the string
+//Does the operation recursively with binary tree
+//to save resources
+strMethods = "".class().methods()
+strMethods.__mul_num = strMethods.__mulR_num = fn mulString(count) {
+	if count == 0 "" //times 0 -> empty string
+	else if count == 1 this //times 1 -> this object itself
+	else { //Otherwise make 2 strings of half the size and combine
+		low = math:floor(count / 2)
+		this * low + this * (count - low)
+	}
+}
+
+
+
+
+null //don't return anything

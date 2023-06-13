@@ -1,0 +1,7 @@
+//Get the pretty printer, create an instance,
+//and create a function that prints using that instance
+printer = util("PrettyPrinter")()
+
+//Prints the formatted json text of the object
+global fn pprint(object, maxDepth)
+	print(printer.pformat(object, maxDepth, true))

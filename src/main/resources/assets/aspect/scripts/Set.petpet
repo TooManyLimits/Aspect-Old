@@ -1,15 +1,46 @@
-global Set = class("Set", $[
-    __init = fn(list) {
-        list.each(fn(v) this[v] = true)
+Set = class("Set", $[
+    //Initializers
+    __init_0 = fn() {
+        this.elems = $[]
         this
     },
-    add = fn(val) this[val] = true,
-    has = fn(val) if this[val] true else false
+    __init_1 = fn(list) {
+        this.elems = $[]
+        list.each(fn(v) this.elems[v] = true)
+        this
+    },
+    
+    //Regular functions, return self for chaining when applicable
+    add = fn(elem) {this.elems[elem] = true this},
+    del = fn(elem) {this.elems.del(elem) this},
+    has = fn(elem) this.elems[elem] or false,
+    each = fn(func) {this.elems.eachK(func) this},
+    size = fn() this.elems.size(),
+    copy = fn() {
+        x = Set()
+        x.elems = this.elems.copy()
+        x
+    },
+
+    //Operator overloads
+
+    //Unite 2 sets
+    __add_Set = fn(other) {
+        s = this.copy()
+        other.each(fn(e) s.add(e))
+        s
+    },
+
+    //Intersect 2 sets
+    __mul_Set = fn(other) {
+        s = Set()
+        this.each(fn(v) if other.has(v) s.add(v))
+        s
+    },
+
+    //Indexing operator support
+    __get = fn(obj) this.has(obj)
 ])
 
-//Examples
-//q = Set(!["hello", 3, "dirt"])
-//q.has(5) //false
-//q[5] //null
-//q[3] //true
-//q.has("hello") //true
+//Return the set class
+Set

@@ -16,7 +16,7 @@ import io.github.moonlightmaya.script.apis.math.Vectors;
 import io.github.moonlightmaya.script.events.Event;
 import io.github.moonlightmaya.script.events.Events;
 import io.github.moonlightmaya.script.events.EventsAPI;
-import io.github.moonlightmaya.script.handlers.ExtraGlobalHandler;
+import io.github.moonlightmaya.script.handlers.UtilHandler;
 import io.github.moonlightmaya.script.handlers.WhitelistHandler;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.IOUtils;
@@ -82,13 +82,9 @@ public class AspectScript {
 
         //Register the types
         WhitelistHandler.setupInstance(this);
+
         //Set up basic globals
         setupGlobals();
-        //Run utils
-        runUtils();
-
-        //Set up extra (from other mods) globals
-        ExtraGlobalHandler.setupInstance(this);
 
         //Switch into init phase
         switchPhase(Phase.INIT);
@@ -151,8 +147,11 @@ public class AspectScript {
         setGlobal("aspectClasses", classes);
 
         //Require
-        requireFunction = setupRequire();
+        requireFunction = getRequireFunction("require", compiledScripts);
         setGlobal("require", requireFunction);
+
+        //Util
+        setGlobal("util", UtilHandler.getUtilFunction(this));
 
         //Textures
         PetPetTable<String, AspectTexture> texturesTable = new PetPetTable<>();
@@ -244,10 +243,10 @@ public class AspectScript {
     }
 
     /**
-     * Generates the require function for these scripts
+     * Generates a require function for these scripts
      * and returns it.
      */
-    private JavaFunction setupRequire() {
+    public static JavaFunction getRequireFunction(String name, Map<String, PetPetClosure> compiledScripts) {
         Map<String, Object> savedOutputs = new HashMap<>();
         Set<String> inProgress = new HashSet<>();
         return new JavaFunction(false, 1) {
@@ -256,7 +255,7 @@ public class AspectScript {
                 if (arg instanceof String name) {
                     //If still in progress and we require it again, then we have a circular require
                     if (inProgress.contains(name))
-                        throw new PetPetException("Discovered circular require() call, asking for \"" + name + "\"");
+                        throw new PetPetException("Discovered circular " + name + "() call, asking for \"" + name + "\"");
 
                     //If we've already required this before, then return the saved output value
                     if (savedOutputs.containsKey(name))
@@ -273,7 +272,7 @@ public class AspectScript {
                     return result;
                 } else {
                     //Type handling
-                    throw new PetPetException("Attempt to call require() with non-string argument " + arg);
+                    throw new PetPetException("Attempt to call " + name + "() with non-string argument " + arg);
                 }
             }
         };
