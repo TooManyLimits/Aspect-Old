@@ -53,6 +53,12 @@ public class Aspect {
     public boolean isReady;
 
     /**
+     * Whether this aspect has been destroyed. This variable is needed because some AspectAPI instances
+     * might still like to access this object.
+     */
+    public boolean isDestroyed;
+
+    /**
      * Important objects to keep saved and accessible:
      */
     public final List<AspectTexture> textures;
@@ -81,20 +87,16 @@ public class Aspect {
      * or has never been loaded in the first place, the aspect itself lives anyway.
      * The Aspect is attached to the UUID rather than the actual entity object.
      */
-    public final @Nullable UUID userUUID;
+    public final UUID userUUID;
     public final UUID aspectUUID; //uuid of this aspect itself. not used for much
 
     /**
-     * Whether this aspect is "host". This term is borrowed from Figura, and I'll try to give an explanation.
      * Certain features in script are considered disallowed for Aspects other than the user's own aspects to
      * perform. There is no backend currently, but once there is, Aspects will be downloaded off the internet.
      * It's the purpose of this variable to determine if said aspects will be allowed to do certain actions,
      * which may not be desirable.
-     *
-     * isGui performs a similar role, except GUI aspects have even greater permissions than host ones.
      */
-    public final boolean isHost;
-    public final boolean isGui;
+    public final ApiAccessLevel accessLevel;
 
     /**
      * The metadata of the Aspect. Contains various useful logistical info. See class for details.
@@ -106,11 +108,10 @@ public class Aspect {
      */
     public final PetPetTable<Object, Object> aspectVars = new PetPetTable<>();
 
-    public Aspect(@Nullable UUID userUUID, BaseStructures.AspectStructure materials, boolean isHost, boolean isGui) {
+    public Aspect(@Nullable UUID userUUID, BaseStructures.AspectStructure materials, ApiAccessLevel accessLevel) {
         this.userUUID = userUUID;
         this.aspectUUID = UUID.randomUUID();
-        this.isHost = isHost;
-        this.isGui = isGui;
+        this.accessLevel = accessLevel;
 
         metadata = new AspectMetadata(materials.metadata());
 
@@ -309,6 +310,7 @@ public class Aspect {
      * - Close all the textures
      */
     public void destroy() {
+        isDestroyed = true;
         for (AspectTexture texture : textures)
             texture.close();
     }
@@ -324,6 +326,11 @@ public class Aspect {
             DisplayUtils.displayError("Equipped aspect errored in " + location.name(), error, true);
         }
     }
+
+    /**
+     *              "ENUMS"
+     */
+
 
     /**
      * The possible locations of an error happening
@@ -346,6 +353,23 @@ public class Aspect {
                 WORLD = "WORLD", //Aspect is rendered normally in the minecraft world
                 MINECRAFT_GUI = "MINECRAFT_GUI", //Aspect is rendered in the minecraft inventory screen or other screens
                 OTHER = "OTHER"; //Aspect is rendered in some other circumstance, perhaps added by another mod
+    }
+
+    /**
+     * ORDER IS IMPORTANT!
+     * ORDER IS IMPORTANT!
+     *
+     * Higher levels of API access give access to
+     * more APIs.
+     */
+    public enum ApiAccessLevel {
+        BASE,
+        HOST, //Add Host API
+        GUI; //Add Manager and Metadata APIs
+
+        public boolean isAtLeast(ApiAccessLevel min) {
+            return this.ordinal() >= min.ordinal();
+        }
     }
 
 }

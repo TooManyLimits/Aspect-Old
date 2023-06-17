@@ -85,7 +85,7 @@ fn m:smoothAim_3(worldPosProvider, easingFactor, useWorldRender) {
 }
 
 fn m:smoothAim_4(worldPosProvider, localAim, localUp, easingFactor) {
-	this.smoothAim_5(worldPos, localAim, localUp, easingFactor, false)
+	this.smoothAim_5(worldPosProvider, localAim, localUp, easingFactor, false)
 }
 
 fn m:smoothAim_5(worldPosProvider, localAim, localUp, easingFactor, useWorldRender) {

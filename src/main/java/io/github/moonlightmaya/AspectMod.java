@@ -37,7 +37,8 @@ public class AspectMod implements ClientModInitializer {
 
         //Setup global ticking
         ClientTickEvents.START_WORLD_TICK.register(AspectManager::tick);
-        //When leaving a world, clear all aspects
+        //At the start and when leaving a world, clear all aspects
+        AspectManager.clearAllAspects();
         ClientPlayConnectionEvents.DISCONNECT.register((networkHandler, client) -> AspectManager.clearAllAspects());
 
         //Setup game interfaces

@@ -17,7 +17,7 @@ public class EntityUtils {
     }
 
     @Nullable public static Entity getEntityByUUID(ClientWorld world, UUID uuid) {
-        if (world == null) return null;
+        if (world == null || uuid == null) return null;
         return ((ClientWorldInvoker) world).aspect$getEntityLookup().get(uuid);
     }
 

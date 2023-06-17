@@ -10,6 +10,7 @@ import io.github.moonlightmaya.util.AspectMatrixStack;
 import io.github.moonlightmaya.util.DisplayUtils;
 import io.github.moonlightmaya.util.IOUtils;
 import io.github.moonlightmaya.util.RenderUtils;
+import io.netty.util.internal.ConcurrentSet;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
@@ -61,13 +62,10 @@ public class AspectManager {
     private static final ConcurrentLinkedQueue<Runnable> TASKS = new ConcurrentLinkedQueue<>();
 
     /**
-     * The list of entity types which don't have a CEM currently
-     * associated with them.
-     * This prevents searching the filesystem for the proper aspect
-     * every frame if it doesn't exist.
-     * This set is cleared when `/aspect clear` is run.
+     * The map of all entity CEM paths that exist. This is cleared and refilled
+     * by checking the CEM folder each time /aspect clear is run.
      */
-    private static final Set<EntityType<?>> ENTITY_TYPES_WITHOUT_CEM = new HashSet<>();
+    private static final Map<EntityType<?>, Path> ENTITY_CEM_PATHS = new HashMap<>();
 
 
     /**
@@ -119,7 +117,7 @@ public class AspectManager {
     }
 
     /**
-     * Returns the aspect of the given entity.
+     * Returns the aspect of the given entity/uuid.
      * If the entity has no equipped aspect, returns null.
      */
     @Nullable
@@ -127,39 +125,33 @@ public class AspectManager {
         return ASPECTS.get(uuid);
     }
 
+
+    //Run on the render thread, so be careful of performance
     @Nullable
     public static Aspect getAspect(Entity entity) {
-        //If the entity has a specific aspect saved, get it
-        if (ASPECTS.containsKey(entity.getUuid()))
-            return ASPECTS.get(entity.getUuid());
+        //If the entity has an existing aspect saved, get it
+        Aspect existing = ASPECTS.get(entity.getUuid());
+        if (existing != null)
+            return existing;
 
-        //If the entity type is marked as not having an aspect, return null
-        //This is to avoid having to search the filesystem multiple times per frame while rendering the entity
-        if (ENTITY_TYPES_WITHOUT_CEM.contains(entity.getType()))
-            return null;
+        //Otherwise, check if it has a CEM path
+        Path p = ENTITY_CEM_PATHS.get(entity.getType());
+        if (p != null) {
+            //If so, load from it
 
-        Identifier entityIdentifier = Registries.ENTITY_TYPE.getId(entity.getType());
-        Path cemPath = IOUtils.getOrCreateModFolder().resolve("cem");
-        cemPath = cemPath.resolve(entityIdentifier.getNamespace());
-        Path folderPath = cemPath.resolve(entityIdentifier.getPath());
-        Path aspectFilePath = cemPath.resolve(entityIdentifier.getPath() + ".aspect");
+            //Get the error callback
+            Consumer<Throwable> errorCallback = t -> {
+                //Without this if-check, error may display multiple times
+                if (ENTITY_CEM_PATHS.containsKey(entity.getType())) {
+                    Identifier id = Registries.ENTITY_TYPE.getId(entity.getType());
+                    DisplayUtils.displayError("Failed to load CEM for entity " + id, t, true);
+                }
+                //Remove it from the list, if an error occurs
+                ENTITY_CEM_PATHS.remove(entity.getType());
+            };
 
-        //If there's an error loading, add the entity to the WITHOUT_CEM list.
-        //Otherwise it keeps attempting to reload the aspect every frame, for every
-        //entity visible. Don't ask how I know.
-        Consumer<Throwable> errorCallback = t -> {
-            //Without this if-check, error may display multiple times
-            if (!ENTITY_TYPES_WITHOUT_CEM.contains(entity.getType()))
-                DisplayUtils.displayError("Failed to load CEM for entity " + entityIdentifier, t, true);
-            ENTITY_TYPES_WITHOUT_CEM.add(entity.getType());
-        };
-
-        if (!loadAspectFromPath(entity.getUuid(), folderPath, errorCallback, false, false)) {
-            //If the file doesn't exist, try again with `.aspect` at the end
-            if (!loadAspectFromPath(entity.getUuid(), aspectFilePath, errorCallback, false, false)) {
-                //If file doesn't exist in either location, then add this entity to the WITHOUT_CEM list and return null
-                ENTITY_TYPES_WITHOUT_CEM.add(entity.getType());
-            }
+            //load for this entity
+            loadAspectFromPath(entity.getUuid(), p, errorCallback, false, false);
         }
 
         //Aspect isn't ready yet, but the task to load it may have begun
@@ -247,8 +239,30 @@ public class AspectManager {
             for (Aspect aspect : ASPECTS.values())
                 aspect.destroy();
             ASPECTS.clear();
-            ENTITY_TYPES_WITHOUT_CEM.clear();
+            updateCemPaths();
         });
+    }
+
+    private static void updateCemPaths() {
+        ENTITY_CEM_PATHS.clear();
+
+        Path baseCemFolder = IOUtils.getOrCreateModFolder().resolve("cem");
+
+        for (EntityType<?> type : Registries.ENTITY_TYPE.stream().toList()) {
+
+            Identifier entityIdentifier = Registries.ENTITY_TYPE.getId(type);
+            Path namespace = baseCemFolder.resolve(entityIdentifier.getNamespace());
+
+            Path folderPath = namespace.resolve(entityIdentifier.getPath());
+            Path aspectFilePath = namespace.resolve(entityIdentifier.getPath() + ".aspect");
+
+            if (Files.exists(folderPath) && folderPath.toFile().isDirectory()) {
+                ENTITY_CEM_PATHS.put(type, folderPath);
+            } else if (Files.exists(aspectFilePath) && aspectFilePath.toFile().isFile()) {
+                ENTITY_CEM_PATHS.put(type, aspectFilePath);
+            }
+
+        }
     }
 
     /**
@@ -296,6 +310,7 @@ public class AspectManager {
             //Check if this was the most recent request
             AtomicInteger i = userUUID == null ? GUI_ASPECT_TIMESTAMP : IN_PROGRESS_TIMESTAMPS.get(userUUID);
             if (i.get() == requestId) {
+
                 //If so, then submit the task to set aspect:
                 setAspect(userUUID, aspect);
                 return;

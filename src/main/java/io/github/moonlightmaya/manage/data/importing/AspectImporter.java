@@ -12,10 +12,7 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 import petpet.types.PetPetList;
 
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -52,53 +49,49 @@ public class AspectImporter {
         this.rootPath = aspectFolder;
     }
 
-    public CompletableFuture<BaseStructures.AspectStructure> doImport() {
-        CompletableFuture<BaseStructures.AspectStructure> result = new CompletableFuture<>();
-        CompletableFuture.runAsync(() -> {
-            try {
-                if (!Files.exists(rootPath))
-                    throw new AspectImporterException("Folder " + IOUtils.trimPathStringToModFolder(rootPath) + " does not exist");
+    public BaseStructures.AspectStructure doImport() throws Exception {
+        if (!Files.exists(rootPath))
+            throw new AspectImporterException("File " + IOUtils.trimPathStringToModFolder(rootPath) + " does not exist");
 
-                if (!Files.exists(rootPath.resolve("aspect.json")))
-                    throw new AspectImporterException("Folder " + IOUtils.trimPathStringToModFolder(rootPath) + " has no aspect.json");
+        //Special case: root path is just a .aspect file, in that case just parse it and return
+        if (Files.isRegularFile(rootPath) && rootPath.toFile().getName().endsWith(".aspect"))
+            return BaseStructures.AspectStructure.read(new DataInputStream(new ByteArrayInputStream(Files.readAllBytes(rootPath))));
 
-                metadata = getMetadata();
-                //Read the globally shared textures to here
-                textures = getTextures();
-                animations = new LinkedHashMap<>();
-                //Read scripts
-                scripts = getScripts();
-                //Get entity model parts:
-                BaseStructures.ModelPartStructure entityRoot = getRootForType("entity");
-                //Get world model parts:
-                List<BaseStructures.ModelPartStructure> worldRoots = getWorldRoots();
-                //Get hud model parts:
-                BaseStructures.ModelPartStructure hudRoot = getRootForType("hud");
+        if (!Files.exists(rootPath.resolve("aspect.json")))
+            throw new AspectImporterException("Folder " + IOUtils.trimPathStringToModFolder(rootPath) + " has no aspect.json");
 
-                //Create the base aspect structure
-                BaseStructures.AspectStructure aspect = new BaseStructures.AspectStructure(
-                    metadata,
-                    entityRoot, worldRoots, hudRoot,
-                    Lists.newArrayList(textures.values()),
-                    Lists.newArrayList(animations.values()),
-                    scripts
-                );
+        metadata = getMetadata();
+        //Read the globally shared textures to here
+        textures = getTextures();
+        animations = new LinkedHashMap<>();
+        //Read scripts
+        scripts = getScripts();
+        //Get entity model parts:
+        BaseStructures.ModelPartStructure entityRoot = getRootForType("entity");
+        //Get world model parts:
+        List<BaseStructures.ModelPartStructure> worldRoots = getWorldRoots();
+        //Get hud model parts:
+        BaseStructures.ModelPartStructure hudRoot = getRootForType("hud");
 
-                //Save the serialized form to the file if needed
-                if (true) { //Later may add a flag in metadata to disable saving this
-                    String name = this.rootPath.toFile().getName() + ".aspect";
-                    try (FileOutputStream out = new FileOutputStream(this.rootPath.resolve(name).toFile())) {
-                        DataOutputStream dos = new DataOutputStream(out);
-                        aspect.write(dos);
-                    }
-                }
+        //Create the base aspect structure
+        BaseStructures.AspectStructure aspectStructure = new BaseStructures.AspectStructure(
+            metadata,
+            entityRoot, worldRoots, hudRoot,
+            Lists.newArrayList(textures.values()),
+            Lists.newArrayList(animations.values()),
+            scripts
+        );
 
-                result.complete(aspect);
-            } catch (Exception e) {
-                result.completeExceptionally(e);
+        //Save the serialized form to the file if needed
+        if (true) { //Later may add a flag in metadata to disable saving this
+            String name = this.rootPath.toFile().getName() + ".aspect";
+            try (FileOutputStream out = new FileOutputStream(this.rootPath.resolve(name).toFile())) {
+                DataOutputStream dos = new DataOutputStream(out);
+                aspectStructure.write(dos);
             }
-        });
-        return result;
+        }
+
+        return aspectStructure;
     }
 
     private BaseStructures.MetadataStructure getMetadata() throws IOException, AspectImporterException {

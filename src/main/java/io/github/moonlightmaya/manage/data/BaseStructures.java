@@ -68,41 +68,37 @@ public class BaseStructures {
             for (ScriptStructure script : scripts) script.write(out);
         }
 
-        public static AspectStructure read(DataInputStream in) throws IOUtils.AspectIOException {
-            try {
-                //Metadata always first, so we can read just a metadata object from a stream if needed
-                MetadataStructure metadata = MetadataStructure.read(in);
+        public static AspectStructure read(DataInputStream in) throws IOException {
+            //Metadata always first, so we can read just a metadata object from a stream if needed
+            MetadataStructure metadata = MetadataStructure.read(in);
 
-                //Animations are needed by model parts, so we put them early
-                int numAnimations = IOUtils.readVarInt(in);
-                List<AnimationStructure> animations = numAnimations > 0 ? new ArrayList<>(numAnimations) : List.of();
-                for (int i = 0; i < numAnimations; i++)
-                    animations.add(AnimationStructure.read(in));
+            //Animations are needed by model parts, so we put them early
+            int numAnimations = IOUtils.readVarInt(in);
+            List<AnimationStructure> animations = numAnimations > 0 ? new ArrayList<>(numAnimations) : List.of();
+            for (int i = 0; i < numAnimations; i++)
+                animations.add(AnimationStructure.read(in));
 
-                ModelPartStructure entityRoot = ModelPartStructure.read(in, animations);
+            ModelPartStructure entityRoot = ModelPartStructure.read(in, animations);
 
-                int numWorldRoots = IOUtils.readVarInt(in);
-                List<ModelPartStructure> worldRoots = numWorldRoots > 0 ? new ArrayList<>(numWorldRoots) : List.of();
-                for (int i = 0; i < numWorldRoots; i++)
-                    worldRoots.add(ModelPartStructure.read(in, animations));
+            int numWorldRoots = IOUtils.readVarInt(in);
+            List<ModelPartStructure> worldRoots = numWorldRoots > 0 ? new ArrayList<>(numWorldRoots) : List.of();
+            for (int i = 0; i < numWorldRoots; i++)
+                worldRoots.add(ModelPartStructure.read(in, animations));
 
-                ModelPartStructure hudRoot = ModelPartStructure.read(in, animations);
+            ModelPartStructure hudRoot = ModelPartStructure.read(in, animations);
 
-                int numTextures = IOUtils.readVarInt(in);
-                List<TextureStructure> textures = numTextures > 0 ? new ArrayList<>(numTextures) : List.of();
-                for (int i = 0; i < numTextures; i++)
-                    textures.add(TextureStructure.read(in));
+            int numTextures = IOUtils.readVarInt(in);
+            List<TextureStructure> textures = numTextures > 0 ? new ArrayList<>(numTextures) : List.of();
+            for (int i = 0; i < numTextures; i++)
+                textures.add(TextureStructure.read(in));
 
-                int numScripts = IOUtils.readVarInt(in);
-                List<ScriptStructure> scripts = numScripts > 0 ? new ArrayList<>(numScripts) : List.of();
-                for (int i = 0; i < numScripts; i++)
-                    scripts.add(ScriptStructure.read(in));
-                return new AspectStructure(
-                        metadata, entityRoot, worldRoots, hudRoot, textures, animations, scripts
-                );
-            } catch (IOException e) {
-                throw new IOUtils.AspectIOException(e);
-            }
+            int numScripts = IOUtils.readVarInt(in);
+            List<ScriptStructure> scripts = numScripts > 0 ? new ArrayList<>(numScripts) : List.of();
+            for (int i = 0; i < numScripts; i++)
+                scripts.add(ScriptStructure.read(in));
+            return new AspectStructure(
+                    metadata, entityRoot, worldRoots, hudRoot, textures, animations, scripts
+            );
         }
     }
 

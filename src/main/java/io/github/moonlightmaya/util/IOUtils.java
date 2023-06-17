@@ -10,6 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class IOUtils {
 
@@ -205,10 +207,32 @@ public class IOUtils {
         return value;
     }
 
-    public static class AspectIOException extends RuntimeException {
-        public AspectIOException(IOException wrapped) {
-            super(wrapped);
-        }
+    public static <T, R> Function<T, R> wrapExcepting(ExceptingFunction<T, R> func, Function<Throwable, RuntimeException> runtimeWrapper) {
+        return arg -> {
+            try {
+                return func.accept(arg);
+            } catch (Throwable e) {
+                throw runtimeWrapper.apply(e);
+            }
+        };
+    }
+
+    public static <T> Supplier<T> wrapExcepting(ExceptingSupplier<T> func, Function<Throwable, RuntimeException> runtimeWrapper) {
+        return () -> {
+            try {
+                return func.get();
+            } catch (Throwable e) {
+                throw runtimeWrapper.apply(e);
+            }
+        };
+    }
+
+    public interface ExceptingFunction<T, R> {
+        R accept(T arg) throws Throwable;
+    }
+
+    public interface ExceptingSupplier<T> {
+        T get() throws Throwable;
     }
 
 }

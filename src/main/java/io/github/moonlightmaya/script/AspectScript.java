@@ -314,33 +314,7 @@ public class AspectScript {
         return null;
     }
 
-    public enum Phase {
-        INIT, TICK, RENDER
-    }
 
-    /**
-     * Change the Phase of the script to the given
-     * new phase, reset the instructions, and set
-     * the instruction limit to the amount given
-     * for the new phase
-     *
-     * Eventually this will be torn out and replaced
-     * with permissions/trust settings
-     */
-    public void switchPhase(Phase newPhase) {
-        if (isErrored()) return;
-        instance.interpreter.maxCost = switch (newPhase) {
-            case INIT -> AspectConfig.INIT_INSTRUCTIONS.get();
-            case TICK -> AspectConfig.TICK_INSTRUCTIONS.get();
-            case RENDER -> AspectConfig.RENDER_INSTRUCTIONS.get();
-        };
-        //Notify which phase they ran out of instructions in
-        instance.interpreter.onHitMaxCost = () -> {
-            String message = "Hit the max allowed instructions of " + instance.interpreter.maxCost + " in phase " + newPhase + "!";
-            throw new PetPetException(message);
-        };
-        instance.interpreter.cost = 0;
-    }
 
     public PetPetClosure compile(String name, String src) {
         try {
@@ -373,5 +347,43 @@ public class AspectScript {
     public @Nullable HostAPI getHostAPI() {
         return hostAPI;
     }
+
+    /**
+     * Instruction counting below!
+     */
+
+
+    /**
+     * Which phase of the script execution we are currently in.
+     * Each phase has its own instruction limit.
+     */
+    public enum Phase {
+        INIT, TICK, RENDER
+    }
+
+    /**
+     * Change the Phase of the script to the given
+     * new phase, reset the instructions, and set
+     * the instruction limit to the amount given
+     * for the new phase
+     *
+     * Eventually this will be torn out and replaced
+     * with permissions/trust settings
+     */
+    public void switchPhase(Phase newPhase) {
+        if (isErrored()) return;
+        instance.interpreter.maxCost = switch (newPhase) {
+            case INIT -> AspectConfig.INIT_INSTRUCTIONS.get();
+            case TICK -> AspectConfig.TICK_INSTRUCTIONS.get();
+            case RENDER -> AspectConfig.RENDER_INSTRUCTIONS.get();
+        };
+        //Notify which phase they ran out of instructions in
+        instance.interpreter.onHitMaxCost = () -> {
+            String message = "Hit the max allowed instructions of " + instance.interpreter.maxCost + " in phase " + newPhase + "!";
+            throw new PetPetException(message);
+        };
+        instance.interpreter.cost = 0;
+    }
+
 
 }

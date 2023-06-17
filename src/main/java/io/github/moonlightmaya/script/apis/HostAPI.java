@@ -23,7 +23,7 @@ public class HostAPI {
 
     public boolean cursorUnlocked;
 
-    public Vector3d chatColor = null;
+    public final Vector3d chatColor = new Vector3d(0.9375);
 
     public HostAPI(Aspect aspect) {
         this.aspect = aspect;
@@ -80,7 +80,7 @@ public class HostAPI {
 
     @PetPetWhitelist
     public Vector3d chatColor_0() {
-        return new Vector3d(chatColor);
+        return chatColor;
     }
 
     @PetPetWhitelist
@@ -90,7 +90,7 @@ public class HostAPI {
 
     @PetPetWhitelist
     public HostAPI chatColor_3(double r, double g, double b) {
-        this.chatColor = new Vector3d(r, g, b);
+        this.chatColor.set(r, g, b);
         return this;
     }
 

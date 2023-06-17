@@ -69,19 +69,8 @@ public class AspectAPI {
     }
 
     @PetPetWhitelist
-    public boolean isHost() {
-        return aspect.isHost;
-    }
-
-    /**
-     * Should only be true inside the GUI aspect itself.
-     * I don't believe it's currently possible to obtain
-     * a reference to a GUI aspect from the outside; if
-     * anyone finds a way to do this please let me know.
-     */
-    @PetPetWhitelist
-    public boolean isGui() {
-        return aspect.isGui;
+    public String getApiAccess() {
+        return aspect.accessLevel.toString();
     }
 
     @PetPetWhitelist
